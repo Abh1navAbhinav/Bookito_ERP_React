@@ -13,10 +13,12 @@ import {
   type TradeFairAgent,
 } from '@/data/mockData'
 import { cn } from '@/lib/utils'
+import { TradeFairCardLeadForm } from './TradeFairCardLeadForm'
 
 export default function TradeFairsPage() {
   const [selectedVenue, setSelectedVenue] = useState<TradeFairVenue | null>(null)
   const [activeTab, setActiveTab] = useState<'properties' | 'agents'>('properties')
+  const [showCardLeadPanel, setShowCardLeadPanel] = useState(false)
 
   const breadcrumbItems: BreadcrumbItem[] = [
     {
@@ -188,6 +190,37 @@ export default function TradeFairsPage() {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Card Lead Capture */}
+          <div className="rounded-xl border border-dashed border-primary-200 bg-primary-50/40 p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-primary-900">
+                  Capture leads from business cards
+                </h3>
+                <p className="text-xs text-primary-700">
+                  Scan or upload both sides of a business card from this trade fair to quickly create
+                  a lead.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCardLeadPanel((prev) => !prev)}
+                className="inline-flex items-center justify-center rounded-md bg-primary-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-primary-700"
+              >
+                {showCardLeadPanel ? 'Hide card scanner' : 'Add lead from card'}
+              </button>
+            </div>
+
+            {showCardLeadPanel && selectedVenue && (
+              <div className="mt-4 rounded-lg bg-white p-4 shadow-sm">
+                <TradeFairCardLeadForm
+                  fairName={selectedVenue.venue}
+                  fairId={selectedVenue.id}
+                />
+              </div>
+            )}
           </div>
 
           {/* Tabs */}
