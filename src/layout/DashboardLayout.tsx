@@ -1,24 +1,16 @@
-import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
-import { cn } from '@/lib/utils'
 
 export function DashboardLayout() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-
   return (
     <div className="flex min-h-screen bg-surface-50">
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
-      <div
-        className={cn(
-          'flex flex-1 flex-col transition-all duration-300',
-          sidebarCollapsed ? 'ml-[68px]' : 'ml-[240px]'
-        )}
-      >
+      <Sidebar />
+      {/* 
+          We keep the margin constant at 68px (the width of the collapsed sidebar) 
+          to prevent the entire dashboard from jumping/resizing when the sidebar expands on hover.
+      */}
+      <div className="flex flex-1 flex-col ml-[68px]">
         <Topbar />
         <main className="flex-1 p-6">
           <Outlet />

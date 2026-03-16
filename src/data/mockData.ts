@@ -604,6 +604,13 @@ export const tradeFairAgents: TradeFairAgent[] = [
 // ---------- Sales ----------
 export type SalesStatus = 'Closed' | 'Installation Pending' | 'Interested' | 'Not Interested' | 'Rescheduled' | 'Under Maintenance'
 
+export interface VisitRecord {
+  date: string
+  time: string
+  status: string
+  comment: string
+}
+
 export interface SalesRecord {
   id: string
   slno: number
@@ -623,17 +630,95 @@ export interface SalesRecord {
   state: string
   district: string
   location: string
+  locationLink?: string
+  isLive: boolean
+  visitHistory: VisitRecord[]
 }
 
 export const salesRecords: SalesRecord[] = [
-  { id: 's1', slno: 1, propertyName: 'Ocean Breeze Resort', numberOfRooms: 45, email: 'info@oceanbreeze.com', primaryContactPerson: 'Rajesh Kumar', designation: 'Manager', proposedPrice: 150000, planType: '1 Year', status: 'Closed', comments: 'Premium client. Full OTA integration done.', demoProvided: true, trialProvided: true, installed: true, executive: 'Anil Menon', state: 'Kerala', district: 'Kozhikode', location: 'Calicut Beach' },
-  { id: 's2', slno: 2, propertyName: 'Kappad Heritage Inn', numberOfRooms: 18, email: 'book@kappadinn.in', primaryContactPerson: 'Priya Nair', designation: 'Owner', proposedPrice: 85000, planType: '1 Year', status: 'Closed', comments: 'Smooth onboarding.', demoProvided: true, trialProvided: false, installed: true, executive: 'Deepa S', state: 'Kerala', district: 'Kozhikode', location: 'Kappad' },
-  { id: 's3', slno: 3, propertyName: 'Marine Drive Suites', numberOfRooms: 28, email: 'info@marinedrivesuites.com', primaryContactPerson: 'Meera Krishnan', designation: 'Front Office', proposedPrice: 120000, planType: '1 Year', status: 'Interested', comments: 'Evaluating competitors. Follow up in 2 weeks.', demoProvided: true, trialProvided: true, installed: false, executive: 'Rajan K', state: 'Kerala', district: 'Ernakulam', location: 'Marine Drive' },
-  { id: 's4', slno: 4, propertyName: 'Whitefield Business Lodging', numberOfRooms: 16, email: 'book@wflodging.in', primaryContactPerson: 'Kavitha M', designation: 'HR', proposedPrice: 55000, planType: '6 Month', status: 'Rescheduled', comments: 'Budget constraints. April follow-up.', demoProvided: true, trialProvided: false, installed: false, executive: 'Vishal P', state: 'Karnataka', district: 'Bangalore', location: 'Whitefield' },
-  { id: 's5', slno: 5, propertyName: 'Palolem Beach Resort', numberOfRooms: 32, email: 'info@palolemresort.com', primaryContactPerson: 'Carlos M', designation: 'Owner', proposedPrice: 130000, planType: '1 Year', status: 'Not Interested', comments: 'Using competitor. Not switching.', demoProvided: true, trialProvided: false, installed: false, executive: 'Anil Menon', state: 'Goa', district: 'South Goa', location: 'Palolem' },
-  { id: 's6', slno: 6, propertyName: 'Fort Kochi Grand Hotel', numberOfRooms: 72, email: 'reservations@fkgrand.com', primaryContactPerson: 'Anitha George', designation: 'Manager', proposedPrice: 250000, planType: '1 Year', status: 'Closed', comments: 'Enterprise client.', demoProvided: true, trialProvided: true, installed: true, executive: 'Anil Menon', state: 'Kerala', district: 'Ernakulam', location: 'Fort Kochi' },
-  { id: 's7', slno: 7, propertyName: 'Baga Beachfront Hotel', numberOfRooms: 25, email: 'info@bagabeachfront.com', primaryContactPerson: "Rahul D'Souza", designation: 'Owner', proposedPrice: 110000, planType: '1 Year', status: 'Installation Pending', comments: 'Payment done. Awaiting setup.', demoProvided: true, trialProvided: true, installed: false, executive: 'Anil Menon', state: 'Goa', district: 'North Goa', location: 'Baga' },
+  { 
+    id: 's1', slno: 1, propertyName: 'Ocean Breeze Resort', numberOfRooms: 45, email: 'info@oceanbreeze.com', 
+    primaryContactPerson: 'Rajesh Kumar', designation: 'Manager', proposedPrice: 150000, planType: '1 Year', 
+    status: 'Closed', comments: 'Premium client. Full OTA integration done.', demoProvided: true, trialProvided: true, 
+    installed: true, executive: 'Anil Menon', state: 'Kerala', district: 'Kozhikode', location: 'Calicut Beach',
+    locationLink: 'https://maps.google.com',
+    isLive: true,
+    visitHistory: [
+      { date: '2026-03-01', time: '10:00 AM', status: 'Interested', comment: 'Initial discussion, client liked the UI.' },
+      { date: '2026-03-05', time: '02:00 PM', status: 'Requested Demo', comment: 'Full demo given to the owner.' },
+      { date: '2026-03-10', time: '11:00 AM', status: 'Closed', comment: 'Contract signed and payment done.' },
+    ]
+  },
+  { 
+    id: 's2', slno: 2, propertyName: 'Kappad Heritage Inn', numberOfRooms: 18, email: 'book@kappadinn.in', 
+    primaryContactPerson: 'Priya Nair', designation: 'Owner', proposedPrice: 85000, planType: '1 Year', 
+    status: 'Closed', comments: 'Smooth onboarding.', demoProvided: true, trialProvided: false, 
+    installed: true, executive: 'Deepa S', state: 'Kerala', district: 'Kozhikode', location: 'Kappad',
+    locationLink: 'https://maps.google.com',
+    isLive: true,
+    visitHistory: [
+      { date: '2026-02-15', time: '03:30 PM', status: 'Interested', comment: 'Met owner Priya.' },
+      { date: '2026-02-20', time: '10:00 AM', status: 'Closed', comment: 'Closing call successful.' },
+    ]
+  },
+  { 
+    id: 's3', slno: 3, propertyName: 'Marine Drive Suites', numberOfRooms: 28, email: 'info@marinedrivesuites.com', 
+    primaryContactPerson: 'Meera Krishnan', designation: 'Front Office', proposedPrice: 120000, planType: '1 Year', 
+    status: 'Interested', comments: 'Evaluating competitors. Follow up in 2 weeks.', demoProvided: true, trialProvided: true, 
+    installed: false, executive: 'Rajan K', state: 'Kerala', district: 'Ernakulam', location: 'Marine Drive',
+    isLive: false,
+    visitHistory: [
+      { date: '2026-03-12', time: '04:30 PM', status: 'Interested', comment: 'Checking trial features.' },
+    ]
+  },
+  { 
+    id: 's4', slno: 4, propertyName: 'Whitefield Business Lodging', numberOfRooms: 16, email: 'book@wflodging.in', 
+    primaryContactPerson: 'Kavitha M', designation: 'HR', proposedPrice: 55000, planType: '6 Month', 
+    status: 'Rescheduled', comments: 'Budget constraints. April follow-up.', demoProvided: true, trialProvided: false, 
+    installed: false, executive: 'Vishal P', state: 'Karnataka', district: 'Bangalore', location: 'Whitefield',
+    isLive: false,
+    visitHistory: [
+      { date: '2026-03-01', time: '11:00 AM', status: 'Interested', comment: 'HR requested budget approval.' },
+    ]
+  },
+  { 
+    id: 's5', slno: 5, propertyName: 'Palolem Beach Resort', numberOfRooms: 32, email: 'info@palolemresort.com', 
+    primaryContactPerson: 'Carlos M', designation: 'Owner', proposedPrice: 130000, planType: '1 Year', 
+    status: 'Not Interested', comments: 'Using competitor. Not switching.', demoProvided: true, trialProvided: false, 
+    installed: false, executive: 'Anil Menon', state: 'Goa', district: 'South Goa', location: 'Palolem',
+    isLive: false,
+    visitHistory: [
+      { date: '2026-03-05', time: '10:00 AM', status: 'Not Interested', comment: 'Happy with current PMS.' },
+    ]
+  },
+  { 
+    id: 's6', slno: 6, propertyName: 'Fort Kochi Grand Hotel', numberOfRooms: 72, email: 'reservations@fkgrand.com', 
+    primaryContactPerson: 'Anitha George', designation: 'Manager', proposedPrice: 250000, planType: '1 Year', 
+    status: 'Closed', comments: 'Enterprise client.', demoProvided: true, trialProvided: true, 
+    installed: true, executive: 'Anil Menon', state: 'Kerala', district: 'Ernakulam', location: 'Fort Kochi',
+    isLive: true,
+    visitHistory: [
+      { date: '2026-02-10', time: '09:00 AM', status: 'Interested', comment: 'Large scale requirement.' },
+      { date: '2026-02-25', time: '03:00 PM', status: 'Closed', comment: 'Approved by board.' },
+    ]
+  },
+  { 
+    id: 's7', slno: 7, propertyName: 'Baga Beachfront Hotel', numberOfRooms: 25, email: 'info@bagabeachfront.com', 
+    primaryContactPerson: "Rahul D'Souza", designation: 'Owner', proposedPrice: 110000, planType: '1 Year', 
+    status: 'Installation Pending', comments: 'Payment done. Awaiting setup.', demoProvided: true, trialProvided: true, 
+    installed: false, executive: 'Anil Menon', state: 'Goa', district: 'North Goa', location: 'Baga',
+    isLive: false,
+    visitHistory: [
+      { date: '2026-03-14', time: '02:00 PM', status: 'Installation Pending', comment: 'Staff training scheduled.' },
+    ]
+  },
 ]
+export interface AgendaItem {
+  time: string
+  title: string
+  location: string
+  type: string
+}
 
 // ---------- Executive ----------
 export interface Executive {
@@ -649,14 +734,101 @@ export interface Executive {
   todayVisits: number
   todayRevenue: number
   todayClosings: number
+  targetClosings: number
+  monthlyPerformance: {
+    month: string
+    closings: number
+    revenue: number
+    target: number
+  }[]
+  agenda: AgendaItem[]
 }
 
 export const executives: Executive[] = [
-  { id: 'ex1', name: 'Anil Menon', email: 'anil@bookito.in', avatar: 'AM', role: 'Senior Sales Executive', closings: 28, revenueGenerated: 3250000, demosGiven: 45, trialsProvided: 18, todayVisits: 3, todayRevenue: 135000, todayClosings: 1 },
-  { id: 'ex2', name: 'Deepa S', email: 'deepa@bookito.in', avatar: 'DS', role: 'Sales Executive', closings: 22, revenueGenerated: 2870000, demosGiven: 38, trialsProvided: 15, todayVisits: 2, todayRevenue: 0, todayClosings: 0 },
-  { id: 'ex3', name: 'Rajan K', email: 'rajan@bookito.in', avatar: 'RK', role: 'Sales Executive', closings: 19, revenueGenerated: 2150000, demosGiven: 32, trialsProvided: 12, todayVisits: 4, todayRevenue: 85000, todayClosings: 1 },
-  { id: 'ex4', name: 'Meera Nair', email: 'meera@bookito.in', avatar: 'MN', role: 'Junior Sales Executive', closings: 15, revenueGenerated: 1780000, demosGiven: 28, trialsProvided: 10, todayVisits: 1, todayRevenue: 0, todayClosings: 0 },
-  { id: 'ex5', name: 'Vishal P', email: 'vishal@bookito.in', avatar: 'VP', role: 'Junior Sales Executive', closings: 12, revenueGenerated: 1400000, demosGiven: 22, trialsProvided: 8, todayVisits: 2, todayRevenue: 55000, todayClosings: 0 },
+  { 
+    id: 'ex1', name: 'Anil Menon', email: 'anil@bookito.in', avatar: 'AM', role: 'Senior Sales Executive', 
+    closings: 28, revenueGenerated: 3250000, demosGiven: 45, trialsProvided: 18, 
+    todayVisits: 3, todayRevenue: 135000, todayClosings: 1, targetClosings: 40,
+    monthlyPerformance: [
+      { month: 'Oct', closings: 25, revenue: 2800000, target: 35 },
+      { month: 'Nov', closings: 30, revenue: 3500000, target: 35 },
+      { month: 'Dec', closings: 22, revenue: 2400000, target: 35 },
+      { month: 'Jan', closings: 35, revenue: 4100000, target: 40 },
+      { month: 'Feb', closings: 28, revenue: 3250000, target: 40 },
+      { month: 'Mar', closings: 18, revenue: 2100000, target: 40 },
+    ],
+    agenda: [
+      { title: 'Visit: Ocean Breeze Resort', time: '10:00 AM', location: 'Calicut Beach', type: 'Follow-up' },
+      { title: 'Payment Collection: Fort Kochi Grand', time: '02:30 PM', location: 'Fort Kochi', type: 'Closing' },
+      { title: 'Product Setup: Baga Beachfront', time: '04:00 PM', location: 'Baga', type: 'Installation' },
+    ]
+  },
+  { 
+    id: 'ex2', name: 'Deepa S', email: 'deepa@bookito.in', avatar: 'DS', role: 'Sales Executive', 
+    closings: 22, revenueGenerated: 2870000, demosGiven: 38, trialsProvided: 15, 
+    todayVisits: 2, todayRevenue: 0, todayClosings: 0, targetClosings: 40,
+    monthlyPerformance: [
+      { month: 'Oct', closings: 20, revenue: 2300000, target: 30 },
+      { month: 'Nov', closings: 25, revenue: 3000000, target: 30 },
+      { month: 'Dec', closings: 18, revenue: 2100000, target: 30 },
+      { month: 'Jan', closings: 28, revenue: 3400000, target: 40 },
+      { month: 'Feb', closings: 22, revenue: 2870000, target: 40 },
+      { month: 'Mar', closings: 15, revenue: 1900000, target: 40 },
+    ],
+    agenda: [
+      { title: 'Demo: Kappad Inn', time: '11:30 AM', location: 'Kappad', type: 'New Demo' },
+      { title: 'Contract Signing: Sea View', time: '03:00 PM', location: 'Beypore', type: 'Closing' },
+    ]
+  },
+  { 
+    id: 'ex3', name: 'Rajan K', email: 'rajan@bookito.in', avatar: 'RK', role: 'Sales Executive', 
+    closings: 19, revenueGenerated: 2150000, demosGiven: 32, trialsProvided: 12, 
+    todayVisits: 4, todayRevenue: 85000, todayClosings: 1, targetClosings: 35,
+    monthlyPerformance: [
+      { month: 'Oct', closings: 18, revenue: 1900000, target: 25 },
+      { month: 'Nov', closings: 22, revenue: 2500000, target: 25 },
+      { month: 'Dec', closings: 15, revenue: 1700000, target: 25 },
+      { month: 'Jan', closings: 24, revenue: 2800000, target: 35 },
+      { month: 'Feb', closings: 19, revenue: 2150000, target: 35 },
+      { month: 'Mar', closings: 12, revenue: 1400000, target: 35 },
+    ],
+    agenda: [
+      { title: 'Morning Briefing', time: '09:00 AM', location: 'Office', type: 'Meeting' },
+      { title: 'Client Meeting: Marine Drive', time: '11:00 AM', location: 'Kochi', type: 'Relationship' },
+    ]
+  },
+  { 
+    id: 'ex4', name: 'Meera Nair', email: 'meera@bookito.in', avatar: 'MN', role: 'Junior Sales Executive', 
+    closings: 15, revenueGenerated: 1780000, demosGiven: 28, trialsProvided: 10, 
+    todayVisits: 1, todayRevenue: 0, todayClosings: 0, targetClosings: 30,
+    monthlyPerformance: [
+      { month: 'Oct', closings: 12, revenue: 1400000, target: 20 },
+      { month: 'Nov', closings: 18, revenue: 2100000, target: 20 },
+      { month: 'Dec', closings: 14, revenue: 1600000, target: 20 },
+      { month: 'Jan', closings: 20, revenue: 2400000, target: 30 },
+      { month: 'Feb', closings: 15, revenue: 1780000, target: 30 },
+      { month: 'Mar', closings: 10, revenue: 1200000, target: 30 },
+    ],
+    agenda: [
+      { title: 'Training Session', time: '10:00 AM', location: 'Online', type: 'Internal' },
+    ]
+  },
+  { 
+    id: 'ex5', name: 'Vishal P', email: 'vishal@bookito.in', avatar: 'VP', role: 'Junior Sales Executive', 
+    closings: 12, revenueGenerated: 1400000, demosGiven: 22, trialsProvided: 8, 
+    todayVisits: 2, todayRevenue: 55000, todayClosings: 0, targetClosings: 25,
+    monthlyPerformance: [
+      { month: 'Oct', closings: 10, revenue: 1100000, target: 15 },
+      { month: 'Nov', closings: 14, revenue: 1600000, target: 15 },
+      { month: 'Dec', closings: 12, revenue: 1400000, target: 15 },
+      { month: 'Jan', closings: 18, revenue: 2100000, target: 25 },
+      { month: 'Feb', closings: 12, revenue: 1400000, target: 25 },
+      { month: 'Mar', closings: 8, revenue: 950000, target: 25 },
+    ],
+    agenda: [
+      { title: 'Property Scouting', time: '11:00 AM', location: 'Bangalore', type: 'Direct' },
+    ]
+  },
 ]
 
 // ---------- Notifications ----------

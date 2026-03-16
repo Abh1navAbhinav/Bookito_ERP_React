@@ -41,7 +41,7 @@ export default function DashboardPage() {
           Dashboard
         </h1>
         <p className="mt-1 text-sm text-surface-500">
-          Welcome back! Here's an overview of your operations.
+          Real-time overview of properties, sales, and financial performance.
         </p>
       </div>
 
