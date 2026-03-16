@@ -103,7 +103,6 @@ export function Select({ options, value, onChange, placeholder, className }: Sel
       onChange={(e) => onChange?.(e.target.value)}
       className={cn(
         'w-full rounded-lg border border-surface-300 px-3 py-2 text-sm text-surface-900 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20',
-        !value && 'text-surface-400',
         className
       )}
     >

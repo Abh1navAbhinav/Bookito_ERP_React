@@ -1,14 +1,24 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, Bell, LogOut, User, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { notifications as mockNotifications } from '@/data/mockData'
+
+type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm'
+
+interface DemoUserInfo {
+  role: DemoRole
+  label: string
+}
 
 export function Topbar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showNotifications, setShowNotifications] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
+  const [currentUser, setCurrentUser] = useState<DemoUserInfo | null>(null)
   const notifRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
 
   const unreadCount = mockNotifications.filter((n) => !n.read).length
 
@@ -32,6 +42,28 @@ export function Topbar() {
     success: 'bg-accent-500',
     error: 'bg-red-500',
   }
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem('bookito_demo_user')
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<DemoUserInfo>
+        if (parsed.role && parsed.label) {
+          setCurrentUser(parsed as DemoUserInfo)
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const initials =
+    currentUser?.label
+      ?.split(' ')
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'AD'
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-surface-200 bg-white/80 px-6 backdrop-blur-md">
@@ -108,11 +140,23 @@ export function Topbar() {
             className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-surface-100"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-xs font-bold text-white">
-              AD
+              {initials}
             </div>
             <div className="hidden text-left md:block">
-              <p className="text-xs font-semibold text-surface-800">Admin</p>
-              <p className="text-[10px] text-surface-400">admin@bookito.in</p>
+              <p className="text-xs font-semibold text-surface-800">
+                {currentUser?.label || 'Admin'}
+              </p>
+              <p className="text-[10px] text-surface-400">
+                {currentUser?.role === 'manager'
+                  ? 'Administrator'
+                  : currentUser?.role === 'sales'
+                    ? 'Sales Executive'
+                    : currentUser?.role === 'accountant'
+                      ? 'Accountant'
+                      : currentUser?.role === 'crm'
+                        ? 'CRM'
+                        : 'admin@bookito.in'}
+              </p>
             </div>
             <ChevronDown className="hidden h-3.5 w-3.5 text-surface-400 md:block" />
           </button>
@@ -124,7 +168,13 @@ export function Topbar() {
                 My Profile
               </button>
               <div className="my-1 border-t border-surface-200" />
-              <button className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50">
+              <button
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50"
+                onClick={() => {
+                  window.localStorage.removeItem('bookito_demo_user')
+                  navigate('/login')
+                }}
+              >
                 <LogOut className="h-4 w-4" />
                 Logout
               </button>

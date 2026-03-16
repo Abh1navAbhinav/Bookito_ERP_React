@@ -1,8 +1,16 @@
-import { Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 
 export function DashboardLayout() {
+  const location = useLocation()
+
+  // Scroll to top on route change without blocking rendering
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [location.pathname])
+
   return (
     <div className="flex min-h-screen bg-surface-50">
       <Sidebar />

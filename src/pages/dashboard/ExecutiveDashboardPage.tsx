@@ -288,12 +288,6 @@ export default function ExecutiveDashboardPage() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="primary">
-            <Zap className="h-4 w-4" />
-            Product Updates
-          </Button>
-        </div>
       </div>
 
       {/* Stats Cards */}

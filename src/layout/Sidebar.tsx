@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -14,8 +14,16 @@ import {
   Building,
   Shield,
   UserCircle,
+  IdCard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
+
+interface DemoUserInfo {
+  role: DemoRole
+  label: string
+}
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -27,12 +35,37 @@ const navItems = [
   { label: 'Sales', icon: TrendingUp, path: '/sales' },
   { label: 'Pricing Plan', icon: CreditCard, path: '/pricing-plan' },
   { label: 'Reports', icon: FileBarChart, path: '/reports' },
-  { label: 'Admin Features', icon: Shield, path: '/admin/features' },
+  { label: 'Feature List', icon: Shield, path: '/admin/features' },
+  { label: 'HR – Users', icon: IdCard, path: '/hr/users' },
+  { label: 'HR – Attendance', icon: CalendarDays, path: '/hr/attendance' },
 ]
 
 export function Sidebar() {
   const location = useLocation()
   const [isHovered, setIsHovered] = useState(false)
+  const [currentUser, setCurrentUser] = useState<DemoUserInfo | null>(null)
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem('bookito_demo_user')
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<DemoUserInfo>
+        if (parsed.role && parsed.label) {
+          setCurrentUser(parsed as DemoUserInfo)
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const initials =
+    currentUser?.label
+      ?.split(' ')
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'AD'
 
   return (
     <aside
@@ -106,11 +139,25 @@ export function Sidebar() {
           isHovered ? 'opacity-100' : 'opacity-0'
         )}>
            <div className="h-8 w-8 rounded-full bg-surface-100 flex items-center justify-center text-xs font-bold text-surface-600 uppercase">
-             AD
+             {initials}
            </div>
            <div className="flex flex-col">
-             <span className="text-xs font-bold text-surface-900">Admin</span>
-             <span className="text-[10px] text-surface-500">Administrator</span>
+             <span className="text-xs font-bold text-surface-900">
+               {currentUser?.label || 'Admin'}
+             </span>
+             <span className="text-[10px] text-surface-500">
+               {currentUser?.role === 'manager'
+                 ? 'Administrator'
+                 : currentUser?.role === 'sales'
+                   ? 'Sales Executive'
+                   : currentUser?.role === 'accountant'
+                     ? 'Accountant'
+                     : currentUser?.role === 'crm'
+                       ? 'CRM'
+                       : currentUser?.role === 'hr'
+                         ? 'HR'
+                         : 'Administrator'}
+             </span>
            </div>
         </div>
       </div>
