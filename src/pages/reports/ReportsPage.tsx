@@ -1,15 +1,10 @@
 import { useState } from 'react'
-import {
-  FileBarChart,
-  Download,
-  Wallet,
-  FileSpreadsheet,
-  FileText,
-} from 'lucide-react'
+import { FileBarChart, Download, Wallet, FileSpreadsheet, FileText } from 'lucide-react'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, Input } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { cn } from '@/lib/utils'
+import { downloadCsv } from '@/lib/exportUtils'
 
 type ReportType =
   | 'financeOverview'
@@ -18,6 +13,7 @@ type ReportType =
   | 'profitability'
   | 'cashFlow'
   | 'taxCompliance'
+  | 'audit'
 type DateFilter = 'daily' | 'weekly' | 'monthly' | 'custom'
 
 const reportTypes = [
@@ -63,6 +59,13 @@ const reportTypes = [
     description: 'GST, TDS, and statutory payment summaries',
     count: 18,
   },
+  {
+    id: 'audit' as ReportType,
+    label: 'Audit Report',
+    icon: Wallet,
+    description: 'Audit trail, control checks, and exception logs',
+    count: 24,
+  },
 ]
 
 export default function ReportsPage() {
@@ -70,6 +73,51 @@ export default function ReportsPage() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('monthly')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
+
+  const handleGenerateReport = () => {
+    if (!selectedReport) return
+    // Placeholder for backend integration – currently just confirms to the user
+    const label = reportTypes.find((r) => r.id === selectedReport)?.label ?? 'Report'
+    const range =
+      dateFilter === 'custom' && customFrom && customTo
+        ? `${customFrom} to ${customTo}`
+        : dateFilter.charAt(0).toUpperCase() + dateFilter.slice(1)
+
+    // Basic confirmation that the action worked
+    alert(`${label} generated for ${range}.`)
+  }
+
+  const handleExportExcel = () => {
+    if (!selectedReport) return
+    const metrics = getReportMetrics(selectedReport)
+    const label = reportTypes.find((r) => r.id === selectedReport)?.label ?? 'Report'
+
+    downloadCsv(
+      `finance-${selectedReport}-${dateFilter}.csv`,
+      metrics.map((m) => ({
+        metric: m.name,
+        thisPeriod: m.current,
+        lastPeriod: m.previous,
+        change: m.change,
+      })),
+      [
+        { key: 'metric', label: 'Metric' },
+        { key: 'thisPeriod', label: 'This Period' },
+        { key: 'lastPeriod', label: 'Last Period' },
+        { key: 'change', label: 'Change' },
+      ]
+    )
+
+    // Optional small confirmation
+    console.info(`Exported Excel for ${label}`)
+  }
+
+  const handleExportPdf = () => {
+    if (!selectedReport) return
+
+    // Simple implementation: open the browser print dialog so user can save as PDF
+    window.print()
+  }
 
   return (
     <div className="space-y-6">
@@ -161,7 +209,7 @@ export default function ReportsPage() {
                 </>
               )}
 
-              <Button>
+              <Button onClick={handleGenerateReport}>
                 <FileBarChart className="h-4 w-4" />
                 Generate Report
               </Button>
@@ -176,11 +224,11 @@ export default function ReportsPage() {
                   {reportTypes.find((r) => r.id === selectedReport)!.label} Report
                 </h3>
                 <div className="flex gap-2">
-                  <Button variant="secondary" size="sm">
+                  <Button variant="secondary" size="sm" onClick={handleExportExcel}>
                     <FileSpreadsheet className="h-3.5 w-3.5" />
                     Export Excel
                   </Button>
-                  <Button variant="secondary" size="sm">
+                  <Button variant="secondary" size="sm" onClick={handleExportPdf}>
                     <FileText className="h-3.5 w-3.5" />
                     Export PDF
                   </Button>
@@ -271,6 +319,13 @@ function getReportMetrics(type: ReportType) {
       { name: 'Returns Filed On Time', current: '100%', previous: '96%', change: '4%', isPositive: true },
       { name: 'Pending Filings', current: '0', previous: '2', change: '100%', isPositive: true },
       { name: 'Statutory Compliance Score', current: '9.4/10', previous: '8.9/10', change: '5.6%', isPositive: true },
+    ],
+    audit: [
+      { name: 'Audit Issues Logged', current: '12', previous: '19', change: '36.8%', isPositive: true },
+      { name: 'Critical Findings', current: '2', previous: '4', change: '50%', isPositive: true },
+      { name: 'Issues Resolved', current: '9', previous: '7', change: '28.6%', isPositive: true },
+      { name: 'Open Exceptions', current: '3', previous: '6', change: '50%', isPositive: true },
+      { name: 'Control Effectiveness Score', current: '8.7/10', previous: '8.1/10', change: '7.4%', isPositive: true },
     ],
   }
   return metrics[type]

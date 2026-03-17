@@ -15,6 +15,7 @@ import {
   AreaChart,
   Area
 } from 'recharts'
+import { downloadCsv } from '@/lib/exportUtils'
 
 const hiringTrend = [
   { month: 'Oct', hires: 4 },
@@ -52,14 +53,24 @@ export default function HrReportsPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-            <Button variant="secondary" className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                Filters
-            </Button>
-            <Button className="flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                Export Dashboard
-            </Button>
+          <Button
+            variant="secondary"
+            className="flex items-center gap-2"
+            onClick={() => alert('Filters panel coming soon.')}
+          >
+            <Filter className="h-4 w-4" />
+            Filters
+          </Button>
+          <Button
+            className="flex items-center gap-2"
+            onClick={() => {
+              // Simple implementation: let the user export/print the dashboard via browser
+              window.print()
+            }}
+          >
+            <Download className="h-4 w-4" />
+            Export Dashboard
+          </Button>
         </div>
       </div>
 
@@ -173,10 +184,26 @@ export default function HrReportsPage() {
                   ]} />
               </FormField>
               <div className="flex items-end">
-                  <Button className="w-full flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Generate Report
-                  </Button>
+                <Button
+                  className="w-full flex items-center gap-2"
+                  onClick={() => {
+                    // Minimal working export of a custom HR report as CSV
+                    downloadCsv(
+                      'hr-custom-report.csv',
+                      hiringTrend.map((item) => ({
+                        period: item.month,
+                        hires: item.hires,
+                      })),
+                      [
+                        { key: 'period', label: 'Period' },
+                        { key: 'hires', label: 'New Hires' },
+                      ]
+                    )
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  Generate Report
+                </Button>
               </div>
           </div>
       </div>
