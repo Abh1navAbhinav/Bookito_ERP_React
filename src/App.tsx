@@ -14,6 +14,17 @@ import AdminFeaturesPage from './pages/admin/AdminFeaturesPage'
 import FeatureDetailsPage from './pages/admin/FeatureDetailsPage'
 import HrUsersPage from './pages/hr/HrUsersPage'
 import HrAttendancePage from './pages/hr/HrAttendancePage'
+import HrDashboard from './pages/hr/HrDashboard'
+import EmployeeListPage from './pages/hr/EmployeeManagement/EmployeeListPage'
+import AttendanceDashboard from './pages/hr/Attendance/AttendanceDashboard'
+import LeaveRequestsPage from './pages/hr/Leaves/LeaveRequestsPage'
+import PayrollProcessingPage from './pages/hr/Payroll/PayrollProcessingPage'
+import JobPostingsPage from './pages/hr/Recruitment/JobPostingsPage'
+import PerformanceReviewsPage from './pages/hr/Performance/PerformanceReviewsPage'
+import TrainingProgramsPage from './pages/hr/Training/TrainingProgramsPage'
+import ExitManagementPage from './pages/hr/Exit/ExitManagementPage'
+import EmployeeSelfServicePage from './pages/hr/ESS/EmployeeSelfServicePage'
+import HrReportsPage from './pages/hr/HrReportsPage'
 import LoginPage from './pages/auth/LoginPage'
 
 function App() {
@@ -34,6 +45,17 @@ function App() {
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/admin/features" element={<AdminFeaturesPage />} />
           <Route path="/admin/features/:id" element={<FeatureDetailsPage />} />
+          <Route path="/hr/dashboard" element={<HrDashboard />} />
+          <Route path="/hr/employees" element={<EmployeeListPage />} />
+          <Route path="/hr/attendance-v2" element={<AttendanceDashboard />} />
+          <Route path="/hr/leaves" element={<LeaveRequestsPage />} />
+          <Route path="/hr/payroll" element={<PayrollProcessingPage />} />
+          <Route path="/hr/recruitment" element={<JobPostingsPage />} />
+          <Route path="/hr/performance" element={<PerformanceReviewsPage />} />
+          <Route path="/hr/training" element={<TrainingProgramsPage />} />
+          <Route path="/hr/exit" element={<ExitManagementPage />} />
+          <Route path="/hr/ess" element={<EmployeeSelfServicePage />} />
+          <Route path="/hr/reports" element={<HrReportsPage />} />
           <Route path="/hr/users" element={<HrUsersPage />} />
           <Route path="/hr/attendance" element={<HrAttendancePage />} />
         </Route>

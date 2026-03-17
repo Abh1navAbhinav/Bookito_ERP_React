@@ -12,15 +12,15 @@ export function DashboardLayout() {
   }, [location.pathname])
 
   return (
-    <div className="flex min-h-screen bg-surface-50">
+    <div className="flex min-h-screen bg-surface-50 overflow-x-hidden">
       <Sidebar />
       {/* 
           We keep the margin constant at 68px (the width of the collapsed sidebar) 
           to prevent the entire dashboard from jumping/resizing when the sidebar expands on hover.
       */}
-      <div className="flex flex-1 flex-col ml-[68px]">
+      <div className="flex flex-1 flex-col ml-[68px] overflow-x-hidden">
         <Topbar />
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 overflow-x-hidden">
           <Outlet />
         </main>
       </div>

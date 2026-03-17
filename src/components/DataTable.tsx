@@ -135,7 +135,7 @@ export function DataTable<T>({
 
       {/* Table */}
       <div className="overflow-hidden rounded-xl border border-surface-200 bg-white">
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="min-w-full divide-y divide-surface-200">
             <thead className="bg-surface-50">
               {table.getHeaderGroups().map((headerGroup) => (
@@ -144,8 +144,10 @@ export function DataTable<T>({
                     <th
                       key={header.id}
                       className={cn(
-                        'whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-500',
-                        header.column.getCanSort() && 'cursor-pointer select-none hover:text-surface-700'
+                        'whitespace-nowrap px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500',
+                        header.column.getCanSort() && 'cursor-pointer select-none hover:text-surface-700',
+                        header.column.id === 'actions' &&
+                          'sticky right-0 z-20 bg-surface-50 shadow-[inset_1px_0_0_rgba(226,232,240,1),-4px_0_8px_rgba(15,23,42,0.06)]'
                       )}
                       onClick={header.column.getToggleSortingHandler()}
                     >
@@ -175,7 +177,7 @@ export function DataTable<T>({
                 <tr>
                   <td
                     colSpan={columns.length}
-                    className="px-4 py-12 text-center text-sm text-surface-400"
+                    className="px-6 py-12 text-center text-sm text-surface-400"
                   >
                     No results found.
                   </td>
@@ -189,7 +191,11 @@ export function DataTable<T>({
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className="whitespace-nowrap px-4 py-3 text-sm text-surface-700"
+                        className={cn(
+                          'whitespace-nowrap px-6 py-4 text-sm text-surface-700',
+                          cell.column.id === 'actions' &&
+                            'sticky right-0 z-10 bg-white shadow-[inset_1px_0_0_rgba(226,232,240,1),-4px_0_8px_rgba(15,23,42,0.04)]'
+                        )}
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
@@ -202,7 +208,7 @@ export function DataTable<T>({
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between border-t border-surface-200 bg-surface-50 px-4 py-3">
+        <div className="flex items-center justify-between border-t border-surface-200 bg-surface-50/50 px-6 py-4">
           <p className="text-xs text-surface-500">
             Showing{' '}
             <span className="font-medium">

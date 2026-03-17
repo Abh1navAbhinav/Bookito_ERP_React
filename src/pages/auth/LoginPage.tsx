@@ -44,9 +44,9 @@ const demoUsers: DemoUser[] = [
   {
     id: 'hr',
     label: 'HR (People Ops)',
-    description: 'Manage user accounts, logins, roles and attendance.',
+    description: 'Comprehensive People Operations dashboard for management and HR teams.',
     icon: IdCard,
-    defaultRoute: '/hr/users',
+    defaultRoute: '/hr/dashboard',
   },
 ]
 

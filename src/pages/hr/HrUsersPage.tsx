@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Users, Plus } from 'lucide-react'
+import { Users, Plus, Trash2, RotateCcw } from 'lucide-react'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, FormField, Input, Select } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
+import { differenceInDays, parseISO } from 'date-fns'
 
 type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
 
@@ -30,9 +31,8 @@ export default function HrUsersPage() {
 
   const getRemainingDays = (deletedAt?: string) => {
     if (!deletedAt) return 30
-    const diff = Date.now() - new Date(deletedAt).getTime()
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-    return Math.max(0, 30 - days)
+    const diff = differenceInDays(new Date(), parseISO(deletedAt))
+    return Math.max(0, 30 - diff)
   }
 
   useEffect(() => {
@@ -51,7 +51,11 @@ export default function HrUsersPage() {
     try {
       const rawUsers = window.localStorage.getItem('bookito_hr_users')
       if (rawUsers) {
-        setUsers(JSON.parse(rawUsers) as DemoUserAccount[])
+        let parsed = JSON.parse(rawUsers) as DemoUserAccount[]
+        // Purge logic
+        const now = new Date()
+        parsed = parsed.filter(u => !u.isDeleted || (u.deletedAt && differenceInDays(now, parseISO(u.deletedAt)) < 30))
+        setUsers(parsed)
       }
     } catch {
       // ignore
@@ -79,11 +83,8 @@ export default function HrUsersPage() {
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => {
-      if (tab === 'active' && u.isDeleted) return false
-      if (tab === 'deleted') {
-        if (!u.isDeleted) return false
-        if (getRemainingDays(u.deletedAt) === 0) return false
-      }
+      if (tab === 'active') return !u.isDeleted
+      if (tab === 'deleted') return !!u.isDeleted
       return true
     })
   }, [users, tab])
@@ -93,7 +94,14 @@ export default function HrUsersPage() {
       {
         accessorKey: 'name',
         header: 'Name',
-        cell: ({ row }) => <span className="text-surface-800">{row.original.name}</span>
+        cell: ({ row }) => (
+            <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs uppercase">
+                    {row.original.name[0]}
+                </div>
+                <span className="font-semibold text-surface-900">{row.original.name}</span>
+            </div>
+        )
       },
       {
         accessorKey: 'email',
@@ -103,7 +111,7 @@ export default function HrUsersPage() {
       {
         accessorKey: 'role',
         header: 'Role',
-        cell: ({ row }) => <span className="text-xs capitalize text-surface-600">{row.original.role}</span>
+        cell: ({ row }) => <span className="text-xs capitalize font-medium text-surface-600 px-2 py-1 bg-surface-100 rounded-lg">{row.original.role}</span>
       },
       {
         accessorKey: 'status',
@@ -112,19 +120,21 @@ export default function HrUsersPage() {
           if (tab === 'deleted') {
             const days = getRemainingDays(row.original.deletedAt)
             return (
-              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full w-fit">
+                <div className="h-1 w-1 rounded-full bg-red-400" />
                 {days} days
               </span>
             )
           }
           return (
             <span
-              className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${
                 row.original.status === 'active'
                   ? 'bg-emerald-50 text-emerald-700'
                   : 'bg-surface-100 text-surface-500'
               }`}
             >
+              <div className={`h-1 w-1 rounded-full ${row.original.status === 'active' ? 'bg-emerald-500' : 'bg-surface-400'}`} />
               {row.original.status === 'active' ? 'Active' : 'Inactive'}
             </span>
           )
@@ -135,7 +145,7 @@ export default function HrUsersPage() {
     if (isHr || tab === 'deleted') {
       cols.push({
         id: 'actions',
-        header: 'Actions',
+        header: '',
         cell: ({ row }) => (
           <div className="text-right flex justify-end gap-2">
             {tab === 'active' ? (
@@ -144,15 +154,16 @@ export default function HrUsersPage() {
                 title="Move to Trash"
                 onClick={() => handleDelete(row.original.id)}
               >
-                <Users className="h-4 w-4 rotate-45" /> 
+                <Trash2 className="h-4 w-4" /> 
               </button>
             ) : (
               <button
-                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-emerald-50 hover:text-emerald-500"
+                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-50 transition-colors border border-emerald-100 shadow-sm"
                 title="Restore User"
                 onClick={() => handleRestore(row.original.id)}
               >
-                <Plus className="h-4 w-4 rotate-0" />
+                <RotateCcw className="h-3.5 w-3.5" />
+                Restore
               </button>
             )}
           </div>
@@ -166,9 +177,9 @@ export default function HrUsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-surface-900">User Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-surface-900">Roles & Permissions</h1>
           <div className="mt-2">
-            <Breadcrumb items={[{ label: 'HR' }, { label: 'Users & Roles' }]} />
+            <Breadcrumb items={[{ label: 'People Ops' }, { label: 'Users & Roles' }]} />
           </div>
         </div>
       </div>
@@ -179,19 +190,19 @@ export default function HrUsersPage() {
             <Users className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-surface-900">Accounts & Roles</h2>
+            <h2 className="text-sm font-semibold text-surface-900">Account Management</h2>
             <p className="text-xs text-surface-500">
-              HR can create demo accounts and assign roles. Other roles can only view this list.
+              Create and manage demo accounts for testing different role permissions.
             </p>
           </div>
         </div>
 
         {isHr && (
           <div className="mb-6 rounded-lg border border-surface-200 bg-surface-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-surface-500">
-              Create user
+            <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-surface-400">
+              Create Demo User
             </h3>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               <FormField label="Name">
                 <Input
                   value={newUser.name}
@@ -220,10 +231,9 @@ export default function HrUsersPage() {
                     { label: 'Manager (Admin)', value: 'manager' },
                     { label: 'Sales Executive', value: 'sales' },
                     { label: 'Accountant', value: 'accountant' },
-                    { label: 'CRM', value: 'crm' },
-                    { label: 'HR', value: 'hr' },
+                    { label: 'CRM Specialist', value: 'crm' },
+                    { label: 'HR Admin', value: 'hr' },
                   ]}
-                  placeholder="Choose role"
                 />
               </FormField>
               <FormField label="Status">
@@ -239,11 +249,10 @@ export default function HrUsersPage() {
                     { label: 'Active', value: 'active' },
                     { label: 'Inactive', value: 'inactive' },
                   ]}
-                  placeholder="Status"
                 />
               </FormField>
             </div>
-            <div className="mt-3 flex justify-end">
+            <div className="mt-4 flex justify-end">
               <Button
                 size="sm"
                 onClick={() => {
@@ -261,44 +270,57 @@ export default function HrUsersPage() {
                   })
                 }}
               >
-                Create User
+                Add User Account
               </Button>
             </div>
           </div>
         )}
+      </div>
 
-        <div className="space-y-4">
-          <div className="flex rounded-lg border border-surface-200 p-0.5 w-fit">
+      <div className="space-y-4">
+        <div className="flex border-b border-surface-200 bg-white px-2">
             <button
               onClick={() => setTab('active')}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+              className={`px-4 py-4 text-sm font-medium transition-colors border-b-2 ${
                 tab === 'active'
-                  ? 'bg-primary-600 text-white shadow-sm'
-                  : 'text-surface-500 hover:text-surface-700'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-surface-500 hover:text-surface-700'
               }`}
             >
-              Active Users
+              Active Accounts
             </button>
             <button
               onClick={() => setTab('deleted')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+              className={`flex items-center gap-2 px-4 py-4 text-sm font-medium transition-colors border-b-2 ${
                 tab === 'deleted'
-                  ? 'bg-red-600 text-white shadow-sm'
-                  : 'text-surface-500 hover:text-surface-700'
+                  ? 'border-red-600 text-red-600'
+                  : 'border-transparent text-surface-500 hover:text-surface-700'
               }`}
             >
-              <Users className="h-3.5 w-3.5 rotate-45" />
+              <Trash2 className="h-4 w-4" />
               Trash
             </button>
-          </div>
-          <DataTable
+        </div>
+        
+        {tab === 'deleted' && (
+            <div className="flex items-center gap-2 px-1">
+                <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+                <p className="text-sm text-surface-500 italic">
+                    Accounts in trash are automatically deleted after 30 days.
+                </p>
+            </div>
+        )}
+
+        <DataTable
             data={filteredUsers}
             columns={columns}
-            searchPlaceholder="Search users..."
-          />
-        </div>
+            searchPlaceholder="Search accounts..."
+        />
       </div>
     </div>
   )
 }
 
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ')
+}

@@ -2,29 +2,67 @@ import { useState } from 'react'
 import {
   FileBarChart,
   Download,
-  Building2,
-  TrendingUp,
   Wallet,
-  Users,
-  CalendarDays,
   FileSpreadsheet,
   FileText,
 } from 'lucide-react'
 import { Breadcrumb } from '@/components/Breadcrumb'
-import { Button, Input, Select } from '@/components/FormElements'
+import { Button, Input } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
-import { type ColumnDef } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
 
-type ReportType = 'properties' | 'sales' | 'finance' | 'travelAgents' | 'tradeFairs'
+type ReportType =
+  | 'financeOverview'
+  | 'revenueCollections'
+  | 'expensesPayables'
+  | 'profitability'
+  | 'cashFlow'
+  | 'taxCompliance'
 type DateFilter = 'daily' | 'weekly' | 'monthly' | 'custom'
 
 const reportTypes = [
-  { id: 'properties' as ReportType, label: 'Properties', icon: Building2, description: 'Property listing and performance reports', count: 248 },
-  { id: 'sales' as ReportType, label: 'Sales', icon: TrendingUp, description: 'Sales pipeline, closings, and executive performance', count: 156 },
-  { id: 'finance' as ReportType, label: 'Finance', icon: Wallet, description: 'Revenue, payments, and expense reports', count: 89 },
-  { id: 'travelAgents' as ReportType, label: 'Travel Agents', icon: Users, description: 'Agent contracts, trials, and payments', count: 87 },
-  { id: 'tradeFairs' as ReportType, label: 'Trade Fairs', icon: CalendarDays, description: 'Trade fair leads and conversions', count: 32 },
+  {
+    id: 'financeOverview' as ReportType,
+    label: 'Finance Overview',
+    icon: Wallet,
+    description: 'High-level revenue, expenses, and profit summary',
+    count: 124,
+  },
+  {
+    id: 'revenueCollections' as ReportType,
+    label: 'Revenue & Collections',
+    icon: Wallet,
+    description: 'Closing amounts, collections, and pending receivables',
+    count: 89,
+  },
+  {
+    id: 'expensesPayables' as ReportType,
+    label: 'Expenses & Payables',
+    icon: Wallet,
+    description: 'Operating expenses, vendor payments, and approvals',
+    count: 63,
+  },
+  {
+    id: 'profitability' as ReportType,
+    label: 'Profitability Analysis',
+    icon: Wallet,
+    description: 'Property-wise and segment-wise profit & loss',
+    count: 47,
+  },
+  {
+    id: 'cashFlow' as ReportType,
+    label: 'Cash Flow',
+    icon: Wallet,
+    description: 'Inflow / outflow trends and cash position',
+    count: 36,
+  },
+  {
+    id: 'taxCompliance' as ReportType,
+    label: 'Tax & Compliance',
+    icon: Wallet,
+    description: 'GST, TDS, and statutory payment summaries',
+    count: 18,
+  },
 ]
 
 export default function ReportsPage() {
@@ -37,12 +75,12 @@ export default function ReportsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-surface-900">Reports</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-surface-900">Finance Reports</h1>
         <div className="mt-2">
           <Breadcrumb
             items={[
               {
-                label: 'Reports',
+                label: 'Finance Reports',
                 ...(selectedReport ? { onClick: () => setSelectedReport(null) } : {}),
               },
               ...(selectedReport
@@ -192,40 +230,47 @@ export default function ReportsPage() {
 
 function getReportMetrics(type: ReportType) {
   const metrics: Record<ReportType, { name: string; current: string; previous: string; change: string; isPositive: boolean }[]> = {
-    properties: [
-      { name: 'Total Properties', current: '248', previous: '221', change: '12.2%', isPositive: true },
-      { name: 'New Properties Added', current: '27', previous: '18', change: '50%', isPositive: true },
-      { name: 'Active Properties', current: '198', previous: '185', change: '7%', isPositive: true },
-      { name: 'Properties Under Maintenance', current: '12', previous: '15', change: '20%', isPositive: true },
-      { name: 'Average Rooms per Property', current: '24', previous: '22', change: '9%', isPositive: true },
-    ],
-    sales: [
-      { name: 'Total Closings', current: '14', previous: '11', change: '27.3%', isPositive: true },
-      { name: 'Revenue Generated', current: '₹14,50,000', previous: '₹11,20,000', change: '29.5%', isPositive: true },
-      { name: 'Demos Given', current: '38', previous: '35', change: '8.6%', isPositive: true },
-      { name: 'Trials Provided', current: '12', previous: '10', change: '20%', isPositive: true },
-      { name: 'Conversion Rate', current: '36.8%', previous: '31.4%', change: '5.4%', isPositive: true },
-    ],
-    finance: [
+    financeOverview: [
       { name: 'Total Revenue', current: '₹12,45,000', previous: '₹10,80,000', change: '15.3%', isPositive: true },
-      { name: 'Collections', current: '₹4,50,000', previous: '₹3,90,000', change: '15.4%', isPositive: true },
-      { name: 'Pending Payments', current: '₹2,93,000', previous: '₹3,40,000', change: '13.8%', isPositive: true },
-      { name: 'Office Expenses', current: '₹53,500', previous: '₹48,000', change: '11.5%', isPositive: false },
+      { name: 'Total Expenses', current: '₹4,85,500', previous: '₹4,10,000', change: '18.4%', isPositive: false },
       { name: 'Net Profit', current: '₹3,96,500', previous: '₹3,42,000', change: '15.9%', isPositive: true },
+      { name: 'Profit Margin', current: '31.8%', previous: '29.4%', change: '2.4%', isPositive: true },
+      { name: 'Avg. Collection Cycle', current: '32 days', previous: '38 days', change: '15.8%', isPositive: true },
     ],
-    travelAgents: [
-      { name: 'Total Agents', current: '87', previous: '72', change: '20.8%', isPositive: true },
-      { name: 'Active Contracts', current: '65', previous: '58', change: '12.1%', isPositive: true },
-      { name: 'Trial Agents', current: '22', previous: '14', change: '57.1%', isPositive: true },
-      { name: 'Contract Renewals', current: '8', previous: '5', change: '60%', isPositive: true },
-      { name: 'Agent Revenue', current: '₹8,50,000', previous: '₹6,40,000', change: '32.8%', isPositive: true },
+    revenueCollections: [
+      { name: 'Closing Amount (This Period)', current: '₹18,20,000', previous: '₹15,40,000', change: '18.2%', isPositive: true },
+      { name: 'Total Collections', current: '₹14,50,000', previous: '₹11,90,000', change: '21.8%', isPositive: true },
+      { name: 'Pending Receivables', current: '₹3,70,000', previous: '₹4,60,000', change: '19.6%', isPositive: true },
+      { name: 'Overdue > 30 days', current: '₹1,10,000', previous: '₹1,60,000', change: '31.2%', isPositive: true },
+      { name: 'Collection Efficiency', current: '86.9%', previous: '81.4%', change: '5.5%', isPositive: true },
     ],
-    tradeFairs: [
-      { name: 'Fairs Attended', current: '3', previous: '2', change: '50%', isPositive: true },
-      { name: 'Leads Generated', current: '45', previous: '28', change: '60.7%', isPositive: true },
-      { name: 'Conversions', current: '8', previous: '5', change: '60%', isPositive: true },
-      { name: 'Demos Booked', current: '15', previous: '10', change: '50%', isPositive: true },
-      { name: 'Fair Expenses', current: '₹75,000', previous: '₹50,000', change: '50%', isPositive: false },
+    expensesPayables: [
+      { name: 'Total Operating Expenses', current: '₹2,95,000', previous: '₹2,60,000', change: '13.5%', isPositive: false },
+      { name: 'Office Expenses', current: '₹53,500', previous: '₹48,000', change: '11.5%', isPositive: false },
+      { name: 'Technology & Licenses', current: '₹72,000', previous: '₹64,000', change: '12.5%', isPositive: false },
+      { name: 'Vendor Payables', current: '₹1,35,000', previous: '₹1,52,000', change: '11.2%', isPositive: true },
+      { name: 'On-time Payments', current: '91%', previous: '88%', change: '3%', isPositive: true },
+    ],
+    profitability: [
+      { name: 'Property-wise Gross Profit', current: '₹4,80,000', previous: '₹4,10,000', change: '17.1%', isPositive: true },
+      { name: 'Top 10 Properties Contribution', current: '68%', previous: '64%', change: '4%', isPositive: true },
+      { name: 'Low-margin Properties', current: '7', previous: '9', change: '22.2%', isPositive: true },
+      { name: 'Average Deal Size', current: '₹3,25,000', previous: '₹2,80,000', change: '16.1%', isPositive: true },
+      { name: 'Discount Impact', current: '₹85,000', previous: '₹92,000', change: '7.6%', isPositive: true },
+    ],
+    cashFlow: [
+      { name: 'Opening Cash Balance', current: '₹2,10,000', previous: '₹1,85,000', change: '13.5%', isPositive: true },
+      { name: 'Cash Inflows', current: '₹9,80,000', previous: '₹8,40,000', change: '16.7%', isPositive: true },
+      { name: 'Cash Outflows', current: '₹7,10,000', previous: '₹6,30,000', change: '12.7%', isPositive: false },
+      { name: 'Net Cash Position', current: '₹4,80,000', previous: '₹3,95,000', change: '21.5%', isPositive: true },
+      { name: 'Runway (Months)', current: '5.2', previous: '4.4', change: '18.2%', isPositive: true },
+    ],
+    taxCompliance: [
+      { name: 'GST Payable', current: '₹1,12,000', previous: '₹1,05,000', change: '6.7%', isPositive: false },
+      { name: 'TDS Deducted', current: '₹48,500', previous: '₹42,000', change: '15.5%', isPositive: false },
+      { name: 'Returns Filed On Time', current: '100%', previous: '96%', change: '4%', isPositive: true },
+      { name: 'Pending Filings', current: '0', previous: '2', change: '100%', isPositive: true },
+      { name: 'Statutory Compliance Score', current: '9.4/10', previous: '8.9/10', change: '5.6%', isPositive: true },
     ],
   }
   return metrics[type]

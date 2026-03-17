@@ -1,9 +1,16 @@
 import { useMemo, useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, MapPin, ExternalLink, Clock, User, MessageCircle } from 'lucide-react'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, Input, Textarea, Select } from '@/components/FormElements'
-import { properties, salesRecords, type Property, type SalesRecord, type VisitRecord } from '@/data/mockData'
+import {
+  locationHierarchy,
+  properties,
+  salesRecords,
+  type Property,
+  type SalesRecord,
+  type VisitRecord,
+} from '@/data/mockData'
 import { formatCurrency } from '@/lib/utils'
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -41,6 +48,14 @@ type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm'
 export default function PropertyDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const navigationState = location.state as
+    | {
+        path?: string[]
+        pathLabels?: string[]
+      }
+    | null
 
   const property: Property | undefined = useMemo(
     () => properties.find((p) => p.id === id),
@@ -93,7 +108,17 @@ export default function PropertyDetailsPage() {
   if (!property) {
     return (
       <div className="space-y-4">
-        <Button variant="secondary" onClick={() => navigate(-1)}>
+        <Button
+          variant="secondary"
+          onClick={() =>
+            navigate('/properties', {
+              state: {
+                path: navigationState?.path ?? derivedPathToDistrict,
+                pathLabels: navigationState?.pathLabels ?? derivedPathLabelsToDistrict,
+              },
+            })
+          }
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
@@ -105,10 +130,76 @@ export default function PropertyDetailsPage() {
   const revisitCount = visitHistory.length
   const upcomingVisit = visitHistory[visitHistory.length - 1]
 
+  const stateNode = useMemo(
+    () => locationHierarchy.find((s) => s.name === property.state),
+    [property.state]
+  )
+
+  const districtNode = useMemo(
+    () => stateNode?.children?.find((d) => d.name === property.district),
+    [stateNode, property.district]
+  )
+
+  const derivedPathToDistrict =
+    stateNode && districtNode ? [stateNode.id, districtNode.id] : undefined
+  const derivedPathLabelsToDistrict =
+    stateNode && districtNode ? [stateNode.name, districtNode.name] : undefined
+
+  const resolvedPathToDistrict = navigationState?.path?.length
+    ? navigationState.path
+    : derivedPathToDistrict
+  const resolvedPathLabelsToDistrict = navigationState?.pathLabels?.length
+    ? navigationState.pathLabels
+    : derivedPathLabelsToDistrict
+
+  const resolvedPathToState = resolvedPathToDistrict?.length
+    ? [resolvedPathToDistrict[0]]
+    : stateNode
+      ? [stateNode.id]
+      : undefined
+  const resolvedPathLabelsToState = resolvedPathLabelsToDistrict?.length
+    ? [resolvedPathLabelsToDistrict[0]]
+    : stateNode
+      ? [stateNode.name]
+      : undefined
+
   const breadcrumb = [
-    { label: 'Properties', onClick: () => navigate('/properties') },
-    { label: property.state },
-    { label: property.district },
+    {
+      label: 'Properties',
+      onClick: () =>
+        navigate('/properties', {
+          state: {
+            path: resolvedPathToDistrict,
+            pathLabels: resolvedPathLabelsToDistrict,
+          },
+        }),
+    },
+    {
+      label: property.state,
+      ...(resolvedPathToState &&
+        resolvedPathLabelsToState && {
+          onClick: () =>
+            navigate('/properties', {
+              state: {
+                path: resolvedPathToState,
+                pathLabels: resolvedPathLabelsToState,
+              },
+            }),
+        }),
+    },
+    {
+      label: property.district,
+      ...(resolvedPathToDistrict &&
+        resolvedPathLabelsToDistrict && {
+          onClick: () =>
+            navigate('/properties', {
+              state: {
+                path: resolvedPathToDistrict,
+                pathLabels: resolvedPathLabelsToDistrict,
+              },
+            }),
+        }),
+    },
     { label: property.name },
   ]
 
@@ -117,7 +208,14 @@ export default function PropertyDetailsPage() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/properties')}
+            onClick={() =>
+              navigate('/properties', {
+                state: {
+                  path: resolvedPathToDistrict,
+                  pathLabels: resolvedPathLabelsToDistrict,
+                },
+              })
+            }
             className="rounded-full bg-surface-100 p-2 text-surface-600 hover:bg-surface-200"
           >
             <ArrowLeft className="h-4 w-4" />

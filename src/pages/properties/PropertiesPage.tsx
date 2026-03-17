@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { type ColumnDef } from '@tanstack/react-table'
 import {
   Plus,
@@ -28,6 +28,7 @@ interface DeletedProperty extends Property {
 
 export default function PropertiesPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [path, setPath] = useState<string[]>([])
   const [pathLabels, setPathLabels] = useState<string[]>([])
   const [showAddModal, setShowAddModal] = useState(false)
@@ -86,8 +87,24 @@ export default function PropertiesPage() {
 
     // Purge logic for local state
     const now = new Date()
-    setDeletedProperties(prev => prev.filter(p => differenceInDays(now, parseISO(p.deletedAt)) < 30))
+    setDeletedProperties((prev) =>
+      prev.filter((p) => differenceInDays(now, parseISO(p.deletedAt)) < 30)
+    )
   }, [])
+
+  useEffect(() => {
+    const state = location.state as
+      | {
+          path?: string[]
+          pathLabels?: string[]
+        }
+      | null
+
+    if (state?.path && state.path.length > 0) {
+      setPath(state.path)
+      setPathLabels(state.pathLabels ?? [])
+    }
+  }, [location.state])
 
   const canEditOrCreate = currentRole === 'sales' || currentRole === 'crm'
 
@@ -100,7 +117,12 @@ export default function PropertiesPage() {
     {
       label: 'Properties',
       ...(path.length > 0
-        ? { onClick: () => { setPath([]); setPathLabels([]) } }
+        ? {
+            onClick: () => {
+              setPath([])
+              setPathLabels([])
+            },
+          }
         : {}),
     },
     ...pathLabels.map((label, i) => ({
@@ -293,7 +315,9 @@ export default function PropertiesPage() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => {
-                navigate(`/properties/${row.original.id}`)
+                navigate(`/properties/${row.original.id}`, {
+                  state: { path, pathLabels },
+                })
               }}
               className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600"
             >
@@ -396,7 +420,9 @@ export default function PropertiesPage() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => {
-                navigate(`/properties/${row.original.id}`)
+                navigate(`/properties/${row.original.id}`, {
+                  state: { path, pathLabels },
+                })
               }}
               className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600"
             >
