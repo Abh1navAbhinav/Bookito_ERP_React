@@ -1452,15 +1452,17 @@ export interface FinanceRecord {
   invoiceUploaded: boolean
   invoiceDate?: string
   lastPaymentDate?: string
+  executive: string
 }
 
+
 export const financeRecords: FinanceRecord[] = [
-  { id: 'f1', propertyName: 'Ocean Breeze Resort', state: 'Kerala', district: 'Kozhikode', location: 'Calicut Beach', closingAmount: 135000, pendingAmount: 0, collectedAmount: 135000, invoiceUploaded: true, invoiceDate: '2026-01-05', lastPaymentDate: '2026-01-10' },
-  { id: 'f2', propertyName: 'Kappad Heritage Inn', state: 'Kerala', district: 'Kozhikode', location: 'Kappad', closingAmount: 78000, pendingAmount: 28000, collectedAmount: 50000, invoiceUploaded: true, invoiceDate: '2026-01-15', lastPaymentDate: '2026-02-01' },
-  { id: 'f3', propertyName: 'Fort Kochi Grand Hotel', state: 'Kerala', district: 'Ernakulam', location: 'Fort Kochi', closingAmount: 220000, pendingAmount: 70000, collectedAmount: 150000, invoiceUploaded: true, invoiceDate: '2025-11-10', lastPaymentDate: '2026-01-15' },
-  { id: 'f4', propertyName: 'Kovalam Beach Resort', state: 'Kerala', district: 'Trivandrum', location: 'Kovalam', closingAmount: 185000, pendingAmount: 85000, collectedAmount: 100000, invoiceUploaded: false },
-  { id: 'f5', propertyName: 'Baga Beachfront Hotel', state: 'Goa', district: 'North Goa', location: 'Baga', closingAmount: 95000, pendingAmount: 95000, collectedAmount: 0, invoiceUploaded: false },
-  { id: 'f6', propertyName: 'Beypore Cottage Stay', state: 'Kerala', district: 'Kozhikode', location: 'Beypore', closingAmount: 30000, pendingAmount: 15000, collectedAmount: 15000, invoiceUploaded: true, invoiceDate: '2026-02-10', lastPaymentDate: '2026-02-20' },
+  { id: 'f1', propertyName: 'Ocean Breeze Resort', state: 'Kerala', district: 'Kozhikode', location: 'Calicut Beach', closingAmount: 135000, pendingAmount: 0, collectedAmount: 135000, invoiceUploaded: true, invoiceDate: '2026-01-05', lastPaymentDate: '2026-01-10', executive: 'Anil Menon' },
+  { id: 'f2', propertyName: 'Kappad Heritage Inn', state: 'Kerala', district: 'Kozhikode', location: 'Kappad', closingAmount: 78000, pendingAmount: 28000, collectedAmount: 50000, invoiceUploaded: true, invoiceDate: '2026-01-15', lastPaymentDate: '2026-02-01', executive: 'Deepa S' },
+  { id: 'f3', propertyName: 'Fort Kochi Grand Hotel', state: 'Kerala', district: 'Ernakulam', location: 'Fort Kochi', closingAmount: 220000, pendingAmount: 70000, collectedAmount: 150000, invoiceUploaded: true, invoiceDate: '2025-11-10', lastPaymentDate: '2026-01-15', executive: 'Anil Menon' },
+  { id: 'f4', propertyName: 'Kovalam Beach Resort', state: 'Kerala', district: 'Trivandrum', location: 'Kovalam', closingAmount: 185000, pendingAmount: 85000, collectedAmount: 100000, invoiceUploaded: false, executive: 'Vishal P' },
+  { id: 'f5', propertyName: 'Baga Beachfront Hotel', state: 'Goa', district: 'North Goa', location: 'Baga', closingAmount: 95000, pendingAmount: 95000, collectedAmount: 0, invoiceUploaded: false, executive: 'Deepa S' },
+  { id: 'f6', propertyName: 'Beypore Cottage Stay', state: 'Kerala', district: 'Kozhikode', location: 'Beypore', closingAmount: 30000, pendingAmount: 15000, collectedAmount: 15000, invoiceUploaded: true, invoiceDate: '2026-02-10', lastPaymentDate: '2026-02-20', executive: 'Rajan K' },
 ]
 
 export const financeStats = {
@@ -1493,6 +1495,62 @@ export const monthlyRevenueData = [
   { month: 'Jan', revenue: 890000 },
   { month: 'Feb', revenue: 620000 },
   { month: 'Mar', revenue: 950000 },
+]
+
+export interface QuotationRecord {
+  id: string
+  propertyId: string
+  propertyName: string
+  recipientName: string
+  date: string
+  roomCategory: string
+  standardPrice: number
+  sellingPrice: number
+  tenure: string
+  status: 'Draft' | 'Sent' | 'Downloaded'
+  executive: string
+}
+
+export const quotationRecords: QuotationRecord[] = [
+  { 
+    id: 'q1', 
+    propertyId: 'p1',
+    propertyName: 'Ocean Breeze Resort', 
+    recipientName: 'Abhilash Manager', 
+    date: '2026-03-10', 
+    roomCategory: '11-20 rooms', 
+    standardPrice: 35000, 
+    sellingPrice: 30000, 
+    tenure: '1 Year', 
+    status: 'Sent', 
+    executive: 'Ashmi Sajeevan K K' 
+  },
+  { 
+    id: 'q2', 
+    propertyId: 'p2',
+    propertyName: 'Kappad Heritage Inn', 
+    recipientName: 'Team Kappad', 
+    date: '2026-03-12', 
+    roomCategory: '21-30 rooms', 
+    standardPrice: 85000, 
+    sellingPrice: 78000, 
+    tenure: '6 Months', 
+    status: 'Downloaded', 
+    executive: 'Ashmi Sajeevan K K' 
+  },
+  { 
+    id: 'q3', 
+    propertyId: 'p3',
+    propertyName: 'Marine Drive Suites', 
+    recipientName: 'Vipin Das', 
+    date: '2026-03-14', 
+    roomCategory: '1-10 rooms', 
+    standardPrice: 25000, 
+    sellingPrice: 20000, 
+    tenure: '1 Year', 
+    status: 'Draft', 
+    executive: 'Ashmi Sajeevan K K' 
+  }
 ]
 
 export interface ExpenseRecord {

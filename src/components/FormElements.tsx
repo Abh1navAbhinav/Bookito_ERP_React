@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { X } from 'lucide-react'
+import { X, Search, ChevronDown, Check } from 'lucide-react'
 
 interface ModalProps {
   isOpen: boolean
@@ -45,7 +45,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
           </button>
         </div>
         {/* Body */}
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-4">{children}</div>
+        <div className="max-h-[85vh] overflow-y-auto px-6 py-4">{children}</div>
       </div>
     </div>
   )
@@ -94,15 +94,17 @@ interface SelectProps {
   onChange?: (value: string) => void
   placeholder?: string
   className?: string
+  disabled?: boolean
 }
 
-export function Select({ options, value, onChange, placeholder, className }: SelectProps) {
+export function Select({ options, value, onChange, placeholder, className, disabled }: SelectProps) {
   return (
     <select
       value={value}
       onChange={(e) => onChange?.(e.target.value)}
+      disabled={disabled}
       className={cn(
-        'w-full rounded-lg border border-surface-300 px-3 py-2 text-sm text-surface-900 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+        'w-full rounded-lg border border-surface-300 px-3 py-2 text-sm text-surface-900 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:bg-surface-50 disabled:text-surface-500 disabled:cursor-not-allowed',
         className
       )}
     >
@@ -117,6 +119,91 @@ export function Select({ options, value, onChange, placeholder, className }: Sel
         </option>
       ))}
     </select>
+  )
+}
+
+// Searchable Select
+export function SearchableSelect({ options, value, onChange, placeholder, className, disabled }: SelectProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const selectedOption = options.find(opt => opt.value === value)
+  
+  const filteredOptions = options.filter(opt => 
+    opt.label.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+        setSearchTerm('')
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className={cn('relative', className)} ref={containerRef}>
+      <div
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={cn(
+          'flex min-h-[38px] cursor-pointer items-center justify-between rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm transition-all focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20',
+          disabled && 'cursor-not-allowed bg-surface-50 text-surface-500 opacity-60',
+          isOpen && 'border-primary-500 ring-2 ring-primary-500/20'
+        )}
+      >
+        <span className={cn(!selectedOption && 'text-surface-400 truncate mr-2')}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <ChevronDown className={cn('h-4 w-4 shrink-0 text-surface-400 transition-transform', isOpen && 'rotate-180')} />
+      </div>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 z-[60] mt-1 overflow-hidden rounded-lg border border-surface-200 bg-white shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="border-b border-surface-100 p-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-surface-400" />
+              <input
+                autoFocus
+                type="text"
+                placeholder="Search..."
+                className="w-full bg-surface-50 pl-9 pr-3 py-1.5 text-sm outline-none rounded-md focus:bg-white focus:ring-1 focus:ring-primary-500/20"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="max-h-[240px] overflow-y-auto p-1">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((opt) => (
+                <div
+                  key={opt.value}
+                  onClick={() => {
+                    onChange?.(opt.value)
+                    setIsOpen(false)
+                    setSearchTerm('')
+                  }}
+                  className={cn(
+                    'flex items-center justify-between rounded-md px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-surface-50',
+                    value === opt.value && 'bg-primary-50 text-primary-700 font-medium'
+                  )}
+                >
+                  <span className="truncate mr-2">{opt.label}</span>
+                  {value === opt.value && <Check className="h-4 w-4 shrink-0" />}
+                </div>
+              ))
+            ) : (
+              <div className="px-3 py-4 text-center text-sm text-surface-400">
+                No results found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
