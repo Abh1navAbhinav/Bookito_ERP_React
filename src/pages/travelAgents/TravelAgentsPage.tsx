@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
-import { Users, Plus } from 'lucide-react'
+import { Users, Plus, RotateCcw } from 'lucide-react'
 import { DataTable } from '@/components/DataTable'
 import { Breadcrumb, type BreadcrumbItem } from '@/components/Breadcrumb'
 import { FolderNavigator } from '@/components/FolderNavigator'
@@ -11,8 +11,10 @@ import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
 export default function TravelAgentsPage() {
+  const [localAgents, setLocalAgents] = useState<TravelAgent[]>(travelAgents)
   const [path, setPath] = useState<string[]>([])
   const [pathLabels, setPathLabels] = useState<string[]>([])
+  const [tab, setTab] = useState<'active' | 'deleted'>('active')
   const [showAddModal, setShowAddModal] = useState(false)
 
   const isLeafLevel = path.length >= 3
@@ -42,16 +44,43 @@ export default function TravelAgentsPage() {
     if (node) setPathLabels([...pathLabels, node.name])
   }
 
+  const getRemainingDays = (deletedAt?: string) => {
+    if (!deletedAt) return 30
+    const diff = Date.now() - new Date(deletedAt).getTime()
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    return Math.max(0, 30 - days)
+  }
+
+  const handleDelete = (id: string) => {
+    setLocalAgents(prev => prev.map(a => 
+      a.id === id ? { ...a, isDeleted: true, deletedAt: new Date().toISOString() } : a
+    ))
+  }
+
+  const handleRestore = (id: string) => {
+    setLocalAgents(prev => prev.map(a => 
+      a.id === id ? { ...a, isDeleted: false, deletedAt: undefined } : a
+    ))
+  }
+
   const filteredAgents = useMemo(() => {
-    if (!isLeafLevel) return travelAgents
-    const [stateId, districtId, locationId] = path
-    const state = locationHierarchy.find((s) => s.id === stateId)
-    const district = state?.children?.find((d) => d.id === districtId)
-    const location = district?.children?.find((l) => l.id === locationId)
-    return travelAgents.filter(
-      (a) => a.state === state?.name && a.district === district?.name && a.location === location?.name
-    )
-  }, [isLeafLevel, path])
+    return localAgents.filter(a => {
+      // Tab filter
+      if (tab === 'active' && a.isDeleted) return false
+      if (tab === 'deleted') {
+        if (!a.isDeleted) return false
+        if (getRemainingDays(a.deletedAt) === 0) return false
+      }
+
+      if (!isLeafLevel) return true
+      const [stateId, districtId, locationId] = path
+      const state = locationHierarchy.find((s) => s.id === stateId)
+      const district = state?.children?.find((d) => d.id === districtId)
+      const location = district?.children?.find((l) => l.id === locationId)
+      
+      return a.state === state?.name && a.district === district?.name && a.location === location?.name
+    })
+  }, [isLeafLevel, path, localAgents, tab])
 
   const columns: ColumnDef<TravelAgent, any>[] = useMemo(
     () => [
@@ -85,56 +114,55 @@ export default function TravelAgentsPage() {
       },
       {
         accessorKey: 'contractType',
-        header: 'Contract',
-        cell: ({ row }) => (
-          <StatusBadge
-            label={row.original.contractType}
-            variant={getStatusVariant(row.original.contractType)}
-            dot
-          />
-        ),
-      },
-      {
-        accessorKey: 'trialRemainingDays',
-        header: 'Trial Days',
+        header: tab === 'active' ? 'Contract' : 'Auto-deletes in',
         cell: ({ row }) => {
-          if (!row.original.trialStatus) return <span className="text-surface-400">—</span>
-          const days = row.original.trialRemainingDays
+          if (tab === 'deleted') {
+            const days = getRemainingDays(row.original.deletedAt)
+            return (
+              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                {days} days
+              </span>
+            )
+          }
           return (
-            <span className={cn('font-medium', days <= 7 ? 'text-red-600' : 'text-amber-600')}>
-              {days} days left
-            </span>
+            <StatusBadge
+              label={row.original.contractType}
+              variant={getStatusVariant(row.original.contractType)}
+              dot
+            />
           )
         },
       },
       {
-        accessorKey: 'planStartDate',
-        header: 'Plan Start',
-      },
-      {
-        accessorKey: 'planEndDate',
-        header: 'Plan End',
-      },
-      {
-        accessorKey: 'collectedAmount',
-        header: 'Collected',
+        id: 'actions',
+        header: 'Actions',
         cell: ({ row }) => (
-          <span className="text-accent-600 font-medium">
-            {formatCurrency(row.original.collectedAmount)}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'pendingAmount',
-        header: 'Pending',
-        cell: ({ row }) => (
-          <span className={row.original.pendingAmount > 0 ? 'text-amber-600 font-medium' : 'text-surface-400'}>
-            {row.original.pendingAmount > 0 ? formatCurrency(row.original.pendingAmount) : '—'}
-          </span>
-        ),
-      },
+          <div className="flex items-center gap-1">
+            <button className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600">
+              <Plus className="h-4 w-4 rotate-45" />
+            </button>
+            {tab === 'active' ? (
+              <button 
+                onClick={() => handleDelete(row.original.id)}
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                title="Delete Agent"
+              >
+                <Plus className="h-4 w-4 rotate-45" />
+              </button>
+            ) : (
+              <button 
+                onClick={() => handleRestore(row.original.id)}
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-green-50 hover:text-green-600"
+                title="Restore Agent"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )
+      }
     ],
-    []
+    [tab]
   )
 
   return (
@@ -159,11 +187,36 @@ export default function TravelAgentsPage() {
           onNavigate={handleNavigate}
         />
       ) : (
-        <DataTable
-          data={filteredAgents}
-          columns={columns}
-          searchPlaceholder="Search agents..."
-        />
+        <div className="space-y-4">
+          <div className="flex rounded-lg border border-surface-200 p-0.5 w-fit">
+            <button
+              onClick={() => setTab('active')}
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                tab === 'active'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-surface-500 hover:text-surface-700'
+              }`}
+            >
+              All Agents
+            </button>
+            <button
+              onClick={() => setTab('deleted')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                tab === 'deleted'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'text-surface-500 hover:text-surface-700'
+              }`}
+            >
+              <Plus className="h-3.5 w-3.5 rotate-45" />
+              Trash
+            </button>
+          </div>
+          <DataTable
+            data={filteredAgents}
+            columns={columns}
+            searchPlaceholder="Search agents..."
+          />
+        </div>
       )}
 
       {/* If nothing in leaf, show all agents */}

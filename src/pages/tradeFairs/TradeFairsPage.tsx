@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
-import { CalendarDays, MapPin, Building2, Users } from 'lucide-react'
+import { CalendarDays, MapPin, Building2, Users, Trash2, RotateCcw } from 'lucide-react'
 import { DataTable } from '@/components/DataTable'
 import { Breadcrumb, type BreadcrumbItem } from '@/components/Breadcrumb'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
@@ -17,8 +17,42 @@ import { TradeFairCardLeadForm } from './TradeFairCardLeadForm'
 
 export default function TradeFairsPage() {
   const [selectedVenue, setSelectedVenue] = useState<TradeFairVenue | null>(null)
+  const [localProperties, setLocalProperties] = useState<TradeFairProperty[]>(tradeFairProperties)
+  const [localAgents, setLocalAgents] = useState<TradeFairAgent[]>(tradeFairAgents)
   const [activeTab, setActiveTab] = useState<'properties' | 'agents'>('properties')
   const [showCardLeadPanel, setShowCardLeadPanel] = useState(false)
+  const [trashTab, setTrashTab] = useState<'active' | 'deleted'>('active')
+
+  const getRemainingDays = (deletedAt?: string) => {
+    if (!deletedAt) return 30
+    const diff = Date.now() - new Date(deletedAt).getTime()
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    return Math.max(0, 30 - days)
+  }
+
+  const handleDeleteProperty = (id: string) => {
+    setLocalProperties(prev => prev.map(p => 
+      p.id === id ? { ...p, isDeleted: true, deletedAt: new Date().toISOString() } : p
+    ))
+  }
+
+  const handleRestoreProperty = (id: string) => {
+    setLocalProperties(prev => prev.map(p => 
+      p.id === id ? { ...p, isDeleted: false, deletedAt: undefined } : p
+    ))
+  }
+
+  const handleDeleteAgent = (id: string) => {
+    setLocalAgents(prev => prev.map(a => 
+      a.id === id ? { ...a, isDeleted: true, deletedAt: new Date().toISOString() } : a
+    ))
+  }
+
+  const handleRestoreAgent = (id: string) => {
+    setLocalAgents(prev => prev.map(a => 
+      a.id === id ? { ...a, isDeleted: false, deletedAt: undefined } : a
+    ))
+  }
 
   const breadcrumbItems: BreadcrumbItem[] = [
     {
@@ -32,21 +66,31 @@ export default function TradeFairsPage() {
       : []),
   ]
 
-  const filteredProperties = useMemo(
-    () =>
-      selectedVenue
-        ? tradeFairProperties.filter((p) => p.fairId === selectedVenue.id)
-        : [],
-    [selectedVenue]
-  )
+  const filteredProperties = useMemo(() => {
+    if (!selectedVenue) return []
+    return localProperties.filter(p => {
+      if (p.fairId !== selectedVenue.id) return false
+      if (trashTab === 'active' && p.isDeleted) return false
+      if (trashTab === 'deleted') {
+        if (!p.isDeleted) return false
+        if (getRemainingDays(p.deletedAt) === 0) return false
+      }
+      return true
+    })
+  }, [selectedVenue, localProperties, trashTab])
 
-  const filteredAgents = useMemo(
-    () =>
-      selectedVenue
-        ? tradeFairAgents.filter((a) => a.fairId === selectedVenue.id)
-        : [],
-    [selectedVenue]
-  )
+  const filteredAgents = useMemo(() => {
+    if (!selectedVenue) return []
+    return localAgents.filter(a => {
+      if (a.fairId !== selectedVenue.id) return false
+      if (trashTab === 'active' && a.isDeleted) return false
+      if (trashTab === 'deleted') {
+        if (!a.isDeleted) return false
+        if (getRemainingDays(a.deletedAt) === 0) return false
+      }
+      return true
+    })
+  }, [selectedVenue, localAgents, trashTab])
 
   const propertyColumns: ColumnDef<TradeFairProperty, any>[] = useMemo(
     () => [
@@ -69,17 +113,52 @@ export default function TradeFairsPage() {
       { accessorKey: 'location', header: 'Location' },
       {
         accessorKey: 'status',
-        header: 'Status',
-        cell: ({ row }) => (
-          <StatusBadge
-            label={row.original.status}
-            variant={getStatusVariant(row.original.status)}
-            dot
-          />
-        ),
+        header: trashTab === 'active' ? 'Status' : 'Auto-deletes in',
+        cell: ({ row }) => {
+          if (trashTab === 'deleted') {
+            const days = getRemainingDays(row.original.deletedAt)
+            return (
+              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                {days} days
+              </span>
+            )
+          }
+          return (
+            <StatusBadge
+              label={row.original.status}
+              variant={getStatusVariant(row.original.status)}
+              dot
+            />
+          )
+        },
       },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            {trashTab === 'active' ? (
+              <button 
+                onClick={() => handleDeleteProperty(row.original.id)}
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                title="Delete Property"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            ) : (
+              <button 
+                onClick={() => handleRestoreProperty(row.original.id)}
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-green-50 hover:text-green-600"
+                title="Restore Property"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )
+      }
     ],
-    []
+    [trashTab]
   )
 
   const agentColumns: ColumnDef<TradeFairAgent, any>[] = useMemo(
@@ -112,17 +191,52 @@ export default function TradeFairsPage() {
       },
       {
         accessorKey: 'status',
-        header: 'Status',
-        cell: ({ row }) => (
-          <StatusBadge
-            label={row.original.status}
-            variant={getStatusVariant(row.original.status)}
-            dot
-          />
-        ),
+        header: trashTab === 'active' ? 'Status' : 'Auto-deletes in',
+        cell: ({ row }) => {
+          if (trashTab === 'deleted') {
+            const days = getRemainingDays(row.original.deletedAt)
+            return (
+              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                {days} days
+              </span>
+            )
+          }
+          return (
+            <StatusBadge
+              label={row.original.status}
+              variant={getStatusVariant(row.original.status)}
+              dot
+            />
+          )
+        },
       },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            {trashTab === 'active' ? (
+              <button 
+                onClick={() => handleDeleteAgent(row.original.id)}
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                title="Delete Agent"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            ) : (
+              <button 
+                onClick={() => handleRestoreAgent(row.original.id)}
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-green-50 hover:text-green-600"
+                title="Restore Agent"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )
+      }
     ],
-    []
+    [trashTab]
   )
 
   return (
@@ -223,32 +337,58 @@ export default function TradeFairsPage() {
             )}
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 rounded-lg border border-surface-200 bg-surface-50 p-1">
-            <button
-              onClick={() => setActiveTab('properties')}
-              className={cn(
-                'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all',
-                activeTab === 'properties'
-                  ? 'bg-white text-primary-700 shadow-sm'
-                  : 'text-surface-500 hover:text-surface-700'
-              )}
-            >
-              <Building2 className="h-4 w-4" />
-              Properties ({filteredProperties.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('agents')}
-              className={cn(
-                'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all',
-                activeTab === 'agents'
-                  ? 'bg-white text-primary-700 shadow-sm'
-                  : 'text-surface-500 hover:text-surface-700'
-              )}
-            >
-              <Users className="h-4 w-4" />
-              Travel Agents ({filteredAgents.length})
-            </button>
+          {/* Tabs & Trash Toggle */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex gap-1 rounded-lg border border-surface-200 bg-surface-50 p-1">
+              <button
+                onClick={() => setActiveTab('properties')}
+                className={cn(
+                  'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all',
+                  activeTab === 'properties'
+                    ? 'bg-white text-primary-700 shadow-sm'
+                    : 'text-surface-500 hover:text-surface-700'
+                )}
+              >
+                <Building2 className="h-4 w-4" />
+                Properties ({filteredProperties.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('agents')}
+                className={cn(
+                  'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all',
+                  activeTab === 'agents'
+                    ? 'bg-white text-primary-700 shadow-sm'
+                    : 'text-surface-500 hover:text-surface-700'
+                )}
+              >
+                <Users className="h-4 w-4" />
+                Travel Agents ({filteredAgents.length})
+              </button>
+            </div>
+
+            <div className="flex rounded-lg border border-surface-200 p-0.5 w-fit">
+              <button
+                onClick={() => setTrashTab('active')}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  trashTab === 'active'
+                    ? 'bg-primary-600 text-white shadow-sm'
+                    : 'text-surface-500 hover:text-surface-700'
+                }`}
+              >
+                Active
+              </button>
+              <button
+                onClick={() => setTrashTab('deleted')}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  trashTab === 'deleted'
+                    ? 'bg-red-600 text-white shadow-sm'
+                    : 'text-surface-500 hover:text-surface-700'
+                }`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Trash
+              </button>
+            </div>
           </div>
 
           {/* Tab Content */}

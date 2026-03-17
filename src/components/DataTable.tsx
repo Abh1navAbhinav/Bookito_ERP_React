@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,8 +8,18 @@ import {
   flexRender,
   type ColumnDef,
   type SortingState,
+  type VisibilityState,
 } from '@tanstack/react-table'
-import { ChevronDown, ChevronUp, ChevronsUpDown, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { 
+  ChevronDown, 
+  ChevronUp, 
+  ChevronsUpDown, 
+  ChevronLeft, 
+  ChevronRight, 
+  Search,
+  Settings2,
+  Check
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface DataTableProps<T> {
@@ -29,13 +39,27 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [isColumnPickerOpen, setIsColumnPickerOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsColumnPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const table = useReactTable({
     data,
     columns,
-    state: { sorting, globalFilter },
+    state: { sorting, globalFilter, columnVisibility },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -47,15 +71,66 @@ export function DataTable<T>({
 
   return (
     <div className="space-y-3">
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
-        <input
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="w-full rounded-lg border border-surface-300 py-2 pl-9 pr-4 text-sm text-surface-900 transition-colors placeholder:text-surface-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-        />
+      {/* Header Controls */}
+      <div className="flex items-center justify-between gap-4">
+        {/* Search */}
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
+          <input
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="w-full rounded-lg border border-surface-300 py-2 pl-9 pr-4 text-sm text-surface-900 transition-colors placeholder:text-surface-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+          />
+        </div>
+
+        {/* Column Toggle */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setIsColumnPickerOpen(!isColumnPickerOpen)}
+            className={cn(
+              "flex items-center gap-2 rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm font-medium text-surface-700 transition-all hover:bg-surface-50 focus:outline-none focus:ring-2 focus:ring-primary-500/20",
+              isColumnPickerOpen && "border-primary-500 ring-2 ring-primary-500/20"
+            )}
+          >
+            <Settings2 className="h-4 w-4 text-surface-500" />
+            <span>Columns</span>
+          </button>
+
+          {isColumnPickerOpen && (
+            <div className="absolute right-0 z-[60] mt-2 w-56 overflow-hidden rounded-xl border border-surface-200 bg-white shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="border-b border-surface-100 bg-surface-50/50 px-4 py-2.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-surface-500">
+                  Toggle Columns
+                </p>
+              </div>
+              <div className="max-h-[300px] overflow-y-auto p-1.5">
+                {table
+                  .getAllLeafColumns()
+                  .filter((column) => typeof column.columnDef.header === 'string')
+                  .map((column) => {
+                    return (
+                      <div
+                        key={column.id}
+                        onClick={() => column.toggleVisibility(!column.getIsVisible())}
+                        className={cn(
+                          "flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-surface-50",
+                          column.getIsVisible() ? "text-surface-900 font-medium" : "text-surface-400"
+                        )}
+                      >
+                        <span className="truncate pr-2">
+                          {column.columnDef.header as string}
+                        </span>
+                        {column.getIsVisible() && (
+                          <Check className="h-4 w-4 shrink-0 text-primary-600" />
+                        )}
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Table */}

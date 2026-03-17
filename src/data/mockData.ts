@@ -1086,7 +1086,14 @@ export const tenureOptions = ['6 Months', '1 Year'] as const
 export const primaryContactOptions = ['HR', 'Front Office', 'Manager', 'Owner'] as const
 export const visitStatusOptions = ['Closed', 'Interested', 'Not Interested', 'Rescheduled'] as const
 
-export interface Property {
+// --- Base Interface ---
+export interface DeletableRecord {
+  isDeleted?: boolean
+  deletedAt?: string
+}
+
+// --- Properties ---
+export interface Property extends DeletableRecord {
   id: string
   slno: number
   name: string
@@ -1440,7 +1447,7 @@ export const closingVsPendingData = [
 ]
 
 // ---------- Finance ----------
-export interface FinanceRecord {
+export interface FinanceRecord extends DeletableRecord {
   id: string
   propertyName: string
   state: string
@@ -1509,6 +1516,8 @@ export interface QuotationRecord {
   tenure: string
   status: 'Draft' | 'Sent' | 'Downloaded'
   executive: string
+  isDeleted?: boolean
+  deletedAt?: string
 }
 
 export const quotationRecords: QuotationRecord[] = [
@@ -1523,7 +1532,8 @@ export const quotationRecords: QuotationRecord[] = [
     sellingPrice: 30000, 
     tenure: '1 Year', 
     status: 'Sent', 
-    executive: 'Ashmi Sajeevan K K' 
+    executive: 'Ashmi Sajeevan K K',
+    isDeleted: false
   },
   { 
     id: 'q2', 
@@ -1536,7 +1546,8 @@ export const quotationRecords: QuotationRecord[] = [
     sellingPrice: 78000, 
     tenure: '6 Months', 
     status: 'Downloaded', 
-    executive: 'Ashmi Sajeevan K K' 
+    executive: 'Ashmi Sajeevan K K',
+    isDeleted: false
   },
   { 
     id: 'q3', 
@@ -1549,11 +1560,27 @@ export const quotationRecords: QuotationRecord[] = [
     sellingPrice: 20000, 
     tenure: '1 Year', 
     status: 'Draft', 
-    executive: 'Ashmi Sajeevan K K' 
+    executive: 'Ashmi Sajeevan K K',
+    isDeleted: false
+  },
+  { 
+    id: 'q4', 
+    propertyId: 'p4',
+    propertyName: 'Kovalam Beach Resort', 
+    recipientName: 'Manager Kovalam', 
+    date: '2026-02-10', 
+    roomCategory: '11-20 rooms', 
+    standardPrice: 45000, 
+    sellingPrice: 40000, 
+    tenure: '1 Year', 
+    status: 'Downloaded', 
+    executive: 'Deepa S',
+    isDeleted: true,
+    deletedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString() // 15 days ago
   }
 ]
 
-export interface ExpenseRecord {
+export interface ExpenseRecord extends DeletableRecord {
   id: string
   category: 'Office Expenses' | 'Other Expenses' | 'Income'
   description: string
@@ -1573,7 +1600,7 @@ export const expenses: ExpenseRecord[] = [
 // ---------- Travel Agents ----------
 export type ContractType = 'Platinum' | 'Gold' | 'Silver' | 'Bronze'
 
-export interface TravelAgent {
+export interface TravelAgent extends DeletableRecord {
   id: string
   agentName: string
   contactNumber: string
@@ -1600,7 +1627,7 @@ export const travelAgents: TravelAgent[] = [
 ]
 
 // ---------- Trade Fairs ----------
-export interface TradeFairVenue {
+export interface TradeFairVenue extends DeletableRecord {
   id: string
   location: string
   city: string
@@ -1616,7 +1643,7 @@ export const tradeFairVenues: TradeFairVenue[] = [
 
 export type TradeFairStatus = 'Interested' | 'Requested Demo' | 'Connected' | 'Closed' | 'Payment Done'
 
-export interface TradeFairProperty {
+export interface TradeFairProperty extends DeletableRecord {
   id: string
   fairId: string
   propertyName: string
@@ -1635,7 +1662,7 @@ export const tradeFairProperties: TradeFairProperty[] = [
   { id: 'tfp5', fairId: 'tf3', propertyName: 'Coorg Coffee Estate Stay', contactPerson: 'Kavitha R', contactNumber: '+91 94321 44005', email: 'stay@coorgcoffee.com', location: 'Coorg', status: 'Payment Done' },
 ]
 
-export interface TradeFairAgent {
+export interface TradeFairAgent extends DeletableRecord {
   id: string
   fairId: string
   agentName: string
@@ -1664,7 +1691,7 @@ export interface VisitRecord {
   createdBy?: string
 }
 
-export interface SalesRecord {
+export interface SalesRecord extends DeletableRecord {
   id: string
   slno: number
   propertyName: string

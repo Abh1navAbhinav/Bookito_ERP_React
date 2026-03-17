@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
-import { CalendarDays, Clock } from 'lucide-react'
+import { useEffect, useState, useMemo } from 'react'
+import { CalendarDays, Clock, Users } from 'lucide-react'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, FormField, Input, Select } from '@/components/FormElements'
+import { DataTable } from '@/components/DataTable'
+import { type ColumnDef } from '@tanstack/react-table'
 
 type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
 
@@ -54,6 +56,82 @@ export default function HrAttendancePage() {
     setEntries(list)
     window.localStorage.setItem('bookito_hr_attendance', JSON.stringify(list))
   }
+
+      const columns: ColumnDef<AttendanceEntry, any>[] = useMemo(
+        () => [
+          {
+            accessorKey: 'employeeName',
+            header: 'Name',
+            cell: ({ row }) => <span className="text-surface-800">{row.original.employeeName}</span>
+          },
+          {
+            accessorKey: 'date',
+            header: 'Date',
+            cell: ({ row }) => <span className="text-xs text-surface-500">{row.original.date}</span>
+          },
+          {
+            accessorKey: 'status',
+            header: 'Status',
+            cell: ({ row }) => (
+              <span
+                className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                  row.original.status === 'present'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : row.original.status === 'absent'
+                      ? 'bg-red-50 text-red-600'
+                      : 'bg-amber-50 text-amber-700'
+                }`}
+              >
+                {row.original.status === 'present'
+                  ? 'Present'
+                  : row.original.status === 'absent'
+                    ? 'Absent'
+                    : 'On leave'}
+              </span>
+            )
+          },
+          {
+            id: 'time',
+            header: 'Time',
+            cell: ({ row }) => (
+              <div className="flex items-center gap-2 text-xs text-surface-500">
+                {row.original.checkIn && (
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    In {row.original.checkIn}
+                  </span>
+                )}
+                {row.original.checkOut && (
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Out {row.original.checkOut}
+                  </span>
+                )}
+              </div>
+            )
+          },
+        ],
+        []
+      )
+
+      if (isHr) {
+        columns.push({
+          id: 'actions',
+          header: 'Actions',
+          cell: ({ row }) => (
+            <div className="text-right">
+              <button
+                className="text-xs text-red-500 hover:text-red-600"
+                onClick={() =>
+                  saveEntries(entries.filter((e) => e.id !== row.original.id))
+                }
+              >
+                Remove
+              </button>
+            </div>
+          )
+        })
+      }
 
   return (
     <div className="space-y-6">
@@ -175,102 +253,12 @@ export default function HrAttendancePage() {
           </div>
         )}
 
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs text-surface-500">
-            <span>{entries.length} entries</span>
-          </div>
-          <div className="overflow-hidden rounded-lg border border-surface-200">
-            <table className="min-w-full divide-y divide-surface-200 text-sm">
-              <thead className="bg-surface-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-surface-500">
-                    Name
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-surface-500">
-                    Date
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-surface-500">
-                    Status
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-surface-500">
-                    Time
-                  </th>
-                  {isHr && (
-                    <th className="px-4 py-2 text-right text-xs font-medium uppercase tracking-wide text-surface-500">
-                      Actions
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-100 bg-white">
-                {entries.map((entry) => (
-                  <tr key={entry.id}>
-                    <td className="px-4 py-2 text-surface-800">
-                      {entry.employeeName}
-                    </td>
-                    <td className="px-4 py-2 text-xs text-surface-500">
-                      {entry.date}
-                    </td>
-                    <td className="px-4 py-2 text-xs">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          entry.status === 'present'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : entry.status === 'absent'
-                              ? 'bg-red-50 text-red-600'
-                              : 'bg-amber-50 text-amber-700'
-                        }`}
-                      >
-                        {entry.status === 'present'
-                          ? 'Present'
-                          : entry.status === 'absent'
-                            ? 'Absent'
-                            : 'On leave'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-xs text-surface-500">
-                      <div className="flex items-center gap-2">
-                        {entry.checkIn && (
-                          <span className="inline-flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            In {entry.checkIn}
-                          </span>
-                        )}
-                        {entry.checkOut && (
-                          <span className="inline-flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            Out {entry.checkOut}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    {isHr && (
-                      <td className="px-4 py-2 text-right text-xs">
-                        <button
-                          className="text-red-500 hover:text-red-600"
-                          onClick={() =>
-                            saveEntries(entries.filter((e) => e.id !== entry.id))
-                          }
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-                {entries.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={isHr ? 5 : 4}
-                      className="px-4 py-6 text-center text-xs text-surface-400"
-                    >
-                      No attendance entries yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-4">
+          <DataTable
+            data={entries}
+            columns={columns}
+            searchPlaceholder="Search attendance..."
+          />
         </div>
       </div>
     </div>

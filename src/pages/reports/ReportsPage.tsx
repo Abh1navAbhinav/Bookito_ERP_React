@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, Input, Select } from '@/components/FormElements'
+import { DataTable } from '@/components/DataTable'
+import { type ColumnDef } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
 
 type ReportType = 'properties' | 'sales' | 'finance' | 'travelAgents' | 'tradeFairs'
@@ -150,32 +152,36 @@ export default function ReportsPage() {
 
             {/* Sample Report Table */}
             <div className="p-5">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-surface-200">
-                  <thead className="bg-surface-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-500">Metric</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-500">This Period</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-500">Last Period</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-500">Change</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-surface-100">
-                    {getReportMetrics(selectedReport).map((metric, i) => (
-                      <tr key={i} className="hover:bg-surface-50">
-                        <td className="px-4 py-3 text-sm font-medium text-surface-900">{metric.name}</td>
-                        <td className="px-4 py-3 text-sm text-surface-700">{metric.current}</td>
-                        <td className="px-4 py-3 text-sm text-surface-500">{metric.previous}</td>
-                        <td className="px-4 py-3 text-sm">
-                          <span className={cn('font-medium', metric.isPositive ? 'text-accent-600' : 'text-red-500')}>
-                            {metric.isPositive ? '↑' : '↓'} {metric.change}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable
+                data={getReportMetrics(selectedReport)}
+                columns={[
+                  {
+                    accessorKey: 'name',
+                    header: 'Metric',
+                    cell: ({ row }) => <span className="font-medium text-surface-900">{row.original.name}</span>
+                  },
+                  {
+                    accessorKey: 'current',
+                    header: 'This Period',
+                    cell: ({ row }) => <span className="text-surface-700">{row.original.current}</span>
+                  },
+                  {
+                    accessorKey: 'previous',
+                    header: 'Last Period',
+                    cell: ({ row }) => <span className="text-surface-500">{row.original.previous}</span>
+                  },
+                  {
+                    accessorKey: 'change',
+                    header: 'Change',
+                    cell: ({ row }) => (
+                      <span className={cn('font-medium', row.original.isPositive ? 'text-accent-600' : 'text-red-500')}>
+                        {row.original.isPositive ? '↑' : '↓'} {row.original.change}
+                      </span>
+                    )
+                  },
+                ]}
+                searchPlaceholder="Search metrics..."
+              />
             </div>
           </div>
         </div>

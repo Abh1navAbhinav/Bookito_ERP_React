@@ -15,6 +15,8 @@ import {
   FileText,
   Receipt,
   Eye,
+  RotateCcw,
+  Download,
 } from 'lucide-react'
 import {
   BarChart,
@@ -63,6 +65,30 @@ export default function FinancePage() {
   const [showBillModal, setShowBillModal] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [isEditingQuotation, setIsEditingQuotation] = useState(false)
+
+  const [quotationTab, setQuotationTab] = useState<'active' | 'deleted'>('active')
+  const [paymentTab, setPaymentTab] = useState<'active' | 'deleted'>('active')
+  const [expenseTab, setExpenseTab] = useState<'active' | 'deleted'>('active')
+  const [localExpenses, setLocalExpenses] = useState<ExpenseRecord[]>(expenses)
+  const [isEditingExpense, setIsEditingExpense] = useState(false)
+  const [currentExpenseId, setCurrentExpenseId] = useState<string | null>(null)
+  
+  const [expenseData, setExpenseData] = useState({
+    category: 'Office Expenses' as any,
+    description: '',
+    amount: 0,
+    date: new Date().toISOString().split('T')[0]
+  })
+
+  const [isEditingPayment, setIsEditingPayment] = useState(false)
+  const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null)
+  const [paymentData, setPaymentData] = useState({
+    propertyName: '',
+    closingAmount: 0,
+    collectedAmount: 0,
+    lastPaymentDate: '',
+    executive: ''
+  })
   
   const quotationRef = useRef<HTMLDivElement>(null)
   
@@ -201,12 +227,130 @@ export default function FinancePage() {
     contentRef: quotationRef,
     documentTitle: `Quotation_${quotationData.propertyName.replace(/\s+/g, '_')}`,
   })
+
+  // --- Quotation Handlers ---
+  const handleDeleteQuotation = (id: string) => {
+    setLocalQuotationRecords(prev => prev.map(q => 
+      q.id === id ? { ...q, isDeleted: true, deletedAt: new Date().toISOString() } : q
+    ))
+  }
+
+  const handleRestoreQuotation = (id: string) => {
+    setLocalQuotationRecords(prev => prev.map(q => 
+      q.id === id ? { ...q, isDeleted: false, deletedAt: undefined } : q
+    ))
+  }
+
+  // --- Payment Handlers ---
+  const handleDeletePayment = (id: string) => {
+    setLocalFinanceRecords(prev => prev.map(r => 
+      r.id === id ? { ...r, isDeleted: true, deletedAt: new Date().toISOString() } : r
+    ))
+  }
+
+  const handleRestorePayment = (id: string) => {
+    setLocalFinanceRecords(prev => prev.map(r => 
+      r.id === id ? { ...r, isDeleted: false, deletedAt: undefined } : r
+    ))
+  }
+
+  const handleEditPayment = (record: FinanceRecord) => {
+    setCurrentPaymentId(record.id)
+    setPaymentData({
+      propertyName: record.propertyName,
+      closingAmount: record.closingAmount,
+      collectedAmount: record.collectedAmount,
+      lastPaymentDate: record.lastPaymentDate || '',
+      executive: record.executive
+    })
+    setIsEditingPayment(true)
+    setShowPaymentEditModal(true)
+  }
+
+  const handleSavePayment = () => {
+    setLocalFinanceRecords(prev => prev.map(r => 
+      r.id === currentPaymentId ? {
+        ...r,
+        propertyName: paymentData.propertyName,
+        closingAmount: paymentData.closingAmount,
+        collectedAmount: paymentData.collectedAmount,
+        pendingAmount: paymentData.closingAmount - paymentData.collectedAmount,
+        lastPaymentDate: paymentData.lastPaymentDate,
+        executive: paymentData.executive
+      } : r
+    ))
+    setShowPaymentEditModal(false)
+    setIsEditingPayment(false)
+    setCurrentPaymentId(null)
+  }
+
+  const handleDownloadPaymentPDF = (record: FinanceRecord) => {
+    // Mock PDF download
+    console.log('Downloading PDF for', record.propertyName)
+    alert(`Downloading Payment Receipt for ${record.propertyName}`)
+  }
+
+  // --- Expense Handlers ---
+  const handleDeleteExpense = (id: string) => {
+    setLocalExpenses(prev => prev.map(e => 
+      e.id === id ? { ...e, isDeleted: true, deletedAt: new Date().toISOString() } : e
+    ))
+  }
+
+  const handleRestoreExpense = (id: string) => {
+    setLocalExpenses(prev => prev.map(e => 
+      e.id === id ? { ...e, isDeleted: false, deletedAt: undefined } : e
+    ))
+  }
+
+  const handleEditExpense = (record: ExpenseRecord) => {
+    setCurrentExpenseId(record.id)
+    setExpenseData({
+      category: record.category,
+      description: record.description,
+      amount: record.amount,
+      date: record.date
+    })
+    setIsEditingExpense(true)
+    setShowExpenseModal(true)
+  }
+
+  const handleSaveExpense = () => {
+    if (isEditingExpense && currentExpenseId) {
+      setLocalExpenses(prev => prev.map(e => 
+        e.id === currentExpenseId ? { ...e, ...expenseData } : e
+      ))
+    } else {
+      const newExpense: ExpenseRecord = {
+        id: `e-${Date.now()}`,
+        ...expenseData
+      }
+      setLocalExpenses(prev => [newExpense, ...prev])
+    }
+    setShowExpenseModal(false)
+    setIsEditingExpense(false)
+    setCurrentExpenseId(null)
+    setExpenseData({
+      category: 'Office Expenses',
+      description: '',
+      amount: 0,
+      date: new Date().toISOString().split('T')[0]
+    })
+  }
+
+  const getRemainingDays = (deletedAt?: string) => {
+    if (!deletedAt) return 30
+    const diff = Date.now() - new Date(deletedAt).getTime()
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    return Math.max(0, 30 - days)
+  }
   
   // Filters state
   const [statusFilter, setStatusFilter] = useState<'all' | 'full' | 'partial' | 'pending'>('all')
   const [executiveFilter, setExecutiveFilter] = useState<string>('all')
   const [customFilters, setCustomFilters] = useState<{ column: string, value: string }[]>([])
   const [showAddFilterModal, setShowAddFilterModal] = useState(false)
+  const [showPaymentEditModal, setShowPaymentEditModal] = useState(false)
   const [newFilterColumn, setNewFilterColumn] = useState('')
   const [newFilterValue, setNewFilterValue] = useState('')
 
@@ -216,6 +360,13 @@ export default function FinancePage() {
 
   const filteredFinanceRecords = useMemo(() => {
     return localFinanceRecords.filter(record => {
+      // Tab filter
+      if (paymentTab === 'active' && record.isDeleted) return false
+      if (paymentTab === 'deleted') {
+        if (!record.isDeleted) return false
+        if (getRemainingDays(record.deletedAt) === 0) return false
+      }
+
       // Status filter
       if (statusFilter === 'full' && record.pendingAmount !== 0) return false
       if (statusFilter === 'partial' && !(record.collectedAmount > 0 && record.pendingAmount > 0)) return false
@@ -232,7 +383,7 @@ export default function FinancePage() {
       
       return true
     })
-  }, [localFinanceRecords, statusFilter, executiveFilter, customFilters])
+  }, [localFinanceRecords, statusFilter, executiveFilter, customFilters, paymentTab])
 
   // Quotation Filters state
   const [quotationStatusFilter, setQuotationStatusFilter] = useState<'all' | 'Draft' | 'Sent' | 'Downloaded'>('all')
@@ -248,6 +399,14 @@ export default function FinancePage() {
 
   const filteredQuotationRecords = useMemo(() => {
     return localQuotationRecords.filter(record => {
+      // Tab filter
+      if (quotationTab === 'active' && record.isDeleted) return false
+      if (quotationTab === 'deleted') {
+        if (!record.isDeleted) return false
+        // Auto-delete after 30 days logic
+        if (getRemainingDays(record.deletedAt) === 0) return false
+      }
+
       // Status filter
       if (quotationStatusFilter !== 'all' && record.status !== quotationStatusFilter) return false
       
@@ -262,7 +421,18 @@ export default function FinancePage() {
       
       return true
     })
-  }, [localQuotationRecords, quotationStatusFilter, quotationExecutiveFilter, quotationCustomFilters])
+  }, [localQuotationRecords, quotationStatusFilter, quotationExecutiveFilter, quotationCustomFilters, quotationTab])
+
+  const filteredExpenses = useMemo(() => {
+    return localExpenses.filter(e => {
+      if (expenseTab === 'active' && e.isDeleted) return false
+      if (expenseTab === 'deleted') {
+        if (!e.isDeleted) return false
+        if (getRemainingDays(e.deletedAt) === 0) return false
+      }
+      return true
+    })
+  }, [localExpenses, expenseTab])
 
   const revenueDataMap = {
     daily: { data: dailyRevenueData, key: 'day' },
@@ -332,30 +502,62 @@ export default function FinancePage() {
       },
       {
         accessorKey: 'executive',
-        header: 'Executive',
-        cell: ({ row }) => (
-          <span className="text-xs text-surface-500">{row.original.executive}</span>
-        ),
+        header: paymentTab === 'active' ? 'Executive' : 'Auto-deletes in',
+        cell: ({ row }) => {
+          if (paymentTab === 'deleted') {
+            const days = getRemainingDays(row.original.deletedAt)
+            return (
+              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                {days} days
+              </span>
+            )
+          }
+          return <span className="text-xs text-surface-500">{row.original.executive}</span>
+        },
       },
       {
         id: 'actions',
         header: 'Actions',
-        cell: () => (
+        cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            <button className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600">
-              <Edit className="h-4 w-4" />
-            </button>
-            <button className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600">
-              <Upload className="h-4 w-4" />
-            </button>
-            <button className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600">
-              <Trash2 className="h-4 w-4" />
-            </button>
+            {paymentTab === 'active' ? (
+              <>
+                <button 
+                  onClick={() => handleEditPayment(row.original)}
+                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600"
+                  title="Edit Payment"
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+                <button 
+                  onClick={() => handleDownloadPaymentPDF(row.original)}
+                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600"
+                  title="Download PDF"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+                <button 
+                  onClick={() => handleDeletePayment(row.original.id)}
+                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                  title="Delete Payment"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={() => handleRestorePayment(row.original.id)}
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-green-50 hover:text-green-600"
+                title="Restore Payment"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            )}
           </div>
         ),
       },
     ],
-    []
+    [paymentTab]
   )
   
   const quotationColumns: ColumnDef<QuotationRecord, any>[] = useMemo(
@@ -390,8 +592,16 @@ export default function FinancePage() {
       },
       {
         accessorKey: 'status',
-        header: 'Status',
+        header: quotationTab === 'active' ? 'Status' : 'Auto-deletes in',
         cell: ({ row }) => {
+          if (quotationTab === 'deleted') {
+            const days = getRemainingDays(row.original.deletedAt)
+            return (
+              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                {days} days
+              </span>
+            )
+          }
           const status = row.original.status
           const variant = status === 'Sent' ? 'success' : status === 'Downloaded' ? 'info' : 'warning'
           return <StatusBadge label={status} variant={variant} dot />
@@ -423,11 +633,28 @@ export default function FinancePage() {
             >
               <Edit className="h-4 w-4" />
             </button>
+            {quotationTab === 'active' ? (
+              <button 
+                onClick={() => handleDeleteQuotation(row.original.id)}
+                title="Delete Quotation"
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            ) : (
+              <button 
+                onClick={() => handleRestoreQuotation(row.original.id)}
+                title="Restore Quotation"
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-green-50 hover:text-green-600"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            )}
           </div>
         )
       }
     ],
-    []
+    [quotationTab]
   )
 
   const expenseColumns: ColumnDef<ExpenseRecord, any>[] = useMemo(
@@ -464,8 +691,42 @@ export default function FinancePage() {
           )
         },
       },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            {expenseTab === 'active' ? (
+              <>
+                <button 
+                  onClick={() => handleEditExpense(row.original)}
+                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600"
+                  title="Edit Expense"
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+                <button 
+                  onClick={() => handleDeleteExpense(row.original.id)}
+                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                  title="Delete Expense"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={() => handleRestoreExpense(row.original.id)}
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-green-50 hover:text-green-600"
+                title="Restore Expense"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        ),
+      },
     ],
-    []
+    [expenseTab]
   )
 
   return (
@@ -558,7 +819,32 @@ export default function FinancePage() {
       {/* Quotation Records Table */}
       <div>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold text-surface-900">Quotation Records</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold text-surface-900">Quotation Records</h2>
+            <div className="flex rounded-lg border border-surface-200 p-0.5 ml-4">
+              <button
+                onClick={() => setQuotationTab('active')}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  quotationTab === 'active'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-surface-500 hover:text-surface-700'
+                }`}
+              >
+                All Quotations
+              </button>
+              <button
+                onClick={() => setQuotationTab('deleted')}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  quotationTab === 'deleted'
+                    ? 'bg-red-600 text-white'
+                    : 'text-surface-500 hover:text-surface-700'
+                }`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Trash
+              </button>
+            </div>
+          </div>
           
           <div className="flex flex-wrap items-center gap-3">
             {/* Status Filter */}
@@ -644,7 +930,32 @@ export default function FinancePage() {
       {/* Finance Records Table */}
       <div>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold text-surface-900">Payment Records</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold text-surface-900">Payment Records</h2>
+            <div className="flex rounded-lg border border-surface-200 p-0.5 ml-4">
+              <button
+                onClick={() => setPaymentTab('active')}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  paymentTab === 'active'
+                    ? 'bg-primary-600 text-white shadow-sm'
+                    : 'text-surface-500 hover:text-surface-700'
+                }`}
+              >
+                All Payments
+              </button>
+              <button
+                onClick={() => setPaymentTab('deleted')}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  paymentTab === 'deleted'
+                    ? 'bg-red-600 text-white shadow-sm'
+                    : 'text-surface-500 hover:text-surface-700'
+                }`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Trash
+              </button>
+            </div>
+          </div>
           
           <div className="flex flex-wrap items-center gap-3">
             {/* Status Filter */}
@@ -727,26 +1038,56 @@ export default function FinancePage() {
         />
       </div>
 
-      {/* Expenses */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-surface-900">Expense Tracking</h2>
+        <div className="mb-3 flex items-center gap-4">
+          <h2 className="text-lg font-semibold text-surface-900">Expense Tracking</h2>
+          <div className="flex rounded-lg border border-surface-200 p-0.5 ml-4">
+            <button
+              onClick={() => setExpenseTab('active')}
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                expenseTab === 'active'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-surface-500 hover:text-surface-700'
+              }`}
+            >
+              All Expenses
+            </button>
+            <button
+              onClick={() => setExpenseTab('deleted')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                expenseTab === 'deleted'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'text-surface-500 hover:text-surface-700'
+              }`}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Trash
+            </button>
+          </div>
+        </div>
         <DataTable
-          data={expenses}
+          data={filteredExpenses}
           columns={expenseColumns}
           searchPlaceholder="Search expenses..."
         />
       </div>
 
-      {/* Add Expense Modal */}
+      {/* Add/Edit Expense Modal */}
       <Modal
         isOpen={showExpenseModal}
-        onClose={() => setShowExpenseModal(false)}
-        title="Add Expense"
+        onClose={() => {
+          setShowExpenseModal(false)
+          setIsEditingExpense(false)
+          setCurrentExpenseId(null)
+        }}
+        title={isEditingExpense ? "Edit Expense" : "Add Expense"}
         size="md"
       >
         <div className="space-y-4">
           <FormField label="Category">
             <Select
+              value={expenseData.category}
+              onChange={(val) => setExpenseData(prev => ({ ...prev, category: val as any }))}
               options={[
                 { label: 'Office Expenses', value: 'Office Expenses' },
                 { label: 'Other Expenses', value: 'Other Expenses' },
@@ -756,20 +1097,35 @@ export default function FinancePage() {
             />
           </FormField>
           <FormField label="Description">
-            <Input placeholder="Enter description" />
+            <Input 
+              placeholder="Enter description" 
+              value={expenseData.description}
+              onChange={(e) => setExpenseData(prev => ({ ...prev, description: e.target.value }))}
+            />
           </FormField>
           <FormField label="Amount">
-            <Input type="number" placeholder="0" />
+            <Input 
+              type="number" 
+              placeholder="0" 
+              value={expenseData.amount || ''}
+              onChange={(e) => setExpenseData(prev => ({ ...prev, amount: Number(e.target.value) }))}
+            />
           </FormField>
           <FormField label="Date">
-            <Input type="date" />
+            <Input 
+              type="date" 
+              value={expenseData.date}
+              onChange={(e) => setExpenseData(prev => ({ ...prev, date: e.target.value }))}
+            />
           </FormField>
         </div>
         <div className="mt-6 flex justify-end gap-3">
           <Button variant="secondary" onClick={() => setShowExpenseModal(false)}>
             Cancel
           </Button>
-          <Button onClick={() => setShowExpenseModal(false)}>Save Expense</Button>
+          <Button onClick={handleSaveExpense}>
+            {isEditingExpense ? "Update Expense" : "Save Expense"}
+          </Button>
         </div>
       </Modal>
 
@@ -1057,6 +1413,69 @@ export default function FinancePage() {
           </Button>
           <Button onClick={handleGenerateBill}>
             Generate Bill
+          </Button>
+        </div>
+      </Modal>
+      {/* Edit Payment Modal */}
+      <Modal
+        isOpen={showPaymentEditModal}
+        onClose={() => setShowPaymentEditModal(false)}
+        title="Edit Payment Record"
+        size="md"
+      >
+        <div className="space-y-4">
+          <FormField label="Property Name">
+            <Input 
+              value={paymentData.propertyName}
+              onChange={(e) => setPaymentData(prev => ({ ...prev, propertyName: e.target.value }))}
+            />
+          </FormField>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Closing Amount">
+              <Input 
+                type="number" 
+                value={paymentData.closingAmount}
+                onChange={(e) => setPaymentData(prev => ({ ...prev, closingAmount: Number(e.target.value) }))}
+              />
+            </FormField>
+            <FormField label="Collected Amount">
+              <Input 
+                type="number" 
+                value={paymentData.collectedAmount}
+                onChange={(e) => setPaymentData(prev => ({ ...prev, collectedAmount: Number(e.target.value) }))}
+              />
+            </FormField>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Last Payment Date">
+              <Input 
+                type="date" 
+                value={paymentData.lastPaymentDate}
+                onChange={(e) => setPaymentData(prev => ({ ...prev, lastPaymentDate: e.target.value }))}
+              />
+            </FormField>
+            <FormField label="Executive">
+              <Input 
+                value={paymentData.executive}
+                onChange={(e) => setPaymentData(prev => ({ ...prev, executive: e.target.value }))}
+              />
+            </FormField>
+          </div>
+          <div className="rounded-lg bg-orange-50 p-3 border border-orange-100">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-orange-700 font-medium">Pending Balance:</span>
+              <span className="text-orange-800 font-bold">
+                {formatCurrency(paymentData.closingAmount - paymentData.collectedAmount)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="mt-6 flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setShowPaymentEditModal(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSavePayment}>
+            Update Payment
           </Button>
         </div>
       </Modal>

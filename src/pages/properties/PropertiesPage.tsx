@@ -63,6 +63,13 @@ export default function PropertiesPage() {
     comments: '',
   })
 
+  const getRemainingDays = (deletedAt?: string) => {
+    if (!deletedAt) return 30
+    const diff = Date.now() - new Date(deletedAt).getTime()
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    return Math.max(0, 30 - days)
+  }
+
   useEffect(() => {
     // Load current demo user role
     try {
@@ -74,30 +81,12 @@ export default function PropertiesPage() {
         }
       }
     } catch {
-      // ignore parsing errors
+      // ignore
     }
 
-    // Load deleted properties and purge entries older than 30 days
-    try {
-      const rawDeleted = window.localStorage.getItem('bookito_deleted_properties')
-      if (rawDeleted) {
-        const parsed = JSON.parse(rawDeleted) as DeletedProperty[]
-        const now = new Date()
-        const fresh = parsed.filter((p) => {
-          const deletedAt = new Date(p.deletedAt)
-          return differenceInDays(now, deletedAt) < 30
-        })
-        setDeletedProperties(fresh)
-        if (fresh.length !== parsed.length) {
-          window.localStorage.setItem(
-            'bookito_deleted_properties',
-            JSON.stringify(fresh)
-          )
-        }
-      }
-    } catch {
-      // ignore parsing errors
-    }
+    // Purge logic for local state
+    const now = new Date()
+    setDeletedProperties(prev => prev.filter(p => differenceInDays(now, parseISO(p.deletedAt)) < 30))
   }, [])
 
   const canEditOrCreate = currentRole === 'sales' || currentRole === 'crm'
@@ -390,12 +379,15 @@ export default function PropertiesPage() {
       },
       {
         accessorKey: 'deletedAt',
-        header: 'Deleted On',
-        cell: ({ row }) => (
-          <span className="text-xs text-surface-500">
-            {new Date(row.original.deletedAt).toLocaleString()}
-          </span>
-        ),
+        header: 'Auto-deletes in',
+        cell: ({ row }) => {
+          const days = getRemainingDays(row.original.deletedAt)
+          return (
+            <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+              {days} days
+            </span>
+          )
+        },
       },
       {
         id: 'actions',
@@ -454,28 +446,27 @@ export default function PropertiesPage() {
         />
       ) : (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex rounded-lg border border-surface-200 p-0.5 w-fit">
             <button
-              type="button"
               onClick={() => setShowDeleted(false)}
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                 !showDeleted
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-surface-100 text-surface-600'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-surface-500 hover:text-surface-700'
               }`}
             >
-              Active properties
+              Active
             </button>
             <button
-              type="button"
               onClick={() => setShowDeleted(true)}
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                 showDeleted
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-surface-100 text-surface-600'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'text-surface-500 hover:text-surface-700'
               }`}
             >
-              Deleted properties
+              <Trash2 className="h-3.5 w-3.5" />
+              Trash
             </button>
           </div>
 
