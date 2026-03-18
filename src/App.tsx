@@ -9,7 +9,6 @@ import TravelAgentDetailsPage from './pages/travelAgents/TravelAgentDetailsPage'
 import TradeFairsPage from './pages/tradeFairs/TradeFairsPage'
 import TradeFairPropertyDetailsPage from './pages/tradeFairs/TradeFairPropertyDetailsPage'
 import TradeFairAgentDetailsPage from './pages/tradeFairs/TradeFairAgentDetailsPage'
-import SalesPage from './pages/sales/SalesPage'
 import PricingPlanPage from './pages/pricingPlan/PricingPlanPage'
 import ReportsPage from './pages/reports/ReportsPage'
 import ExecutiveDashboardPage from './pages/dashboard/ExecutiveDashboardPage'
@@ -46,7 +45,6 @@ function App() {
           <Route path="/trade-fairs" element={<TradeFairsPage />} />
           <Route path="/trade-fairs/property/:id" element={<TradeFairPropertyDetailsPage />} />
           <Route path="/trade-fairs/agent/:id" element={<TradeFairAgentDetailsPage />} />
-          <Route path="/sales" element={<SalesPage />} />
           <Route path="/pricing-plan" element={<PricingPlanPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/admin/features" element={<AdminFeaturesPage />} />
