@@ -1084,7 +1084,9 @@ export const propertyClasses = ['Luxury', 'Premium', 'Standard', 'Average'] as c
 export const roomCategories = ['1-10 rooms', '11-20 rooms', '21-30 rooms', '30+ rooms'] as const
 export const tenureOptions = ['6 Months', '1 Year'] as const
 export const primaryContactOptions = ['HR', 'Front Office', 'Manager', 'Owner'] as const
-export const visitStatusOptions = ['Closed', 'Interested', 'Not Interested', 'Rescheduled'] as const
+export const visitStatusOptions = ['Closed', 'Interested', 'Not Interested', 'Rescheduled', 'Installation Pending', 'Requested Demo'] as const
+export const firstVisitStatusOptions = ['Committed', 'Installed', 'Completed', 'Pending', 'Visit Scheduled'] as const
+export const planTypeOptions = ['6 Months', '1 Year Plan', '2 Year Plan'] as const
 
 // --- Base Interface ---
 export interface DeletableRecord {
@@ -1102,6 +1104,7 @@ export interface Property extends DeletableRecord {
   roomCategory: typeof roomCategories[number]
   numberOfRooms: number
   hasMultipleProperty: boolean
+  numberOfProperties?: number
   email: string
   proposedPrice: number
   finalCommittedPrice: number
@@ -1110,14 +1113,20 @@ export interface Property extends DeletableRecord {
   primaryContactPerson: typeof primaryContactOptions[number]
   contactPersonName: string
   contactNumber: string
+  primaryPersonPosition?: string
+  executiveName?: string
   firstVisitDate: string
   firstVisitStatus: string
+  committedProposedRate?: string
   comments: string
   rescheduledDate?: string
   rescheduledComment?: string
   secondVisitExecutive?: string
   secondVisitDate?: string
   secondVisitStatus?: typeof visitStatusOptions[number]
+  secondVisitComments?: string
+  currentlyAssignedTo?: string
+  planType?: string
   closingAmount?: number
   planStartDate: string
   planExpiryDate: string

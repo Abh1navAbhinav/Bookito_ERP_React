@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { FileText, Download, TrendingUp, Users, Calendar, DollarSign, Filter, Search } from 'lucide-react'
-import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, FormField, Input, Select } from '@/components/FormElements'
 import { 
   BarChart, 
@@ -48,9 +47,6 @@ export default function HrReportsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-surface-900">HR Reports & Analytics</h1>
-          <div className="mt-2">
-            <Breadcrumb items={[{ label: 'HR' }, { label: 'Reports' }]} />
-          </div>
         </div>
         <div className="flex items-center gap-3">
           <Button

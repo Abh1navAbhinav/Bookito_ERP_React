@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import { type ColumnDef } from '@tanstack/react-table'
 import {
@@ -32,7 +32,6 @@ import {
 import { StatsCard } from '@/components/StatsCard'
 import { ChartCard } from '@/components/ChartCard'
 import { DataTable } from '@/components/DataTable'
-import { Breadcrumb } from '@/components/Breadcrumb'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Button, Modal, FormField, Input, Select, SearchableSelect } from '@/components/FormElements'
 import { QuotationDocument } from '@/components/QuotationDocument'
@@ -52,12 +51,15 @@ import {
 } from '@/data/mockData'
 import { formatCurrency, formatNumber } from '@/lib/utils'
 
+type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
+
 type RevenueView = 'daily' | 'weekly' | 'monthly'
 
 export default function FinancePage() {
   const [localFinanceRecords, setLocalFinanceRecords] = useState<FinanceRecord[]>(financeRecords)
   const [localProperties, setLocalProperties] = useState<Property[]>(properties)
   const [localQuotationRecords, setLocalQuotationRecords] = useState<QuotationRecord[]>(quotationRecords)
+  const [currentRole, setCurrentRole] = useState<DemoRole | null>(null)
 
   const [revenueView, setRevenueView] = useState<RevenueView>('monthly')
   const [showExpenseModal, setShowExpenseModal] = useState(false)
@@ -104,6 +106,20 @@ export default function FinancePage() {
     executiveRole: '',
     executivePhone: ''
   })
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem('bookito_demo_user')
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<{ role: DemoRole }>
+        if (parsed.role) {
+          setCurrentRole(parsed.role)
+        }
+      }
+    } catch {
+      // ignore invalid storage
+    }
+  }, [])
 
   // State to track if a property is selected to handle data fetching
   const [isPropertySelected, setIsPropertySelected] = useState(false)
@@ -735,19 +751,18 @@ export default function FinancePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-surface-900">Finance</h1>
-          <div className="mt-2">
-            <Breadcrumb items={[{ label: 'Finance' }]} />
-          </div>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="secondary" onClick={() => setShowQuotationModal(true)}>
             <FileText className="h-4 w-4" />
             Create Quotation
           </Button>
-          <Button onClick={() => setShowExpenseModal(true)}>
-            <Plus className="h-4 w-4" />
-            Add Expense
-          </Button>
+          {currentRole === 'accountant' && (
+            <Button onClick={() => setShowExpenseModal(true)}>
+              <Plus className="h-4 w-4" />
+              Add Expense
+            </Button>
+          )}
         </div>
       </div>
 

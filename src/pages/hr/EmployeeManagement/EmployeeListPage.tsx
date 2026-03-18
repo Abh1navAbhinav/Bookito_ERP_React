@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Plus, Search, Filter, MoreHorizontal, Mail, Phone, MapPin, Building2, UserCircle, X, Check, Trash2, RotateCcw } from 'lucide-react'
-import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, FormField, Input, Select, Modal } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
@@ -253,9 +252,6 @@ export default function EmployeeListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-surface-900">Employees</h1>
-          <div className="mt-2">
-            <Breadcrumb items={[{ label: 'People Ops' }, { label: 'Employee Management' }]} />
-          </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex rounded-lg border border-surface-200 p-0.5 bg-surface-100/50 shadow-inner">

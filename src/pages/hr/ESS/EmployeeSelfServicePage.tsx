@@ -12,7 +12,6 @@ import {
   Clock,
   CheckCircle2,
 } from 'lucide-react'
-import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, FormField, Input, Modal } from '@/components/FormElements'
 import { cn } from '@/lib/utils'
 import { downloadCsv } from '@/lib/exportUtils'
@@ -107,9 +106,6 @@ export default function EmployeeSelfServicePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-surface-900">My Profile</h1>
-          <div className="mt-2">
-            <Breadcrumb items={[{ label: 'ESS' }, { label: 'My Dashboard' }]} />
-          </div>
         </div>
         {currentUser?.role === 'hr' && (
           <Button className="flex items-center gap-2">

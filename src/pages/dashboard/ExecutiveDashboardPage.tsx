@@ -29,7 +29,6 @@ import {
 } from 'recharts'
 import { StatsCard } from '@/components/StatsCard'
 import { ChartCard } from '@/components/ChartCard'
-import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, Modal, FormField, Input, Textarea, Select } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'

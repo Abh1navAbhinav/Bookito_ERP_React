@@ -241,12 +241,12 @@ export default function TradeFairsPage() {
 
   return (
     <div className="space-y-6">
+      <div className="mb-4">
+        <Breadcrumb items={breadcrumbItems} />
+      </div>
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-surface-900">Trade Fairs</h1>
-        <div className="mt-2">
-          <Breadcrumb items={breadcrumbItems} />
-        </div>
       </div>
 
       {!selectedVenue ? (

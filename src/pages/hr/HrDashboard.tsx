@@ -8,7 +8,6 @@ import {
   BarChart3,
   Calendar
 } from 'lucide-react'
-import { Breadcrumb } from '@/components/Breadcrumb'
 import {
   BarChart,
   Bar,
@@ -85,9 +84,6 @@ export default function HrDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-surface-900">Dashboard</h1>
-          <div className="mt-2">
-            <Breadcrumb items={[{ label: 'People Ops' }, { label: 'Dashboard' }]} />
-          </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 rounded-lg border border-surface-200 bg-white px-3 py-1.5 text-sm font-medium text-surface-600 shadow-sm">

@@ -121,22 +121,22 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
+      <div className="mb-4">
+        <Breadcrumb
+          items={[
+            {
+              label: 'Finance Reports',
+              ...(selectedReport ? { onClick: () => setSelectedReport(null) } : {}),
+            },
+            ...(selectedReport
+              ? [{ label: reportTypes.find((r) => r.id === selectedReport)!.label }]
+              : []),
+          ]}
+        />
+      </div>
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-surface-900">Finance Reports</h1>
-        <div className="mt-2">
-          <Breadcrumb
-            items={[
-              {
-                label: 'Finance Reports',
-                ...(selectedReport ? { onClick: () => setSelectedReport(null) } : {}),
-              },
-              ...(selectedReport
-                ? [{ label: reportTypes.find((r) => r.id === selectedReport)!.label }]
-                : []),
-            ]}
-          />
-        </div>
       </div>
 
       {!selectedReport ? (

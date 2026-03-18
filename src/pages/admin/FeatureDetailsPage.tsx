@@ -36,6 +36,9 @@ export default function FeatureDetailsPage() {
 
   return (
     <div className="space-y-6">
+      <div className="mb-4 text-xs text-surface-500">
+        <Breadcrumb items={breadcrumb} />
+      </div>
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <button
@@ -51,9 +54,6 @@ export default function FeatureDetailsPage() {
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-surface-900">
               {feature.name}
             </h1>
-            <div className="mt-1 text-xs text-surface-500">
-              <Breadcrumb items={breadcrumb} />
-            </div>
           </div>
         </div>
         <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-500 to-indigo-500 px-4 py-1.5 text-xs font-medium text-white shadow-md">

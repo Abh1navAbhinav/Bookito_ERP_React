@@ -1,14 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
-import { Users, Plus, RotateCcw } from 'lucide-react'
+import { Users, Plus, RotateCcw, Trash2, Eye, Edit } from 'lucide-react'
 import { DataTable } from '@/components/DataTable'
 import { Breadcrumb, type BreadcrumbItem } from '@/components/Breadcrumb'
 import { FolderNavigator } from '@/components/FolderNavigator'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
 import { Button, Modal, FormField, Input, Select } from '@/components/FormElements'
 import { locationHierarchy, travelAgents, type TravelAgent } from '@/data/mockData'
-import { formatCurrency } from '@/lib/utils'
-import { cn } from '@/lib/utils'
+
+type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm'
 
 export default function TravelAgentsPage() {
   const [localAgents, setLocalAgents] = useState<TravelAgent[]>(travelAgents)
@@ -16,8 +16,25 @@ export default function TravelAgentsPage() {
   const [pathLabels, setPathLabels] = useState<string[]>([])
   const [tab, setTab] = useState<'active' | 'deleted'>('active')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [currentRole, setCurrentRole] = useState<DemoRole | null>(null)
 
-  const isLeafLevel = path.length >= 3
+  useEffect(() => {
+    try {
+      const rawUser = window.localStorage.getItem('bookito_demo_user')
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser) as { role?: DemoRole }
+        if (parsed.role) {
+          setCurrentRole(parsed.role)
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const canEditOrCreate = currentRole === 'sales' || currentRole === 'crm'
+
+  const isLeafLevel = path.length >= 2
 
   const breadcrumbItems: BreadcrumbItem[] = [
     {
@@ -73,12 +90,11 @@ export default function TravelAgentsPage() {
       }
 
       if (!isLeafLevel) return true
-      const [stateId, districtId, locationId] = path
+      const [stateId, districtId] = path
       const state = locationHierarchy.find((s) => s.id === stateId)
       const district = state?.children?.find((d) => d.id === districtId)
-      const location = district?.children?.find((l) => l.id === locationId)
       
-      return a.state === state?.name && a.district === district?.name && a.location === location?.name
+      return a.state === state?.name && a.district === district?.name
     })
   }, [isLeafLevel, path, localAgents, tab])
 
@@ -90,7 +106,7 @@ export default function TravelAgentsPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
-              {row.original.agentName.split(' ').map((w) => w[0]).join('').slice(0, 2)}
+              {row.original.agentName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
             </div>
             <div>
               <span className="font-medium text-surface-900">{row.original.agentName}</span>
@@ -114,16 +130,8 @@ export default function TravelAgentsPage() {
       },
       {
         accessorKey: 'contractType',
-        header: tab === 'active' ? 'Contract' : 'Auto-deletes in',
+        header: 'Contract',
         cell: ({ row }) => {
-          if (tab === 'deleted') {
-            const days = getRemainingDays(row.original.deletedAt)
-            return (
-              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
-                {days} days
-              </span>
-            )
-          }
           return (
             <StatusBadge
               label={row.original.contractType}
@@ -139,20 +147,80 @@ export default function TravelAgentsPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             <button className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600">
-              <Plus className="h-4 w-4 rotate-45" />
+              <Eye className="h-4 w-4" />
             </button>
-            {tab === 'active' ? (
-              <button 
-                onClick={() => handleDelete(row.original.id)}
-                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                title="Delete Agent"
-              >
-                <Plus className="h-4 w-4 rotate-45" />
-              </button>
-            ) : (
+            {canEditOrCreate && (
+              <>
+                <button className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600">
+                  <Edit className="h-4 w-4" />
+                </button>
+                <button 
+                  onClick={() => handleDelete(row.original.id)}
+                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                  title="Delete Agent"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
+            )}
+          </div>
+        )
+      }
+    ],
+    [canEditOrCreate]
+  )
+
+  const deletedColumns: ColumnDef<TravelAgent, any>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'agentName',
+        header: 'Agent Name',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
+              {row.original.agentName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+            </div>
+            <div>
+              <span className="font-medium text-surface-900">{row.original.agentName}</span>
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'contactNumber',
+        header: 'Contact',
+      },
+      {
+        accessorKey: 'email',
+        header: 'Email',
+        cell: ({ row }) => (
+          <span className="text-surface-500">{row.original.email}</span>
+        ),
+      },
+      {
+        accessorKey: 'deletedAt',
+        header: 'Auto-deletes in',
+        cell: ({ row }) => {
+          const days = getRemainingDays(row.original.deletedAt)
+          return (
+            <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+              {days} days
+            </span>
+          )
+        },
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <button className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600">
+              <Eye className="h-4 w-4" />
+            </button>
+            {canEditOrCreate && (
               <button 
                 onClick={() => handleRestore(row.original.id)}
-                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-green-50 hover:text-green-600"
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
                 title="Restore Agent"
               >
                 <RotateCcw className="h-4 w-4" />
@@ -162,22 +230,26 @@ export default function TravelAgentsPage() {
         )
       }
     ],
-    [tab]
+    [canEditOrCreate]
   )
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="mb-4">
+        <Breadcrumb items={breadcrumbItems} />
+      </div>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-surface-900">Travel Agents</h1>
-          <div className="mt-2">
-            <Breadcrumb items={breadcrumbItems} />
-          </div>
         </div>
-        <Button onClick={() => setShowAddModal(true)}>
-          <Plus className="h-4 w-4" />
-          Add Agent
-        </Button>
+        <div className="flex flex-1 items-center justify-end gap-3 md:flex-none">
+          {isLeafLevel && canEditOrCreate && (
+            <Button onClick={() => setShowAddModal(true)}>
+              <Plus className="h-4 w-4" />
+              Add Agent
+            </Button>
+          )}
+        </div>
       </div>
 
       {!isLeafLevel ? (
@@ -197,7 +269,7 @@ export default function TravelAgentsPage() {
                   : 'text-surface-500 hover:text-surface-700'
               }`}
             >
-              All Agents
+              Active
             </button>
             <button
               onClick={() => setTab('deleted')}
@@ -207,15 +279,35 @@ export default function TravelAgentsPage() {
                   : 'text-surface-500 hover:text-surface-700'
               }`}
             >
-              <Plus className="h-3.5 w-3.5 rotate-45" />
+              <Trash2 className="h-3.5 w-3.5" />
               Trash
             </button>
           </div>
-          <DataTable
-            data={filteredAgents}
-            columns={columns}
-            searchPlaceholder="Search agents..."
-          />
+          {tab === 'active' ? (
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-surface-500">
+                {filteredAgents.length}{' '}
+                {filteredAgents.length === 1 ? 'agent' : 'agents'}
+              </p>
+              <DataTable
+                data={filteredAgents}
+                columns={columns}
+                searchPlaceholder="Search agents..."
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-surface-500">
+                {filteredAgents.length}{' '}
+                {filteredAgents.length === 1 ? 'deleted agent' : 'deleted agents'}
+              </p>
+              <DataTable
+                data={filteredAgents}
+                columns={deletedColumns}
+                searchPlaceholder="Search deleted agents..."
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -224,9 +316,11 @@ export default function TravelAgentsPage() {
         <div className="rounded-xl border border-surface-200 bg-white p-8 text-center">
           <Users className="mx-auto h-12 w-12 text-surface-300" />
           <p className="mt-3 text-sm text-surface-500">No travel agents found in this location.</p>
-          <Button className="mt-4" onClick={() => setShowAddModal(true)}>
-            <Plus className="h-4 w-4" /> Add First Agent
-          </Button>
+          {canEditOrCreate && (
+            <Button className="mt-4" onClick={() => setShowAddModal(true)}>
+              <Plus className="h-4 w-4" /> Add First Agent
+            </Button>
+          )}
         </div>
       )}
 

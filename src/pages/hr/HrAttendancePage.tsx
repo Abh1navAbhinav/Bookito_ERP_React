@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
 import { CalendarDays, Clock, Users } from 'lucide-react'
-import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, FormField, Input, Select } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
@@ -140,9 +139,6 @@ export default function HrAttendancePage() {
           <h1 className="text-2xl font-bold tracking-tight text-surface-900">
             Attendance Register
           </h1>
-          <div className="mt-2">
-            <Breadcrumb items={[{ label: 'HR' }, { label: 'Attendance' }]} />
-          </div>
         </div>
       </div>
 

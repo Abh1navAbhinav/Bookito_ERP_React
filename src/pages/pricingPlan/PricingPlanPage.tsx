@@ -1,5 +1,4 @@
 import { CreditCard, Check, Plus } from 'lucide-react'
-import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button } from '@/components/FormElements'
 import { cn } from '@/lib/utils'
 
@@ -66,9 +65,6 @@ export default function PricingPlanPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-surface-900">Pricing Plans</h1>
-        <div className="mt-2">
-          <Breadcrumb items={[{ label: 'Pricing Plan' }]} />
-        </div>
         <p className="mt-3 text-sm text-surface-500">
           Manage and update Bookito PMS subscription plans offered to properties and travel agents.
         </p>

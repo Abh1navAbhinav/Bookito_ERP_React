@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
+import { PageBreadcrumb } from '@/components/PageBreadcrumb'
 
 export function DashboardLayout() {
   const location = useLocation()
@@ -21,6 +22,7 @@ export function DashboardLayout() {
       <div className="flex flex-1 flex-col ml-[68px] overflow-x-hidden">
         <Topbar />
         <main className="flex-1 p-6 overflow-x-hidden">
+          <PageBreadcrumb />
           <Outlet />
         </main>
       </div>

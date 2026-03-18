@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Zap, Plus } from 'lucide-react'
-import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, Modal, FormField, Input, Textarea } from '@/components/FormElements'
 import { features as initialFeatures, type Feature } from '@/data/mockData'
 
@@ -40,9 +39,6 @@ export default function AdminFeaturesPage() {
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-surface-900">
             Feature Library
           </h1>
-          <div className="mt-2">
-            <Breadcrumb items={[{ label: 'PMS' }, { label: 'Feature List' }]} />
-          </div>
         </div>
         {canManage && (
           <Button
