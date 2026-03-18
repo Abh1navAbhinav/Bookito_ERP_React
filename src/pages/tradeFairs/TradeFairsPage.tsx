@@ -42,7 +42,22 @@ export default function TradeFairsPage() {
 
   const [localProperties, setLocalProperties] = useState<TradeFairProperty[]>(tradeFairProperties)
   const [localAgents, setLocalAgents] = useState<TradeFairAgent[]>(tradeFairAgents)
-  const [activeTab, setActiveTab] = useState<'properties' | 'agents'>('properties')
+  const tabParam = searchParams.get('tab') as 'properties' | 'agents' | null
+  const [activeTab, setActiveTab] = useState<'properties' | 'agents'>(tabParam || 'properties')
+
+  useEffect(() => {
+    if (tabParam && (tabParam === 'properties' || tabParam === 'agents')) {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
+
+  const handleTabChange = (tab: 'properties' | 'agents') => {
+    setActiveTab(tab)
+    if (selectedVenue) {
+      setSearchParams({ fairId: selectedVenue.id, tab })
+    }
+  }
+
   const [showCardLeadPanel, setShowCardLeadPanel] = useState(false)
   const [trashTab, setTrashTab] = useState<'active' | 'deleted'>('active')
 
@@ -392,7 +407,7 @@ export default function TradeFairsPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex gap-1 rounded-lg border border-surface-200 bg-surface-50 p-1">
               <button
-                onClick={() => setActiveTab('properties')}
+                onClick={() => handleTabChange('properties')}
                 className={cn(
                   'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all',
                   activeTab === 'properties'
@@ -404,7 +419,7 @@ export default function TradeFairsPage() {
                 Properties ({filteredProperties.length})
               </button>
               <button
-                onClick={() => setActiveTab('agents')}
+                onClick={() => handleTabChange('agents')}
                 className={cn(
                   'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all',
                   activeTab === 'agents'

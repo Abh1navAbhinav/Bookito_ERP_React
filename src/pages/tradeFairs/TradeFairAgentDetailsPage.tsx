@@ -98,7 +98,7 @@ export default function TradeFairAgentDetailsPage() {
 
   const breadcrumbItems = [
     { label: 'Trade Fairs', onClick: () => navigate('/trade-fairs') },
-    ...(fair ? [{ label: fair.venue, onClick: () => navigate(`/trade-fairs?fairId=${fair.id}`) }] : []),
+    ...(fair ? [{ label: fair.venue, onClick: () => navigate(`/trade-fairs?fairId=${fair.id}&tab=agents`) }] : []),
     { label: agent.agentName }
   ]
 
@@ -115,7 +115,7 @@ export default function TradeFairAgentDetailsPage() {
         <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-start gap-5">
             <button
-              onClick={() => navigate(`/trade-fairs?fairId=${agent.fairId}`)}
+              onClick={() => navigate(`/trade-fairs?fairId=${agent.fairId}&tab=agents`)}
               className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white transition-all hover:bg-white/20 hover:scale-105 active:scale-95"
             >
               <ArrowLeft className="h-5 w-5" />
