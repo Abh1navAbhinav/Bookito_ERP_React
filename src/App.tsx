@@ -5,7 +5,10 @@ import PropertiesPage from './pages/properties/PropertiesPage'
 import PropertyDetailsPage from './pages/properties/PropertyDetailsPage'
 import FinancePage from './pages/finance/FinancePage'
 import TravelAgentsPage from './pages/travelAgents/TravelAgentsPage'
+import TravelAgentDetailsPage from './pages/travelAgents/TravelAgentDetailsPage'
 import TradeFairsPage from './pages/tradeFairs/TradeFairsPage'
+import TradeFairPropertyDetailsPage from './pages/tradeFairs/TradeFairPropertyDetailsPage'
+import TradeFairAgentDetailsPage from './pages/tradeFairs/TradeFairAgentDetailsPage'
 import SalesPage from './pages/sales/SalesPage'
 import PricingPlanPage from './pages/pricingPlan/PricingPlanPage'
 import ReportsPage from './pages/reports/ReportsPage'
@@ -39,7 +42,10 @@ function App() {
           <Route path="/properties/:id" element={<PropertyDetailsPage />} />
           <Route path="/finance" element={<FinancePage />} />
           <Route path="/travel-agents" element={<TravelAgentsPage />} />
+          <Route path="/travel-agents/:id" element={<TravelAgentDetailsPage />} />
           <Route path="/trade-fairs" element={<TradeFairsPage />} />
+          <Route path="/trade-fairs/property/:id" element={<TradeFairPropertyDetailsPage />} />
+          <Route path="/trade-fairs/agent/:id" element={<TradeFairAgentDetailsPage />} />
           <Route path="/sales" element={<SalesPage />} />
           <Route path="/pricing-plan" element={<PricingPlanPage />} />
           <Route path="/reports" element={<ReportsPage />} />

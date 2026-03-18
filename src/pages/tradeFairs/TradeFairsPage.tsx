@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { type ColumnDef } from '@tanstack/react-table'
-import { CalendarDays, MapPin, Building2, Users, Trash2, RotateCcw } from 'lucide-react'
+import { CalendarDays, MapPin, Building2, Users, Trash2, RotateCcw, Eye } from 'lucide-react'
 import { DataTable } from '@/components/DataTable'
 import { Breadcrumb, type BreadcrumbItem } from '@/components/Breadcrumb'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
@@ -17,6 +18,28 @@ import { TradeFairCardLeadForm } from './TradeFairCardLeadForm'
 
 export default function TradeFairsPage() {
   const [selectedVenue, setSelectedVenue] = useState<TradeFairVenue | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const fairId = searchParams.get('fairId')
+
+  useEffect(() => {
+    if (fairId) {
+      const venue = tradeFairVenues.find(v => v.id === fairId)
+      if (venue) {
+        setSelectedVenue(venue)
+      }
+    } else {
+      setSelectedVenue(null)
+    }
+  }, [fairId])
+
+  const handleSetSelectedVenue = (venue: TradeFairVenue | null) => {
+    if (venue) {
+      setSearchParams({ fairId: venue.id })
+    } else {
+      setSearchParams({})
+    }
+  }
+
   const [localProperties, setLocalProperties] = useState<TradeFairProperty[]>(tradeFairProperties)
   const [localAgents, setLocalAgents] = useState<TradeFairAgent[]>(tradeFairAgents)
   const [activeTab, setActiveTab] = useState<'properties' | 'agents'>('properties')
@@ -58,7 +81,7 @@ export default function TradeFairsPage() {
     {
       label: 'Trade Fairs',
       ...(selectedVenue
-        ? { onClick: () => setSelectedVenue(null) }
+        ? { onClick: () => handleSetSelectedVenue(null) }
         : {}),
     },
     ...(selectedVenue
@@ -98,7 +121,12 @@ export default function TradeFairsPage() {
         accessorKey: 'propertyName',
         header: 'Property Name',
         cell: ({ row }) => (
-          <span className="font-medium text-surface-900">{row.original.propertyName}</span>
+          <Link 
+            to={`/trade-fairs/property/${row.original.id}`}
+            className="font-medium text-primary-600 transition-colors hover:text-primary-700 hover:underline"
+          >
+            {row.original.propertyName}
+          </Link>
         ),
       },
       { accessorKey: 'contactPerson', header: 'Contact Person' },
@@ -138,13 +166,22 @@ export default function TradeFairsPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             {trashTab === 'active' ? (
-              <button 
-                onClick={() => handleDeleteProperty(row.original.id)}
-                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                title="Delete Property"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <>
+                <Link
+                  to={`/trade-fairs/property/${row.original.id}`}
+                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-primary-50 hover:text-primary-600"
+                  title="View Details"
+                >
+                  <Eye className="h-4 w-4" />
+                </Link>
+                <button 
+                  onClick={() => handleDeleteProperty(row.original.id)}
+                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                  title="Delete Property"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
             ) : (
               <button 
                 onClick={() => handleRestoreProperty(row.original.id)}
@@ -167,7 +204,12 @@ export default function TradeFairsPage() {
         accessorKey: 'agentName',
         header: 'Agent Name',
         cell: ({ row }) => (
-          <span className="font-medium text-surface-900">{row.original.agentName}</span>
+          <Link 
+            to={`/trade-fairs/agent/${row.original.id}`}
+            className="font-medium text-primary-600 transition-colors hover:text-primary-700 hover:underline"
+          >
+            {row.original.agentName}
+          </Link>
         ),
       },
       { accessorKey: 'contactNumber', header: 'Contact Number' },
@@ -216,13 +258,22 @@ export default function TradeFairsPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             {trashTab === 'active' ? (
-              <button 
-                onClick={() => handleDeleteAgent(row.original.id)}
-                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                title="Delete Agent"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <>
+                <Link
+                  to={`/trade-fairs/agent/${row.original.id}`}
+                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-primary-50 hover:text-primary-600"
+                  title="View Details"
+                >
+                  <Eye className="h-4 w-4" />
+                </Link>
+                <button 
+                  onClick={() => handleDeleteAgent(row.original.id)}
+                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                  title="Delete Agent"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
             ) : (
               <button 
                 onClick={() => handleRestoreAgent(row.original.id)}
@@ -258,7 +309,7 @@ export default function TradeFairsPage() {
             return (
               <button
                 key={venue.id}
-                onClick={() => setSelectedVenue(venue)}
+                onClick={() => handleSetSelectedVenue(venue)}
                 className="group rounded-xl border border-surface-200 bg-white p-5 text-left transition-all duration-200 hover:border-primary-300 hover:shadow-lg"
               >
                 <div className="flex items-start justify-between">

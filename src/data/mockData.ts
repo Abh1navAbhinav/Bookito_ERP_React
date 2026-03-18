@@ -1611,6 +1611,7 @@ export type ContractType = 'Platinum' | 'Gold' | 'Silver' | 'Bronze'
 
 export interface TravelAgent extends DeletableRecord {
   id: string
+  slno: number
   agentName: string
   contactNumber: string
   email: string
@@ -1627,12 +1628,12 @@ export interface TravelAgent extends DeletableRecord {
 }
 
 export const travelAgents: TravelAgent[] = [
-  { id: 'ta1', agentName: 'Kerala Holidays Pvt Ltd', contactNumber: '+91 94567 12345', email: 'contact@keralaholidays.com', trialStatus: false, trialRemainingDays: 0, planStartDate: '2025-06-01', planEndDate: '2026-05-31', pendingAmount: 15000, collectedAmount: 85000, contractType: 'Platinum', state: 'Kerala', district: 'Kozhikode', location: 'Calicut Beach' },
-  { id: 'ta2', agentName: 'Malabar Travels', contactNumber: '+91 85678 23456', email: 'info@malabartravels.in', trialStatus: true, trialRemainingDays: 12, planStartDate: '2026-03-01', planEndDate: '2026-03-31', pendingAmount: 0, collectedAmount: 0, contractType: 'Bronze', state: 'Kerala', district: 'Kozhikode', location: 'Kappad' },
-  { id: 'ta3', agentName: 'Cochin Adventures', contactNumber: '+91 76789 34567', email: 'book@cochinadventures.com', trialStatus: false, trialRemainingDays: 0, planStartDate: '2025-09-15', planEndDate: '2026-09-14', pendingAmount: 25000, collectedAmount: 75000, contractType: 'Gold', state: 'Kerala', district: 'Ernakulam', location: 'Fort Kochi' },
-  { id: 'ta4', agentName: 'South India Tours', contactNumber: '+91 98901 45678', email: 'hello@southindiatours.com', trialStatus: true, trialRemainingDays: 5, planStartDate: '2026-02-20', planEndDate: '2026-03-20', pendingAmount: 0, collectedAmount: 0, contractType: 'Silver', state: 'Kerala', district: 'Trivandrum', location: 'Kovalam' },
-  { id: 'ta5', agentName: 'Goa Beach Holidays', contactNumber: '+91 87012 56789', email: 'info@goabeachholidays.com', trialStatus: false, trialRemainingDays: 0, planStartDate: '2025-12-01', planEndDate: '2026-11-30', pendingAmount: 30000, collectedAmount: 70000, contractType: 'Gold', state: 'Goa', district: 'North Goa', location: 'Baga' },
-  { id: 'ta6', agentName: 'KTM Holidays', contactNumber: '+91 94432 11223', email: 'ops@ktmholidays.in', trialStatus: true, trialRemainingDays: 20, planStartDate: '2026-03-10', planEndDate: '2026-04-10', pendingAmount: 0, collectedAmount: 0, contractType: 'Bronze', state: 'Kerala', district: 'Ernakulam', location: 'Marine Drive' },
+  { id: 'ta1', slno: 1, agentName: 'Kerala Holidays Pvt Ltd', contactNumber: '+91 94567 12345', email: 'contact@keralaholidays.com', trialStatus: false, trialRemainingDays: 0, planStartDate: '2025-06-01', planEndDate: '2026-05-31', pendingAmount: 15000, collectedAmount: 85000, contractType: 'Platinum', state: 'Kerala', district: 'Kozhikode', location: 'Calicut Beach' },
+  { id: 'ta2', slno: 2, agentName: 'Malabar Travels', contactNumber: '+91 85678 23456', email: 'info@malabartravels.in', trialStatus: true, trialRemainingDays: 12, planStartDate: '2026-03-01', planEndDate: '2026-03-31', pendingAmount: 0, collectedAmount: 0, contractType: 'Bronze', state: 'Kerala', district: 'Kozhikode', location: 'Kappad' },
+  { id: 'ta3', slno: 3, agentName: 'Cochin Adventures', contactNumber: '+91 76789 34567', email: 'book@cochinadventures.com', trialStatus: false, trialRemainingDays: 0, planStartDate: '2025-09-15', planEndDate: '2026-09-14', pendingAmount: 25000, collectedAmount: 75000, contractType: 'Gold', state: 'Kerala', district: 'Ernakulam', location: 'Fort Kochi' },
+  { id: 'ta4', slno: 4, agentName: 'South India Tours', contactNumber: '+91 98901 45678', email: 'hello@southindiatours.com', trialStatus: true, trialRemainingDays: 5, planStartDate: '2026-02-20', planEndDate: '2026-03-20', pendingAmount: 0, collectedAmount: 0, contractType: 'Silver', state: 'Kerala', district: 'Trivandrum', location: 'Kovalam' },
+  { id: 'ta5', slno: 5, agentName: 'Goa Beach Holidays', contactNumber: '+91 87012 56789', email: 'info@goabeachholidays.com', trialStatus: false, trialRemainingDays: 0, planStartDate: '2025-12-01', planEndDate: '2026-11-30', pendingAmount: 30000, collectedAmount: 70000, contractType: 'Gold', state: 'Goa', district: 'North Goa', location: 'Baga' },
+  { id: 'ta6', slno: 6, agentName: 'KTM Holidays', contactNumber: '+91 94432 11223', email: 'ops@ktmholidays.in', trialStatus: true, trialRemainingDays: 20, planStartDate: '2026-03-10', planEndDate: '2026-04-10', pendingAmount: 0, collectedAmount: 0, contractType: 'Bronze', state: 'Kerala', district: 'Ernakulam', location: 'Marine Drive' },
 ]
 
 // ---------- Trade Fairs ----------
