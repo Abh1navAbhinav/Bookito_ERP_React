@@ -16,6 +16,7 @@ import { Breadcrumb, type BreadcrumbItem } from '@/components/Breadcrumb'
 import { FolderNavigator } from '@/components/FolderNavigator'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
 import { Modal, FormField, Input, Select, Button, Textarea } from '@/components/FormElements'
+import { AddPropertyModal } from '@/components/modals/AddPropertyModal'
 import { locationHierarchy, properties, salesRecords, type Property, type SalesRecord, propertyTypes, propertyClasses, roomCategories, tenureOptions, primaryContactOptions, visitStatusOptions, firstVisitStatusOptions, planTypeOptions } from '@/data/mockData'
 import { formatCurrency } from '@/lib/utils'
 import { differenceInDays, parseISO } from 'date-fns'
@@ -1135,346 +1136,68 @@ export default function PropertiesPage() {
         </Modal>
       )}
 
-      {/* Add Property Modal */}
-      <Modal
+      {/* Add Property Modal (Reused) */}
+      <AddPropertyModal
         isOpen={showAddModal}
         onClose={() => {
           setShowAddModal(false)
           setCreateForm(emptyCreateForm)
         }}
-        title="Add New Property"
-        size="xl"
-      >
-        <div className="grid grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto">
-          <FormField label="Property Name">
-            <Input
-              value={createForm.name}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="Enter property name"
-            />
-          </FormField>
-          <FormField label="Property Type">
-            <Select
-              value={createForm.propertyType}
-              onChange={(value) => setCreateForm((prev) => ({ ...prev, propertyType: value }))}
-              options={propertyTypes.map((t) => ({ label: t, value: t }))}
-              placeholder="Select type"
-            />
-          </FormField>
-          <FormField label="Property Class">
-            <Select
-              value={createForm.propertyClass}
-              onChange={(value) => setCreateForm((prev) => ({ ...prev, propertyClass: value }))}
-              options={propertyClasses.map((c) => ({ label: c, value: c }))}
-              placeholder="Select class"
-            />
-          </FormField>
-          <FormField label="Room Category">
-            <Select
-              value={createForm.roomCategory}
-              onChange={(value) => setCreateForm((prev) => ({ ...prev, roomCategory: value }))}
-              options={roomCategories.map((r) => ({ label: r, value: r }))}
-              placeholder="Select category"
-            />
-          </FormField>
-          <FormField label="Number of Rooms">
-            <Input
-              type="number"
-              value={createForm.numberOfRooms}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, numberOfRooms: e.target.value }))}
-              placeholder="0"
-            />
-          </FormField>
-          <FormField label="Property Location">
-            <Input
-              value={createForm.location}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, location: e.target.value }))}
-              placeholder="e.g. Forest Side, Mountain Side"
-            />
-          </FormField>
-          <FormField label="Multiple Property">
-            <Select
-              value={createForm.hasMultipleProperty ? 'Yes' : 'No'}
-              onChange={(value) => setCreateForm((prev) => ({ ...prev, hasMultipleProperty: value === 'Yes' }))}
-              options={[{ label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' }]}
-              placeholder="Select"
-            />
-          </FormField>
-          {createForm.hasMultipleProperty && (
-            <FormField label="No. of Properties">
-              <Input
-                type="number"
-                value={createForm.numberOfProperties}
-                onChange={(e) => setCreateForm((prev) => ({ ...prev, numberOfProperties: e.target.value }))}
-                placeholder="0"
-              />
-            </FormField>
-          )}
-          <FormField label="Property Place Name">
-            <Input
-              value={createForm.place}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, place: e.target.value }))}
-              placeholder="e.g. Muthanga, Sulthan Bathery"
-            />
-          </FormField>
-          <FormField label="Property Email ID">
-            <Input
-              type="email"
-              value={createForm.email}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, email: e.target.value }))}
-              placeholder="property@email.com"
-            />
-          </FormField>
-          <FormField label="Proposed Price (INR)">
-            <Input
-              type="number"
-              value={createForm.proposedPrice}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, proposedPrice: e.target.value }))}
-              placeholder="0"
-            />
-          </FormField>
-          <FormField label="Final Committed Price (INR)">
-            <Input
-              type="number"
-              value={createForm.finalCommittedPrice}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, finalCommittedPrice: e.target.value }))}
-              placeholder="0"
-            />
-          </FormField>
-          <FormField label="Tenure / Plan Type">
-            <Select
-              value={createForm.tenure}
-              onChange={(value) => setCreateForm((prev) => ({ ...prev, tenure: value }))}
-              options={tenureOptions.map((t) => ({ label: t, value: t }))}
-              placeholder="Select tenure"
-            />
-          </FormField>
-          <FormField label="Plan Type">
-            <Select
-              value={createForm.planType}
-              onChange={(value) => setCreateForm((prev) => ({ ...prev, planType: value }))}
-              options={planTypeOptions.map((p) => ({ label: p, value: p }))}
-              placeholder="Select plan"
-            />
-          </FormField>
-          <FormField label="Primary Contact Person (Role)">
-            <Select
-              value={createForm.primaryContactPerson}
-              onChange={(value) => setCreateForm((prev) => ({ ...prev, primaryContactPerson: value }))}
-              options={primaryContactOptions.map((p) => ({ label: p, value: p }))}
-              placeholder="Select role"
-            />
-          </FormField>
-          <FormField label="Contact Person Name">
-            <Input
-              value={createForm.contactPersonName}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, contactPersonName: e.target.value }))}
-              placeholder="Enter name"
-            />
-          </FormField>
-          <FormField label="Contact Number">
-            <Input
-              value={createForm.contactNumber}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, contactNumber: e.target.value }))}
-              placeholder="+91 XXXXX XXXXX"
-            />
-          </FormField>
-          <FormField label="Primary Person Position">
-            <Input
-              value={createForm.primaryPersonPosition}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, primaryPersonPosition: e.target.value }))}
-              placeholder="e.g. Manager, Owner"
-            />
-          </FormField>
-          <FormField label="Executive Name">
-            <Input
-              value={createForm.executiveName}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, executiveName: e.target.value }))}
-              placeholder="First visit executive"
-            />
-          </FormField>
-          <FormField label="First Visit Date">
-            <Input
-              type="date"
-              value={createForm.firstVisitDate}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, firstVisitDate: e.target.value }))}
-            />
-          </FormField>
-          <FormField label="First Visit Status">
-            <Select
-              value={createForm.firstVisitStatus}
-              onChange={(value) => setCreateForm((prev) => ({ ...prev, firstVisitStatus: value }))}
-              options={firstVisitStatusOptions.map((s) => ({ label: s, value: s }))}
-              placeholder="Select status"
-            />
-          </FormField>
-          <FormField label="Committed / Proposed Rate">
-            <Input
-              value={createForm.committedProposedRate}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, committedProposedRate: e.target.value }))}
-              placeholder="e.g. 100/250"
-            />
-          </FormField>
-          <FormField label="Second Visit Executive">
-            <Input
-              value={createForm.secondVisitExecutive}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, secondVisitExecutive: e.target.value }))}
-              placeholder="Name"
-            />
-          </FormField>
-          <FormField label="Second Visit Date">
-            <Input
-              type="date"
-              value={createForm.secondVisitDate}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, secondVisitDate: e.target.value }))}
-            />
-          </FormField>
-          <FormField label="Status (Second Visit)">
-            <Select
-              value={createForm.secondVisitStatus}
-              onChange={(value) => setCreateForm((prev) => ({ ...prev, secondVisitStatus: value }))}
-              options={visitStatusOptions.map((s) => ({ label: s, value: s }))}
-              placeholder="Select status"
-            />
-          </FormField>
-          <FormField label="Second Visit Comments">
-            <Input
-              value={createForm.secondVisitComments}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, secondVisitComments: e.target.value }))}
-              placeholder="Comments"
-            />
-          </FormField>
-          <FormField label="Currently Assigned To">
-            <Input
-              value={createForm.currentlyAssignedTo}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, currentlyAssignedTo: e.target.value }))}
-              placeholder="Name or status"
-            />
-          </FormField>
-          <FormField label="Closing Amount">
-            <Input
-              type="number"
-              value={createForm.closingAmount}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, closingAmount: e.target.value }))}
-              placeholder="0"
-            />
-          </FormField>
-          <FormField label="Plan Start / Deployment Date">
-            <Input
-              type="date"
-              value={createForm.planStartDate}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, planStartDate: e.target.value }))}
-            />
-          </FormField>
-          <FormField label="Plan Expiry Date">
-            <Input
-              type="date"
-              value={createForm.planExpiryDate}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, planExpiryDate: e.target.value }))}
-            />
-          </FormField>
-          <FormField label="Location Link">
-            <Input
-              value={createForm.locationLink}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, locationLink: e.target.value }))}
-              placeholder="https://maps.google.com/..."
-            />
-          </FormField>
-          <FormField label="Currently Using Software">
-            <Input
-              value={createForm.currentPMS}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, currentPMS: e.target.value }))}
-              placeholder="e.g. NILL, eZee"
-            />
-          </FormField>
-          <FormField label="Connected OTA Platforms">
-            <Input
-              value={createForm.connectedOTAPlatforms}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, connectedOTAPlatforms: e.target.value }))}
-              placeholder="Comma-separated: GO-MMT, Booking.com, Agoda"
-            />
-          </FormField>
-          <div className="col-span-2">
-            <FormField label="Comments">
-              <Textarea
-                rows={3}
-                value={createForm.comments}
-                onChange={(e) => setCreateForm((prev) => ({ ...prev, comments: e.target.value }))}
-                placeholder="Any comments..."
-              />
-            </FormField>
-          </div>
-        </div>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setShowAddModal(false)
-              setCreateForm(emptyCreateForm)
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              if (!createForm.name?.trim()) return
-              const state = path[0] ? locationHierarchy.find((s) => s.id === path[0]) : null
-              const district = state?.children?.find((d) => d.id === path[1])
-              const stateName = state?.name ?? 'Kerala'
-              const districtName = district?.name ?? 'Wayanad'
-              const nextSlno = Math.max(0, ...propertyList.map((p) => p.slno)) + 1
-              const newId = `p-${Date.now()}`
-              const newProperty: Property = {
-                id: newId,
-                slno: nextSlno,
-                name: createForm.name.trim(),
-                propertyType: (createForm.propertyType || propertyTypes[0]) as Property['propertyType'],
-                propertyClass: (createForm.propertyClass || propertyClasses[0]) as Property['propertyClass'],
-                roomCategory: (createForm.roomCategory || roomCategories[0]) as Property['roomCategory'],
-                numberOfRooms: createForm.numberOfRooms.trim() ? Number(createForm.numberOfRooms) : 0,
-                hasMultipleProperty: createForm.hasMultipleProperty ?? false,
-                numberOfProperties: createForm.numberOfProperties.trim() ? Number(createForm.numberOfProperties) : undefined,
-                email: createForm.email?.trim() ?? '',
-                proposedPrice: createForm.proposedPrice.trim() ? Number(createForm.proposedPrice) : 0,
-                finalCommittedPrice: createForm.finalCommittedPrice.trim() ? Number(createForm.finalCommittedPrice) : 0,
-                tenure: (createForm.tenure || tenureOptions[0]) as Property['tenure'],
-                place: createForm.place?.trim() ?? '',
-                primaryContactPerson: (createForm.primaryContactPerson || primaryContactOptions[0]) as Property['primaryContactPerson'],
-                contactPersonName: createForm.contactPersonName?.trim() ?? '',
-                contactNumber: createForm.contactNumber?.trim() ?? '',
-                primaryPersonPosition: createForm.primaryPersonPosition?.trim() || undefined,
-                executiveName: createForm.executiveName?.trim() || undefined,
-                firstVisitDate: createForm.firstVisitDate?.trim() ?? '',
-                firstVisitStatus: createForm.firstVisitStatus?.trim() ?? '',
-                committedProposedRate: createForm.committedProposedRate?.trim() || undefined,
-                comments: createForm.comments?.trim() ?? '',
-                secondVisitExecutive: createForm.secondVisitExecutive?.trim() || undefined,
-                secondVisitDate: createForm.secondVisitDate?.trim() || undefined,
-                secondVisitStatus: createForm.secondVisitStatus ? (createForm.secondVisitStatus as Property['secondVisitStatus']) : undefined,
-                secondVisitComments: createForm.secondVisitComments?.trim() || undefined,
-                currentlyAssignedTo: createForm.currentlyAssignedTo?.trim() || undefined,
-                planType: createForm.planType?.trim() || undefined,
-                closingAmount: createForm.closingAmount.trim() ? Number(createForm.closingAmount) : undefined,
-                planStartDate: createForm.planStartDate?.trim() ?? '',
-                planExpiryDate: createForm.planExpiryDate?.trim() ?? '',
-                locationLink: createForm.locationLink?.trim() ?? '',
-                currentPMS: createForm.currentPMS?.trim() ?? 'None',
-                connectedOTAPlatforms: createForm.connectedOTAPlatforms.trim()
-                  ? createForm.connectedOTAPlatforms.split(',').map((s) => s.trim()).filter(Boolean)
-                  : [],
-                state: stateName,
-                district: districtName,
-                location: (createForm.location?.trim() || createForm.place?.trim()) ?? '',
-              }
-              setPropertyList((prev) => [...prev, newProperty])
-              setShowAddModal(false)
-              setCreateForm(emptyCreateForm)
-            }}
-          >
-            Save Property
-          </Button>
-        </div>
-      </Modal>
+        onSave={(createForm: any) => {
+          if (!createForm.name?.trim()) return
+          const state = path[0] ? locationHierarchy.find((s) => s.id === path[0]) : null
+          const district = state?.children?.find((d) => d.id === path[1])
+          const stateName = state?.name ?? 'Kerala'
+          const districtName = district?.name ?? 'Wayanad'
+          const nextSlno = Math.max(0, ...propertyList.map((p) => p.slno)) + 1
+          const newId = `p-${Date.now()}`
+          const newProperty: Property = {
+            id: newId,
+            slno: nextSlno,
+            name: createForm.name.trim(),
+            propertyType: (createForm.propertyType || propertyTypes[0]) as Property['propertyType'],
+            propertyClass: (createForm.propertyClass || propertyClasses[0]) as Property['propertyClass'],
+            roomCategory: (createForm.roomCategory || roomCategories[0]) as Property['roomCategory'],
+            numberOfRooms: createForm.numberOfRooms.trim() ? Number(createForm.numberOfRooms) : 0,
+            hasMultipleProperty: createForm.hasMultipleProperty ?? false,
+            numberOfProperties: createForm.numberOfProperties.trim() ? Number(createForm.numberOfProperties) : undefined,
+            email: createForm.email?.trim() ?? '',
+            proposedPrice: createForm.proposedPrice.trim() ? Number(createForm.proposedPrice) : 0,
+            finalCommittedPrice: createForm.finalCommittedPrice.trim() ? Number(createForm.finalCommittedPrice) : 0,
+            tenure: (createForm.tenure || tenureOptions[0]) as Property['tenure'],
+            place: createForm.place?.trim() ?? '',
+            primaryContactPerson: (createForm.primaryContactPerson || primaryContactOptions[0]) as Property['primaryContactPerson'],
+            contactPersonName: createForm.contactPersonName?.trim() ?? '',
+            contactNumber: createForm.contactNumber?.trim() ?? '',
+            primaryPersonPosition: createForm.primaryPersonPosition?.trim() || undefined,
+            executiveName: createForm.executiveName?.trim() || undefined,
+            firstVisitDate: createForm.firstVisitDate?.trim() ?? '',
+            firstVisitStatus: createForm.firstVisitStatus?.trim() ?? '',
+            committedProposedRate: createForm.committedProposedRate?.trim() || undefined,
+            comments: createForm.comments?.trim() ?? '',
+            secondVisitExecutive: createForm.secondVisitExecutive?.trim() || undefined,
+            secondVisitDate: createForm.secondVisitDate?.trim() || undefined,
+            secondVisitStatus: createForm.secondVisitStatus ? (createForm.secondVisitStatus as Property['secondVisitStatus']) : undefined,
+            secondVisitComments: createForm.secondVisitComments?.trim() || undefined,
+            currentlyAssignedTo: createForm.currentlyAssignedTo?.trim() || undefined,
+            planType: createForm.planType?.trim() || undefined,
+            closingAmount: createForm.closingAmount.trim() ? Number(createForm.closingAmount) : undefined,
+            planStartDate: createForm.planStartDate?.trim() ?? '',
+            planExpiryDate: createForm.planExpiryDate?.trim() ?? '',
+            locationLink: createForm.locationLink?.trim() ?? '',
+            currentPMS: createForm.currentPMS?.trim() ?? 'None',
+            connectedOTAPlatforms: createForm.connectedOTAPlatforms.trim()
+              ? createForm.connectedOTAPlatforms.split(',').map((s: string) => s.trim()).filter(Boolean)
+              : [],
+            state: stateName,
+            district: districtName,
+            location: (createForm.location?.trim() || createForm.place?.trim()) ?? '',
+          }
+          setPropertyList((prev) => [...prev, newProperty])
+          setShowAddModal(false)
+          setCreateForm(emptyCreateForm)
+        }}
+      />
     </div>
   )
 }

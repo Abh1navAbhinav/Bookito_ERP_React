@@ -6,7 +6,7 @@ import { features as initialFeatures, type Feature } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 
 type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
-type Category = 'All' | 'Product' | 'Inventory' | 'Sales' | 'Finance' | 'Analytics'
+type Category = 'All' | 'Operations' | 'Inventory' | 'Distribution' | 'Finance' | 'Security'
 
 // Enriching the initial features with some extra metadata for the new design
 export interface EnforcedFeature extends Feature {
@@ -15,12 +15,39 @@ export interface EnforcedFeature extends Feature {
   icon: any
 }
 
-const enhancedFeatures: EnforcedFeature[] = initialFeatures.map((f, i) => ({
-  ...f,
-  category: i % 2 === 0 ? 'Product' : (i % 3 === 0 ? 'Sales' : 'Inventory'),
-  status: i === 0 ? 'New' : (i === 1 ? 'Updated' : 'Stable'),
-  icon: i === 0 ? Globe : (i === 1 ? BarChart3 : (i === 2 ? Database : Layers))
-}))
+function getFeatureCategory(f: Feature): Exclude<Category, 'All'> {
+  const key = `${f.id} ${f.name}`.toLowerCase()
+  if (key.includes('ota') || key.includes('channel')) return 'Distribution'
+  if (key.includes('finance') || key.includes('account')) return 'Finance'
+  if (key.includes('role') || key.includes('access')) return 'Security'
+  if (key.includes('inventory') || key.includes('store')) return 'Inventory'
+  return 'Operations'
+}
+
+function getFeatureIcon(category: Exclude<Category, 'All'>) {
+  switch (category) {
+    case 'Distribution':
+      return Globe
+    case 'Finance':
+      return BarChart3
+    case 'Inventory':
+      return Database
+    case 'Security':
+      return UsersIcon
+    default:
+      return Layers
+  }
+}
+
+const enhancedFeatures: EnforcedFeature[] = initialFeatures.map((f, i) => {
+  const category = getFeatureCategory(f)
+  return {
+    ...f,
+    category,
+    status: i === 0 ? 'New' : (i === 1 ? 'Updated' : 'Stable'),
+    icon: getFeatureIcon(category),
+  }
+})
 
 export default function AdminFeaturesPage() {
   const navigate = useNavigate()
@@ -35,10 +62,19 @@ export default function AdminFeaturesPage() {
     const savedFeatures = localStorage.getItem('bookito_features_catalogue')
     if (savedFeatures) {
       const parsed = JSON.parse(savedFeatures)
-      const withIcons = parsed.map((f: any, i: number) => ({
-        ...f,
-        icon: i % 4 === 0 ? Globe : (i % 4 === 1 ? BarChart3 : (i % 4 === 2 ? Database : Layers))
-      }))
+      const withIcons = parsed.map((f: any, i: number) => {
+        const category =
+          typeof f?.category === 'string' && ['Operations', 'Inventory', 'Distribution', 'Finance', 'Security'].includes(f.category)
+            ? f.category
+            : getFeatureCategory(f)
+
+        return {
+          ...f,
+          category,
+          status: f?.status || (i === 0 ? 'New' : (i === 1 ? 'Updated' : 'Stable')),
+          icon: getFeatureIcon(category),
+        }
+      })
       setFeatures(withIcons)
     } else {
       setFeatures(enhancedFeatures)
@@ -64,7 +100,7 @@ export default function AdminFeaturesPage() {
     })
   }, [features, searchQuery, activeCategory])
 
-  const categories: Category[] = ['All', 'Product', 'Inventory', 'Sales', 'Finance', 'Analytics']
+  const categories: Category[] = ['All', 'Operations', 'Inventory', 'Distribution', 'Finance', 'Security']
 
   const handleSaveFeature = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -155,12 +191,12 @@ export default function AdminFeaturesPage() {
             placeholder="Search features, modules, or version updates..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-12 w-full rounded-xl border-none bg-surface-50 pl-11 pr-4 text-sm font-medium text-surface-900 ring-1 ring-surface-200 focus:bg-white focus:ring-2 focus:ring-primary-500/20"
+            className="h-11 w-full rounded-xl border-none bg-surface-50 pl-11 pr-4 text-sm font-medium text-surface-900 ring-1 ring-surface-200 focus:bg-white focus:ring-2 focus:ring-primary-500/20"
           />
         </div>
         
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
-          <div className="flex h-10 items-center justify-center rounded-xl bg-surface-50 px-3 text-surface-500 ring-1 ring-surface-200">
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 md:pb-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-50 text-surface-400 ring-1 ring-surface-200">
             <Filter className="h-4 w-4" />
           </div>
           {categories.map((cat) => (
@@ -168,9 +204,9 @@ export default function AdminFeaturesPage() {
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={cn(
-                "h-10 whitespace-nowrap rounded-xl px-4 text-sm font-semibold transition-all",
+                "flex h-10 items-center justify-center whitespace-nowrap rounded-xl px-5 text-sm font-semibold transition-all",
                 activeCategory === cat
-                  ? "bg-primary-600 text-white shadow-md shadow-primary-200"
+                  ? "bg-primary-600 text-white shadow-lg shadow-primary-200"
                   : "bg-white text-surface-600 ring-1 ring-surface-200 hover:bg-surface-50"
               )}
             >

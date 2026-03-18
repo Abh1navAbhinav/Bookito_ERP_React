@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   ArrowLeft, 
@@ -6,19 +6,34 @@ import {
   User, 
   Phone, 
   Mail, 
-  MapPin, 
+   MapPin, 
   CalendarDays,
   ExternalLink,
-  MessageSquare
+  MessageCircle,
+  Clock,
+  Send,
+  Eye
 } from 'lucide-react'
+import { Button, Textarea } from '@/components/FormElements'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
 import { 
   tradeFairProperties, 
   tradeFairVenues, 
   type TradeFairProperty,
-  type TradeFairVenue
+  type TradeFairVenue,
+  propertyTypes,
+  propertyClasses,
+  roomCategories,
+  tenureOptions,
+  primaryContactOptions,
+  firstVisitStatusOptions,
+  visitStatusOptions,
+  planTypeOptions,
+  type Property
 } from '@/data/mockData'
+import { Modal, FormField, Input, Select } from '@/components/FormElements'
+import { AddPropertyModal } from '@/components/modals/AddPropertyModal'
 
 /* --- Helper Components --- */
 function SectionCard({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) {
@@ -69,6 +84,28 @@ export default function TradeFairPropertyDetailsPage() {
   const property = useMemo(() => 
     tradeFairProperties.find(p => p.id === id),
   [id])
+
+  const [extraComments, setExtraComments] = useState<
+    { author: string; comment: string; createdAt: string }[]
+  >([])
+  const [newComment, setNewComment] = useState({
+    comment: '',
+  })
+  const [isEmailSent, setIsEmailSent] = useState(false)
+  const [emailSentDate, setEmailSentDate] = useState('')
+  const [isConverted, setIsConverted] = useState(false)
+
+  const [showMailModal, setShowMailModal] = useState(false)
+  const [showViewSentMailModal, setShowViewSentMailModal] = useState(false)
+  const [showConvertModal, setShowConvertModal] = useState(false)
+
+  const initialConvertData = useMemo(() => ({
+    name: property?.propertyName || '',
+    email: property?.email || '',
+    contactPersonName: property?.contactPerson || '',
+    contactNumber: property?.contactNumber || '',
+    location: property?.location || '',
+  }), [property])
 
   const fair = useMemo(() => 
     property ? tradeFairVenues.find(v => v.id === property.fairId) : null,
@@ -212,16 +249,51 @@ export default function TradeFairPropertyDetailsPage() {
         <div className="space-y-6">
           <div className="rounded-2xl border border-surface-200 bg-white p-6 shadow-sm">
             <h3 className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-surface-400">
-              <MessageSquare className="h-4 w-4" />
+              <MessageCircle className="h-4 w-4" />
               Quick Actions
             </h3>
             <div className="grid grid-cols-1 gap-2">
-              <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-50 px-4 py-3 text-sm font-bold text-primary-600 transition-all hover:bg-primary-100">
-                Send Welcome Email
-              </button>
-              <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-50 px-4 py-3 text-sm font-bold text-accent-600 transition-all hover:bg-accent-100">
-                Convert to Property
-              </button>
+              {isEmailSent ? (
+                <div className="space-y-2">
+                  <div className="rounded-xl bg-primary-50 px-4 py-3 border border-primary-100">
+                    <div className="flex items-center gap-2 text-primary-700 mb-1">
+                      <Mail className="h-4 w-4" />
+                      <span className="text-sm font-bold">Welcome Email Sent</span>
+                    </div>
+                    <p className="text-[10px] text-primary-600 font-medium tracking-tight">Sent on {emailSentDate}</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowViewSentMailModal(true)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary-200 bg-white px-4 py-2 text-xs font-bold text-primary-600 transition-all hover:bg-primary-50"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    View Sent Mail
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setShowMailModal(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-50 px-4 py-3 text-sm font-bold text-primary-600 transition-all hover:bg-primary-100 active:scale-95"
+                >
+                  Send Welcome Email
+                </button>
+              )}
+              
+              {isConverted ? (
+                <div className="rounded-xl bg-emerald-50 px-4 py-3 border border-emerald-100">
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <Building2 className="h-4 w-4" />
+                    <span className="text-sm font-bold">Converted to Property</span>
+                  </div>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setShowConvertModal(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-50 px-4 py-3 text-sm font-bold text-accent-600 transition-all hover:bg-accent-100 active:scale-95"
+                >
+                  Convert to Property
+                </button>
+              )}
             </div>
           </div>
 
@@ -242,8 +314,183 @@ export default function TradeFairPropertyDetailsPage() {
               </div>
             </div>
           </div>
+
+          <SectionCard title="Follow Up Comments" icon={MessageCircle}>
+            <div className="space-y-5">
+              {/* Follow-up comments list */}
+              <div className="space-y-4">
+                {extraComments.length > 0 ? (
+                  <ul className="space-y-3">
+                    {extraComments.map((c, idx) => (
+                      <li
+                        key={idx}
+                        className="rounded-xl border border-surface-100 bg-surface-50 px-4 py-3 shadow-sm transition-all hover:border-primary-100"
+                      >
+                        <div className="mb-2 flex items-center justify-between">
+                          <span className="text-xs font-bold text-surface-700 flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-primary-500" />
+                            {c.author}
+                          </span>
+                          <span className="text-[10px] font-medium text-surface-400 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {c.createdAt}
+                          </span>
+                        </div>
+                        <p className="text-sm text-surface-600 leading-relaxed italic">"{c.comment}"</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 rounded-xl border border-dashed border-surface-200 bg-surface-50/50">
+                    <MessageCircle className="h-8 w-8 text-surface-200 mb-2" />
+                    <p className="text-xs text-surface-400 font-medium italic">No follow up comments logged yet.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Add comment form */}
+              <div className="space-y-4 pt-4 border-t border-surface-100">
+                <Textarea
+                  rows={3}
+                  placeholder="Type a follow-up note..."
+                  value={newComment.comment}
+                  onChange={(e) =>
+                    setNewComment({ comment: e.target.value })
+                  }
+                  className="text-sm shadow-inner resize-none bg-surface-50/30 focus:bg-white"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (!newComment.comment.trim()) return
+                      setExtraComments((prev) => [
+                        ...prev,
+                        {
+                          author: 'Manager (Admin)',
+                          comment: newComment.comment.trim(),
+                          createdAt: new Date().toLocaleString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }),
+                        },
+                      ])
+                      setNewComment({ comment: '' })
+                    }}
+                    className="px-4 py-2 text-xs font-bold shadow-sm"
+                  >
+                    <Send className="mr-2 h-3.5 w-3.5" />
+                    Add Comment
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </SectionCard>
         </div>
       </div>
+
+      {/* Mail Template Preview Modal */}
+      <Modal
+        isOpen={showMailModal}
+        onClose={() => setShowMailModal(false)}
+        title="Welcome Email Preview"
+        size="lg"
+      >
+        <div className="space-y-6">
+          <div className="rounded-xl border border-surface-200 bg-surface-50 p-4">
+            <div className="space-y-2 text-sm">
+              <div className="flex gap-2">
+                <span className="font-bold text-surface-500 w-16">To:</span>
+                <span className="text-surface-900">{property!.email}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold text-surface-500 w-16">Subject:</span>
+                <span className="text-surface-900">Welcome to Bookito ERP – Transforming {property!.propertyName}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-surface-100 bg-white p-6 shadow-inner min-h-[300px] text-surface-700 leading-relaxed font-serif">
+            <p>Dear {property!.contactPerson},</p>
+            <br />
+            <p>It was a pleasure meeting you at <strong>{fair?.venue}</strong>. We were impressed by <strong>{property!.propertyName}</strong> and believe our ERP solution can significantly streamline your operations and maximize your revenue.</p>
+            <br />
+            <p>At Bookito, we specialize in providing all-in-one management tools tailored for properties like yours in {property!.location}.</p>
+            <br />
+            <p>We've attached our digital brochure for your review. I would love to schedule a brief 10-minute demo to show you how we can help {property!.propertyName} grow.</p>
+            <br />
+            <p>Best Regards,</p>
+            <p className="font-bold text-indigo-600">Sales Team | Bookito ERP</p>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setShowMailModal(false)}>
+              Discard
+            </Button>
+            <Button
+              onClick={() => {
+                setIsEmailSent(true)
+                setEmailSentDate(new Date().toLocaleString('en-IN', {
+                  day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                }))
+                setShowMailModal(false)
+              }}
+            >
+              <Send className="mr-2 h-4 w-4" />
+              Send Email Now
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* View Sent Mail Modal */}
+      <Modal
+        isOpen={showViewSentMailModal}
+        onClose={() => setShowViewSentMailModal(false)}
+        title="Sent Welcome Email"
+        size="lg"
+      >
+        <div className="space-y-6">
+          <div className="flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-2 border border-emerald-100 text-emerald-700 text-xs font-bold">
+            <span className="flex items-center gap-2">
+              <Mail className="h-3.5 w-3.5" />
+              Delivered Successfully
+            </span>
+            <span>{emailSentDate}</span>
+          </div>
+
+          <div className="rounded-xl border border-surface-100 bg-white p-6 shadow-inner min-h-[300px] text-surface-700 leading-relaxed font-serif relative">
+            <div className="absolute -top-3 left-6 bg-surface-50 border border-surface-200 px-2 py-0.5 rounded text-[10px] font-black uppercase text-surface-500">Sent Content</div>
+            <p>Dear {property!.contactPerson},</p>
+            <br />
+            <p>It was a pleasure meeting you at <strong>{fair?.venue}</strong>. We were impressed by <strong>{property!.propertyName}</strong> and believe our ERP solution can significantly streamline your operations and maximize your revenue.</p>
+            <br />
+            <p>At Bookito, we specialize in providing all-in-one management tools tailored for properties like yours in {property!.location}.</p>
+            <br />
+            <p>We've attached our digital brochure for your review. I would love to schedule a brief 10-minute demo to show you how we can help {property!.propertyName} grow.</p>
+            <br />
+            <p>Best Regards,</p>
+            <p className="font-bold text-indigo-600">Sales Team | Bookito ERP</p>
+          </div>
+
+          <div className="flex justify-end">
+            <Button onClick={() => setShowViewSentMailModal(false)}>Close</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Convert to Property Modal (Reused from Properties Module) */}
+      <AddPropertyModal
+        isOpen={showConvertModal}
+        onClose={() => setShowConvertModal(false)}
+        initialData={initialConvertData}
+        onSave={(data) => {
+          console.log('Converted Property Data:', data)
+          setIsConverted(true)
+        }}
+      />
     </div>
   )
 }

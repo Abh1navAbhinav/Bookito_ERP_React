@@ -1950,8 +1950,92 @@ export interface Feature {
 }
 
 export const features: Feature[] = [
-  { id: 'feat1', name: 'Channel Manager v2.5', description: 'Airbnb integration, real-time sync, bulk rate update', version: '2.5.0', date: '2026-03-10' },
-  { id: 'feat2', name: 'OTA Dashboard', description: 'Unified OTA performance dashboard with analytics', version: '2.4.0', date: '2026-02-28' },
-  { id: 'feat3', name: 'Smart Pricing', description: 'AI-powered dynamic pricing suggestions', version: '2.3.0', date: '2026-02-15' },
-  { id: 'feat4', name: 'Guest Reviews', description: 'Centralized review management across all OTAs', version: '2.2.0', date: '2026-01-30' },
+  {
+    id: 'frontdesk-reservation',
+    name: 'Front Desk & Reservation Management',
+    description:
+      'Real-time room availability (by room type and individual room), calendar-based reservation creation, reservation lifecycle (quotation → confirmed → check-in/out → cancelled), and downloadable booking confirmations/invoices.',
+    version: '1.0.0',
+    date: '2026-03-18',
+  },
+  {
+    id: 'flexible-booking-types',
+    name: 'Flexible Booking Types',
+    description:
+      'Single, group, and split-day bookings with consolidated invoicing, plus stay extension support by adding new room-type segments during the stay.',
+    version: '1.0.0',
+    date: '2026-03-18',
+  },
+  {
+    id: 'guest-management',
+    name: 'Guest Management',
+    description:
+      'Central guest profile management, guest-to-room assignment, and built-in C-Form compliance with update and resubmission support.',
+    version: '1.0.0',
+    date: '2026-03-18',
+  },
+  {
+    id: 'banquet-event-booking',
+    name: 'Banquet & Event Booking',
+    description:
+      'Independent banquet hall inventory, event date/time-slot booking, guest count and seating arrangement capture, and downloadable banquet booking confirmations.',
+    version: '1.0.0',
+    date: '2026-03-18',
+  },
+  {
+    id: 'housekeeping-operations',
+    name: 'Housekeeping Operations',
+    description:
+      'Room cleaning status tracking (Dirty/Clean/Inspected), housekeeping staff assignment, and live room status synchronization with Front Desk.',
+    version: '1.0.0',
+    date: '2026-03-18',
+  },
+  {
+    id: 'food-beverage-kot',
+    name: 'Food & Beverage (F&B) + KOT',
+    description:
+      'F&B orders for rooms and banquets, automatic Kitchen Order Ticket (KOT) generation, real-time kitchen workflow tracking, and posting F&B charges to room/banquet folios.',
+    version: '1.0.0',
+    date: '2026-03-18',
+  },
+  {
+    id: 'store-management',
+    name: 'Store Management',
+    description:
+      'Department-wise stores (housekeeping/kitchen/maintenance/operations), product & unit management, vendor and purchase tracking, stock-in from vendors with auto stock updates, issue/consumption tracking, returns, and audit trail with real-time stock balance.',
+    version: '1.0.0',
+    date: '2026-03-18',
+  },
+  {
+    id: 'inventory-management',
+    name: 'Inventory Management',
+    description:
+      'Room type configuration & mapping, individual room management with status tracking, bed/extra-bed configuration, meal plans & in-room amenities setup, daily rate configuration & promotions, and central availability calculation across reservations and maintenance.',
+    version: '1.0.0',
+    date: '2026-03-18',
+  },
+  {
+    id: 'ota-channel-management',
+    name: 'OTA & Channel Management',
+    description:
+      'OTA onboarding & configuration, room type and rate plan mapping, and real-time availability synchronization to prevent overbooking.',
+    version: '1.0.0',
+    date: '2026-03-18',
+  },
+  {
+    id: 'accounts-finance',
+    name: 'Accounts & Finance',
+    description:
+      'Cash & bank account management, Cash Book/Bank Book with default selection, automatic payment popups by payment type, and accurate ledger posting for all transactions.',
+    version: '1.0.0',
+    date: '2026-03-18',
+  },
+  {
+    id: 'role-based-access-control',
+    name: 'Role-Based Access Control',
+    description:
+      'Multi-user system with role-based permissions, module-level Add/Change/Delete controls, and immediate enforcement of access rules.',
+    version: '1.0.0',
+    date: '2026-03-18',
+  },
 ]

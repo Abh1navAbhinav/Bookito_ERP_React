@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   ArrowLeft, 
@@ -9,17 +9,23 @@ import {
   MapPin, 
   CalendarDays,
   ExternalLink,
-  MessageSquare,
-  Globe
+  MessageCircle,
+  Clock,
+  Send,
+  Globe,
+  Eye
 } from 'lucide-react'
+import { Button, Textarea, Modal, FormField, Input, Select } from '@/components/FormElements'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
 import { 
-  tradeFairAgents, 
+  tradeFairAgents,
   tradeFairVenues, 
   type TradeFairAgent,
-  type TradeFairVenue
+  type TradeFairVenue,
+  type TravelAgent
 } from '@/data/mockData'
+import { AddAgentModal } from '@/components/modals/AddAgentModal'
 
 /* --- Helper Components --- */
 function SectionCard({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) {
@@ -70,6 +76,27 @@ export default function TradeFairAgentDetailsPage() {
   const agent = useMemo(() => 
     tradeFairAgents.find(a => a.id === id),
   [id])
+
+  const [extraComments, setExtraComments] = useState<
+    { author: string; comment: string; createdAt: string }[]
+  >([])
+  const [newComment, setNewComment] = useState({
+    comment: '',
+  })
+  const [isKitSent, setIsKitSent] = useState(false)
+  const [kitSentDate, setKitSentDate] = useState('')
+  const [isOnboarded, setIsOnboarded] = useState(false)
+
+  const [showKitModal, setShowKitModal] = useState(false)
+  const [showViewSentKitModal, setShowViewSentKitModal] = useState(false)
+  const [showOnboardModal, setShowOnboardModal] = useState(false)
+
+  const initialOnboardData = useMemo(() => ({
+    agentName: agent?.agentName || '',
+    email: agent?.email || '',
+    contactNumber: agent?.contactNumber || '',
+    location: agent?.location || '',
+  }), [agent])
 
   const fair = useMemo(() => 
     agent ? tradeFairVenues.find(v => v.id === agent.fairId) : null,
@@ -226,16 +253,51 @@ export default function TradeFairAgentDetailsPage() {
           <div className="rounded-2xl border border-surface-200 bg-white p-6 shadow-sm overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-full -mr-16 -mt-16 blur-xl" />
             <h3 className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-surface-400 relative z-10">
-              <MessageSquare className="h-4 w-4 text-indigo-500" />
+              <MessageCircle className="h-4 w-4 text-indigo-500" />
               Quick Actions
             </h3>
             <div className="grid grid-cols-1 gap-2 relative z-10">
-              <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600 transition-all hover:bg-indigo-100">
-                Send Agency Kit
-              </button>
-              <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-50 px-4 py-3 text-sm font-bold text-accent-600 transition-all hover:bg-accent-100">
-                Onboard as DMC
-              </button>
+              {isKitSent ? (
+                <div className="space-y-2">
+                  <div className="rounded-xl bg-indigo-50/50 px-4 py-3 border border-indigo-100">
+                    <div className="flex items-center gap-2 text-indigo-700 mb-1">
+                      <Mail className="h-4 w-4" />
+                      <span className="text-sm font-bold">Agency Kit Sent</span>
+                    </div>
+                    <p className="text-[10px] text-indigo-600 font-medium">Sent on {kitSentDate}</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowViewSentKitModal(true)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2 text-xs font-bold text-indigo-600 transition-all hover:bg-indigo-50"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    View Sent Kit
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setShowKitModal(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600 transition-all hover:bg-indigo-100 active:scale-95"
+                >
+                  Send Agency Kit
+                </button>
+              )}
+
+              {isOnboarded ? (
+                <div className="rounded-xl bg-emerald-50 px-4 py-3 border border-emerald-100">
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <Users className="h-4 w-4" />
+                    <span className="text-sm font-bold">Onboarded as {agent?.isDMC ? 'DMC' : 'Agent'}</span>
+                  </div>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setShowOnboardModal(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-50 px-4 py-3 text-sm font-bold text-accent-600 transition-all hover:bg-accent-100 active:scale-95"
+                >
+                  {agent?.isDMC ? 'Onboard as DMC' : 'Onboard as Agent'}
+                </button>
+              )}
             </div>
           </div>
 
@@ -256,8 +318,189 @@ export default function TradeFairAgentDetailsPage() {
               </div>
             </div>
           </div>
+
+          <SectionCard title="Follow Up Comments" icon={MessageCircle}>
+            <div className="space-y-5">
+              {/* Follow-up comments list */}
+              <div className="space-y-4">
+                {extraComments.length > 0 ? (
+                  <ul className="space-y-3">
+                    {extraComments.map((c, idx) => (
+                      <li
+                        key={idx}
+                        className="rounded-xl border border-surface-100 bg-surface-50 px-4 py-3 shadow-sm transition-all hover:border-indigo-100"
+                      >
+                        <div className="mb-2 flex items-center justify-between">
+                          <span className="text-xs font-bold text-surface-700 flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                            {c.author}
+                          </span>
+                          <span className="text-[10px] font-medium text-surface-400 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {c.createdAt}
+                          </span>
+                        </div>
+                        <p className="text-sm text-surface-600 leading-relaxed italic">"{c.comment}"</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 rounded-xl border border-dashed border-surface-200 bg-surface-50/50">
+                    <MessageCircle className="h-8 w-8 text-surface-200 mb-2" />
+                    <p className="text-xs text-surface-400 font-medium italic">No follow up comments logged yet.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Add comment form */}
+              <div className="space-y-4 pt-4 border-t border-surface-100">
+                <Textarea
+                  rows={3}
+                  placeholder="Capture agent interaction..."
+                  value={newComment.comment}
+                  onChange={(e) =>
+                    setNewComment({ comment: e.target.value })
+                  }
+                  className="text-sm shadow-inner resize-none bg-surface-50/30 focus:bg-white border-none"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (!newComment.comment.trim()) return
+                      setExtraComments((prev) => [
+                        ...prev,
+                        {
+                          author: 'Manager (Admin)',
+                          comment: newComment.comment.trim(),
+                          createdAt: new Date().toLocaleString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }),
+                        },
+                      ])
+                      setNewComment({ comment: '' })
+                    }}
+                    className="px-4 py-2 text-xs font-bold shadow-sm bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    <Send className="mr-2 h-3.5 w-3.5" />
+                    Add Comment
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </SectionCard>
         </div>
       </div>
+
+      {/* Agency Kit Preview Modal */}
+      <Modal
+        isOpen={showKitModal}
+        onClose={() => setShowKitModal(false)}
+        title="Agency Kit Preview"
+        size="lg"
+      >
+        <div className="space-y-6">
+          <div className="rounded-xl border border-surface-200 bg-indigo-50/30 p-4">
+            <div className="space-y-2 text-sm">
+              <div className="flex gap-2">
+                <span className="font-bold text-surface-500 w-16">To:</span>
+                <span className="text-surface-900">{agent!.email}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold text-surface-500 w-16">Subject:</span>
+                <span className="text-surface-900">Partnership Opportunity with Bookito ERP – {agent!.agentName}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-surface-100 bg-white p-6 shadow-inner min-h-[300px] text-surface-700 leading-relaxed font-serif">
+            <p>Dear Partners at {agent!.agentName},</p>
+            <br />
+            <p>It was fantastic connecting with you at the trade fair. We've been following the great work <strong>{agent!.agentName}</strong> has been doing in the {agent!.location} market.</p>
+            <br />
+            <p>We are excited to share our exclusive <strong>Agency Kit</strong> with you, outlining how our ERP can help you manage your property portfolios more effectively and maximize commissions.</p>
+            <br />
+            <p>Our platform is designed to ease the collaboration between agents and properties, providing real-time availability and seamless booking management.</p>
+            <br />
+            <p>I've attached our agency partnership deck for your reference. Let's discuss how we can build a fruitful partnership.</p>
+            <br />
+            <p>Best Regards,</p>
+            <p className="font-bold text-indigo-600">Partnerships Team | Bookito ERP</p>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setShowKitModal(false)}>
+              Discard
+            </Button>
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700"
+              onClick={() => {
+                setIsKitSent(true)
+                setKitSentDate(new Date().toLocaleString('en-IN', {
+                  day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                }))
+                setShowKitModal(false)
+              }}
+            >
+              <Send className="mr-2 h-4 w-4" />
+              Send Agency Kit
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* View Sent Kit Modal */}
+      <Modal
+        isOpen={showViewSentKitModal}
+        onClose={() => setShowViewSentKitModal(false)}
+        title="Sent Agency Kit"
+        size="lg"
+      >
+        <div className="space-y-6">
+          <div className="flex items-center justify-between rounded-xl bg-indigo-50 px-4 py-2 border border-indigo-100 text-indigo-700 text-xs font-bold">
+            <span className="flex items-center gap-2">
+              <Mail className="h-3.5 w-3.5" />
+              Agency Kit Delivered
+            </span>
+            <span>{kitSentDate}</span>
+          </div>
+
+          <div className="rounded-xl border border-surface-100 bg-white p-6 shadow-inner min-h-[300px] text-surface-700 leading-relaxed font-serif relative">
+            <div className="absolute -top-3 left-6 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-[10px] font-black uppercase text-indigo-500">Sent Content</div>
+            <p>Dear Partners at {agent!.agentName},</p>
+            <br />
+            <p>It was fantastic connecting with you at the trade fair. We've been following the great work <strong>{agent!.agentName}</strong> has been doing in the {agent!.location} market.</p>
+            <br />
+            <p>We are excited to share our exclusive <strong>Agency Kit</strong> with you, outlining how our ERP can help you manage your property portfolios more effectively and maximize commissions.</p>
+            <br />
+            <p>Our platform is designed to ease the collaboration between agents and properties, providing real-time availability and seamless booking management.</p>
+            <br />
+            <p>I've attached our agency partnership deck for your reference. Let's discuss how we can build a fruitful partnership.</p>
+            <br />
+            <p>Best Regards,</p>
+            <p className="font-bold text-indigo-600">Partnerships Team | Bookito ERP</p>
+          </div>
+
+          <div className="flex justify-end">
+            <Button onClick={() => setShowViewSentKitModal(false)}>Close</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Onboard Agent Modal (Reused from Agents Module) */}
+      <AddAgentModal
+        isOpen={showOnboardModal}
+        onClose={() => setShowOnboardModal(false)}
+        initialData={initialOnboardData}
+        title={`Onboard ${agent!.agentName} as Agent`}
+        onSave={(data: any) => {
+          console.log('Onboarded Agent Data:', data)
+          setIsOnboarded(true)
+        }}
+      />
     </div>
   )
 }

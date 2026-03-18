@@ -8,6 +8,7 @@ import { FolderNavigator } from '@/components/FolderNavigator'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
 import { Button, Modal, FormField, Input, Select } from '@/components/FormElements'
 import { locationHierarchy, travelAgents, type TravelAgent } from '@/data/mockData'
+import { AddAgentModal } from '@/components/modals/AddAgentModal'
 
 type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm'
 
@@ -396,231 +397,77 @@ export default function TravelAgentsPage() {
         </div>
       )}
 
-      {/* Add Modal */}
-      <Modal
+      {/* Add Modal (Reused) */}
+      <AddAgentModal
         isOpen={showAddModal}
         onClose={() => {
           setShowAddModal(false)
           setCreateForm(emptyForm)
         }}
-        title="Add Travel Agent"
-        size="md"
-      >
-        <div className="space-y-4">
-          <FormField label="Agent Name">
-            <Input
-              value={createForm.agentName}
-              onChange={(e) => setCreateForm((p) => ({ ...p, agentName: e.target.value }))}
-              placeholder="Enter agency name"
-            />
-          </FormField>
-          <FormField label="Contact Number">
-            <Input
-              value={createForm.contactNumber}
-              onChange={(e) => setCreateForm((p) => ({ ...p, contactNumber: e.target.value }))}
-              placeholder="+91 XXXXX XXXXX"
-            />
-          </FormField>
-          <FormField label="Email">
-            <Input
-              type="email"
-              value={createForm.email}
-              onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))}
-              placeholder="agent@email.com"
-            />
-          </FormField>
-          <FormField label="Location">
-            <Input
-              value={createForm.location}
-              onChange={(e) => setCreateForm((p) => ({ ...p, location: e.target.value }))}
-              placeholder="e.g. Chelode, Wayanad"
-            />
-          </FormField>
-          <FormField label="Contract Type">
-            <Select
-              value={createForm.contractType}
-              onChange={(value) =>
-                setCreateForm((p) => ({ ...p, contractType: value as TravelAgent['contractType'] }))
-              }
-              options={[
-                { label: 'Platinum', value: 'Platinum' },
-                { label: 'Gold', value: 'Gold' },
-                { label: 'Silver', value: 'Silver' },
-                { label: 'Bronze', value: 'Bronze' },
-              ]}
-              placeholder="Select contract"
-            />
-          </FormField>
-          <FormField label="Plan Start Date">
-            <Input
-              type="date"
-              value={createForm.planStartDate}
-              onChange={(e) => setCreateForm((p) => ({ ...p, planStartDate: e.target.value }))}
-            />
-          </FormField>
-          <FormField label="Plan End Date">
-            <Input
-              type="date"
-              value={createForm.planEndDate}
-              onChange={(e) => setCreateForm((p) => ({ ...p, planEndDate: e.target.value }))}
-            />
-          </FormField>
-        </div>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setShowAddModal(false)
-              setCreateForm(emptyForm)
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              if (!createForm.agentName.trim()) return
-              const [stateId, districtId] = path
-              const state = locationHierarchy.find((s) => s.id === stateId)
-              const district = state?.children?.find((d) => d.id === districtId)
-              const stateName = state?.name ?? 'Kerala'
-              const districtName = district?.name ?? 'Wayanad'
+        onSave={(data: any) => {
+          if (!data.agentName.trim()) return
+          const [stateId, districtId] = path
+          const state = locationHierarchy.find((s) => s.id === stateId)
+          const district = state?.children?.find((d) => d.id === districtId)
+          const stateName = state?.name ?? 'Kerala'
+          const districtName = district?.name ?? 'Wayanad'
 
-              const nextSlno = Math.max(0, ...localAgents.map((a) => a.slno ?? 0)) + 1
-              const newAgent: TravelAgent = {
-                id: `ta-${Date.now()}`,
-                slno: nextSlno,
-                agentName: createForm.agentName.trim(),
-                email: createForm.email.trim(),
-                contactNumber: createForm.contactNumber.trim(),
-                location: createForm.location.trim(),
-                contractType: createForm.contractType,
-                planStartDate: createForm.planStartDate,
-                planEndDate: createForm.planEndDate,
-                trialStatus: false,
-                trialRemainingDays: 0,
-                pendingAmount: 0,
-                collectedAmount: 0,
-                state: stateName,
-                district: districtName,
-              }
-              setLocalAgents((prev) => [...prev, newAgent])
-              setShowAddModal(false)
-              setCreateForm(emptyForm)
-            }}
-          >
-            Save Agent
-          </Button>
-        </div>
-      </Modal>
+          const nextSlno = Math.max(0, ...localAgents.map((a) => a.slno ?? 0)) + 1
+          const newAgent: TravelAgent = {
+            id: `ta-${Date.now()}`,
+            slno: nextSlno,
+            agentName: data.agentName.trim(),
+            email: data.email.trim(),
+            contactNumber: data.contactNumber.trim(),
+            location: data.location.trim(),
+            contractType: data.contractType,
+            planStartDate: data.planStartDate,
+            planEndDate: data.planEndDate,
+            trialStatus: false,
+            trialRemainingDays: 0,
+            pendingAmount: 0,
+            collectedAmount: 0,
+            state: stateName,
+            district: districtName,
+          }
+          setLocalAgents((prev) => [...prev, newAgent])
+          setShowAddModal(false)
+          setCreateForm(emptyForm)
+        }}
+      />
 
-      {/* Edit Modal */}
+      {/* Edit Modal (Reused) */}
       {editingAgent && (
-        <Modal
+        <AddAgentModal
           isOpen={showEditModal}
           onClose={() => {
             setShowEditModal(false)
             setEditingAgent(null)
           }}
           title={`Edit ${editingAgent.agentName}`}
-          size="md"
-        >
-          <div className="space-y-4">
-            <FormField label="Agent Name">
-              <Input
-                value={editForm.agentName}
-                onChange={(e) => setEditForm((p) => ({ ...p, agentName: e.target.value }))}
-                placeholder="Enter agency name"
-              />
-            </FormField>
-            <FormField label="Contact Number">
-              <Input
-                value={editForm.contactNumber}
-                onChange={(e) => setEditForm((p) => ({ ...p, contactNumber: e.target.value }))}
-                placeholder="+91 XXXXX XXXXX"
-              />
-            </FormField>
-            <FormField label="Email">
-              <Input
-                type="email"
-                value={editForm.email}
-                onChange={(e) => setEditForm((p) => ({ ...p, email: e.target.value }))}
-                placeholder="agent@email.com"
-              />
-            </FormField>
-            <FormField label="Location">
-              <Input
-                value={editForm.location}
-                onChange={(e) => setEditForm((p) => ({ ...p, location: e.target.value }))}
-                placeholder="e.g. Chelode, Wayanad"
-              />
-            </FormField>
-            <FormField label="Contract Type">
-              <Select
-                value={editForm.contractType}
-                onChange={(value) =>
-                  setEditForm((p) => ({ ...p, contractType: value as TravelAgent['contractType'] }))
-                }
-                options={[
-                  { label: 'Platinum', value: 'Platinum' },
-                  { label: 'Gold', value: 'Gold' },
-                  { label: 'Silver', value: 'Silver' },
-                  { label: 'Bronze', value: 'Bronze' },
-                ]}
-                placeholder="Select contract"
-              />
-            </FormField>
-            <FormField label="Plan Start Date">
-              <Input
-                type="date"
-                value={editForm.planStartDate}
-                onChange={(e) => setEditForm((p) => ({ ...p, planStartDate: e.target.value }))}
-              />
-            </FormField>
-            <FormField label="Plan End Date">
-              <Input
-                type="date"
-                value={editForm.planEndDate}
-                onChange={(e) => setEditForm((p) => ({ ...p, planEndDate: e.target.value }))}
-              />
-            </FormField>
-          </div>
-          <div className="mt-6 flex justify-end gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowEditModal(false)
-                setEditingAgent(null)
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                if (!editingAgent) return
-                setLocalAgents((prev) =>
-                  prev.map((a) =>
-                    a.id === editingAgent.id
-                      ? {
-                          ...a,
-                          agentName: editForm.agentName.trim() || a.agentName,
-                          contactNumber: editForm.contactNumber.trim() || a.contactNumber,
-                          email: editForm.email.trim() || a.email,
-                          location: editForm.location.trim() || a.location,
-                          contractType: editForm.contractType || a.contractType,
-                          planStartDate: editForm.planStartDate || a.planStartDate,
-                          planEndDate: editForm.planEndDate || a.planEndDate,
-                        }
-                      : a
-                  )
-                )
-                setShowEditModal(false)
-                setEditingAgent(null)
-              }}
-            >
-              Save Changes
-            </Button>
-          </div>
-        </Modal>
+          initialData={editForm}
+          onSave={(data: any) => {
+            if (!editingAgent) return
+            setLocalAgents((prev) =>
+              prev.map((a) =>
+                a.id === editingAgent.id
+                  ? {
+                      ...a,
+                      agentName: data.agentName.trim() || a.agentName,
+                      contactNumber: data.contactNumber.trim() || a.contactNumber,
+                      email: data.email.trim() || a.email,
+                      location: data.location.trim() || a.location,
+                      contractType: data.contractType || a.contractType,
+                      planStartDate: data.planStartDate || a.planStartDate,
+                      planEndDate: data.planEndDate || a.planEndDate,
+                    }
+                  : a
+              )
+            )
+            setShowEditModal(false)
+            setEditingAgent(null)
+          }}
+        />
       )}
     </div>
   )

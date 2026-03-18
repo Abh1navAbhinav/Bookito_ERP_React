@@ -36,9 +36,9 @@ const navItems = [
   { label: 'Finance', icon: Wallet, path: '/finance', roles: ['manager', 'accountant'] },
   { label: 'Travel Agents', icon: Users, path: '/travel-agents', roles: ['manager', 'sales', 'crm'] },
   { label: 'Trade Fairs', icon: CalendarDays, path: '/trade-fairs', roles: ['manager', 'sales', 'crm'] },
-  { label: 'Pricing Plan', icon: CreditCard, path: '/pricing-plan', roles: ['manager'] },
+  { label: 'Pricing Plan', icon: CreditCard, path: '/pricing-plan', roles: ['manager', 'crm', 'sales', 'accountant'] },
   { label: 'Reports', icon: FileBarChart, path: '/reports', roles: ['manager', 'accountant'] },
-  { label: 'Feature List', icon: Shield, path: '/admin/features', roles: ['manager'] },
+  { label: 'Feature List', icon: Shield, path: '/admin/features', roles: ['manager', 'sales', 'crm'] },
   
   // HR Specific Modules (Visible to HR login only)
   { label: 'Dashboard', icon: LayoutDashboard, path: '/hr/dashboard', roles: ['hr'] },
