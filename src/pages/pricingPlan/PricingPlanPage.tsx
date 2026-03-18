@@ -1,135 +1,653 @@
-import { CreditCard, Check, Plus } from 'lucide-react'
-import { Button } from '@/components/FormElements'
+import { useState, useEffect } from 'react'
+import { CreditCard, Check, Plus, Star, Zap, Info, ArrowRight, Trash2, Edit3, X, RotateCcw } from 'lucide-react'
+import { Button, Modal, FormField, Input, Textarea } from '@/components/FormElements'
 import { cn } from '@/lib/utils'
 
-const plans = [
+type RoomSlab = '1-10' | '11-20' | '21-30' | '30+'
+type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
+
+type PlanFeature = {
+  title: string
+  items: string[]
+}
+
+type PricingRow = {
+  rooms: RoomSlab
+  sixMonths: number
+  oneYear: number
+}
+
+type Plan = {
+  id: string
+  name: string
+  description: string
+  popular?: boolean
+  promo?: string
+  color: string
+  pricing: PricingRow[]
+  features: PlanFeature[]
+  footerNote?: string
+}
+
+interface DeletedPlan extends Plan {
+  deletedAt: string
+}
+
+const initialPlans: Plan[] = [
   {
-    name: '6 Month Plan',
-    price: '₹35,000',
-    period: '6 months',
-    description: 'Ideal for small properties looking to try Bookito PMS',
-    features: [
-      'Property Management System',
-      'Up to 20 rooms',
-      'Basic Channel Manager',
-      '2 OTA Integrations',
-      'Email Support',
-      'Basic Reports',
-    ],
+    id: 'plan-standard',
+    name: 'Bookito Standard',
+    description: 'Core CRS + inventory + channel management for growing properties.',
     popular: false,
-    color: 'from-surface-600 to-surface-800',
+    color: 'from-blue-600 to-blue-800',
+    pricing: [
+      { rooms: '1-10', sixMonths: 10000, oneYear: 18000 },
+      { rooms: '11-20', sixMonths: 16000, oneYear: 30000 },
+      { rooms: '21-30', sixMonths: 22000, oneYear: 40000 },
+      { rooms: '30+', sixMonths: 32000, oneYear: 60000 },
+    ],
+    features: [
+      { title: 'CRS (central reservation system)', items: ['booking engine', 'ota integration', 'direct booking', 'travel agent booking', 'guest management'] },
+      { title: 'Inventory management', items: ['extra bed pricing', 'meal plan management', 'Daily rate adjustment', 'room configurations'] },
+      { title: 'Channel manager', items: ['Manage OTA platforms in a single platform'] },
+    ],
   },
   {
-    name: 'Standard 1 Year',
-    price: '₹55,000',
-    period: '1 year',
-    description: 'Best for growing properties with channel management needs',
-    features: [
-      'Full PMS Suite',
-      'Up to 30 rooms',
-      'Advanced Channel Manager',
-      '5 OTA Integrations',
-      'Priority Email Support',
-      'Smart Reports & Analytics',
-      'Guest Reviews Management',
-      'Rate Intelligence',
-    ],
+    id: 'plan-premium',
+    name: 'Bookito Premium',
+    description: 'Everything in Standard, plus banquet, store, KOT, finance, and advanced controls.',
     popular: true,
-    color: 'from-primary-600 to-primary-800',
+    promo: 'Best for Mid-size Hotels',
+    color: 'from-indigo-600 to-purple-800',
+    pricing: [
+      { rooms: '1-10', sixMonths: 16000, oneYear: 28000 },
+      { rooms: '11-20', sixMonths: 24000, oneYear: 45000 },
+      { rooms: '21-30', sixMonths: 32000, oneYear: 60000 },
+      { rooms: '30+', sixMonths: 45000, oneYear: 85000 },
+    ],
+    features: [
+      { title: 'Includes everything in Standard', items: [] },
+      { title: 'CRS Upgrades', items: ['Hold room facility', 'Advanced guest profiles'] },
+      { title: 'Banquet & Events', items: ['Booking & Management', 'Event-based pricing'] },
+      { title: 'Store & Inventory', items: ['Purchase orders/returns', 'Department-wise stock issue', 'Outlet sales tracking'] },
+      { title: 'KOT Management', items: ['Instant order creation', 'Table/room linking', 'Kitchen communication'] },
+      { title: 'Finance & Accounts', items: ['Cash/bank entry', 'Trial balance', 'P&L reports'] },
+    ],
   },
   {
-    name: 'Premium 1 Year',
-    price: '₹1,20,000',
-    period: '1 year',
-    description: 'For large properties & chains requiring enterprise features',
-    features: [
-      'Enterprise PMS Suite',
-      'Unlimited rooms',
-      'AI-Powered Channel Manager',
-      'All OTA Integrations',
-      '24/7 Phone & Chat Support',
-      'Advanced Analytics Dashboard',
-      'Smart Pricing Engine',
-      'Custom API Integrations',
-      'Multi-Property Management',
-      'Dedicated Account Manager',
+    id: 'plan-pro',
+    name: 'Bookito PRO',
+    description: 'Includes everything in Premium plus PRO-grade integrations, reports, and support.',
+    color: 'from-slate-800 to-slate-950',
+    pricing: [
+      { rooms: '1-10', sixMonths: 22000, oneYear: 40000 },
+      { rooms: '11-20', sixMonths: 32000, oneYear: 60000 },
+      { rooms: '21-30', sixMonths: 45000, oneYear: 85000 },
+      { rooms: '30+', sixMonths: 85000, oneYear: 120000 },
     ],
-    popular: false,
-    color: 'from-purple-600 to-purple-800',
+    features: [
+      { title: 'Includes everything in Premium', items: [] },
+      { title: 'Advanced Operations', items: ['Bar management', 'POS integration', 'Multi-property management'] },
+      { title: 'Business Intelligence', items: ['Advanced revenue management', 'Advanced custom reports', 'Dedicated support manager'] },
+      { title: 'Connectivity', items: ['Full API access', 'Third-party accounting integration'] },
+    ],
+    footerNote: 'PRO includes all Premium modules, plus additional integrations and support.',
   },
 ]
 
+const formatInr = (value: number) =>
+  `₹${value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+
+const roomLabel: Record<RoomSlab, string> = {
+  '1-10': 'Rooms 1–10',
+  '11-20': 'Rooms 11–20',
+  '21-30': 'Rooms 21–30',
+  '30+': 'Rooms 30+',
+}
+
 export default function PricingPlanPage() {
+  const [plans, setPlans] = useState<Plan[]>([])
+  const [currentRole, setCurrentRole] = useState<DemoRole | null>(null)
+  const [showComparison, setShowComparison] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingPlan, setEditingPlan] = useState<Plan | null>(null)
+  const [modalFeatures, setModalFeatures] = useState<PlanFeature[]>([])
+  const [expandedPlans, setExpandedPlans] = useState<Record<string, boolean>>({})
+  const [showDeleted, setShowDeleted] = useState(false)
+  const [deletedPlans, setDeletedPlans] = useState<DeletedPlan[]>([])
+
+  // Load plans and role
+  useEffect(() => {
+    const savedPlans = localStorage.getItem('bookito_pricing_plans')
+    if (savedPlans) {
+      setPlans(JSON.parse(savedPlans))
+    } else {
+      setPlans(initialPlans)
+    }
+
+    const savedDeleted = localStorage.getItem('bookito_deleted_pricing_plans')
+    if (savedDeleted) {
+      const parsed: DeletedPlan[] = JSON.parse(savedDeleted)
+      // Auto-purge older than 30 days
+      const now = Date.now()
+      const thirtyDays = 30 * 24 * 60 * 60 * 1000
+      const valid = parsed.filter(p => (now - new Date(p.deletedAt).getTime()) < thirtyDays)
+      setDeletedPlans(valid)
+      localStorage.setItem('bookito_deleted_pricing_plans', JSON.stringify(valid))
+    }
+
+    try {
+      const raw = window.localStorage.getItem('bookito_demo_user')
+      if (raw) {
+        const parsed = JSON.parse(raw) as { role?: DemoRole }
+        if (parsed.role) setCurrentRole(parsed.role)
+      }
+    } catch { /* ignore */ }
+  }, [])
+
+  // Initialize modal features when opening modal
+  useEffect(() => {
+    if (showEditModal) {
+      setModalFeatures(editingPlan?.features || [{ title: 'Core Features', items: [''] }])
+    }
+  }, [showEditModal, editingPlan])
+
+  const canManage = currentRole === 'manager'
+
+  const handleSavePlan = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    
+    const newPlan: Plan = {
+      id: editingPlan?.id || `plan-${Date.now()}`,
+      name: formData.get('name') as string,
+      description: formData.get('description') as string,
+      popular: formData.get('popular') === 'on',
+      promo: formData.get('promo') as string,
+      color: formData.get('color') as string || 'from-surface-700 to-surface-900',
+      footerNote: formData.get('footerNote') as string,
+      pricing: [
+        { rooms: '1-10', sixMonths: Number(formData.get('p1-6m')), oneYear: Number(formData.get('p1-1y')) },
+        { rooms: '11-20', sixMonths: Number(formData.get('p2-6m')), oneYear: Number(formData.get('p2-1y')) },
+        { rooms: '21-30', sixMonths: Number(formData.get('p3-6m')), oneYear: Number(formData.get('p3-1y')) },
+        { rooms: '30+', sixMonths: Number(formData.get('p4-6m')), oneYear: Number(formData.get('p4-1y')) },
+      ],
+      features: modalFeatures.filter(f => f.title.trim() !== '')
+    }
+
+    let updatedPlans: Plan[]
+    if (editingPlan) {
+      updatedPlans = plans.map(p => p.id === editingPlan.id ? newPlan : p)
+    } else {
+      updatedPlans = [...plans, newPlan]
+    }
+
+    setPlans(updatedPlans)
+    localStorage.setItem('bookito_pricing_plans', JSON.stringify(updatedPlans))
+    setShowEditModal(false)
+  }
+
+  const handleDeletePlan = (id: string) => {
+    const planToDelete = plans.find(p => p.id === id)
+    if (!planToDelete) return
+
+    if (window.confirm('Move this pricing plan to trash? It will be auto-deleted after 30 days.')) {
+      const deletedAt = new Date().toISOString()
+      const entry: DeletedPlan = { ...planToDelete, deletedAt }
+      
+      const updatedPlans = plans.filter(p => p.id !== id)
+      setPlans(updatedPlans)
+      localStorage.setItem('bookito_pricing_plans', JSON.stringify(updatedPlans))
+
+      const updatedDeleted = [...deletedPlans, entry]
+      setDeletedPlans(updatedDeleted)
+      localStorage.setItem('bookito_deleted_pricing_plans', JSON.stringify(updatedDeleted))
+    }
+  }
+
+  const handleRestorePlan = (id: string) => {
+    const planToRestore = deletedPlans.find(p => p.id === id)
+    if (!planToRestore) return
+
+    const updatedDeleted = deletedPlans.filter(p => p.id !== id)
+    setDeletedPlans(updatedDeleted)
+    localStorage.setItem('bookito_deleted_pricing_plans', JSON.stringify(updatedDeleted))
+
+    const { deletedAt, ...rest } = planToRestore
+    const updatedPlans = [...plans, rest]
+    setPlans(updatedPlans)
+    localStorage.setItem('bookito_pricing_plans', JSON.stringify(updatedPlans))
+  }
+
+  const getRemainingDays = (deletedAt: string) => {
+    const diff = Date.now() - new Date(deletedAt).getTime()
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    return Math.max(0, 30 - days)
+  }
+
+  const addFeatureGroup = () => {
+    setModalFeatures([...modalFeatures, { title: '', items: [''] }])
+  }
+
+  const removeFeatureGroup = (index: number) => {
+    setModalFeatures(modalFeatures.filter((_, i) => i !== index))
+  }
+
+  const updateFeatureGroupTitle = (index: number, title: string) => {
+    const next = [...modalFeatures]
+    next[index].title = title
+    setModalFeatures(next)
+  }
+
+  const addFeatureItem = (groupIndex: number) => {
+    const next = [...modalFeatures]
+    next[groupIndex].items.push('')
+    setModalFeatures(next)
+  }
+
+  const removeFeatureItem = (groupIndex: number, itemIndex: number) => {
+    const next = [...modalFeatures]
+    next[groupIndex].items = next[groupIndex].items.filter((_, i) => i !== itemIndex)
+    setModalFeatures(next)
+  }
+
+  const updateFeatureItem = (groupIndex: number, itemIndex: number, value: string) => {
+    const next = [...modalFeatures]
+    next[groupIndex].items[itemIndex] = value
+    setModalFeatures(next)
+  }
+
+  const toggleExpand = (planId: string) => {
+    setExpandedPlans(prev => ({ ...prev, [planId]: !prev[planId] }))
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 pb-20">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-surface-900">Pricing Plans</h1>
-        <p className="mt-3 text-sm text-surface-500">
-          Manage and update Bookito PMS subscription plans offered to properties and travel agents.
-        </p>
+      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary-600 ring-1 ring-primary-100">
+            <Zap className="h-3.5 w-3.5" />
+            Pricing & Monetization
+          </div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-surface-900 md:text-4xl">Subscription Plans</h1>
+          <p className="max-w-xl text-surface-500">
+            Manage your product tiers and pricing slabs. Changes here will reflect across the sales and partner portals.
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {/* Active/Trash Tabs */}
+          <div className="mr-4 flex rounded-xl border border-surface-200 bg-white p-1 shadow-sm">
+            <button
+              onClick={() => setShowDeleted(false)}
+              className={cn(
+                "rounded-lg px-4 py-1.5 text-xs font-bold transition-all",
+                !showDeleted ? "bg-primary-600 text-white shadow-md" : "text-surface-500 hover:text-surface-900"
+              )}
+            >
+              Active
+            </button>
+            <button
+              onClick={() => setShowDeleted(true)}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-bold transition-all",
+                showDeleted ? "bg-red-500 text-white shadow-md" : "text-surface-500 hover:text-red-500"
+              )}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Trash
+              {deletedPlans.length > 0 && (
+                <span className={cn(
+                  "flex h-4 w-4 items-center justify-center rounded-full text-[10px]",
+                  showDeleted ? "bg-white text-red-500" : "bg-red-100 text-red-600"
+                )}>
+                  {deletedPlans.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowComparison(true)}
+            className="h-12 rounded-xl border-surface-200 bg-white px-6 shadow-sm"
+          >
+            <Info className="h-4 w-4" />
+            Compare Features
+          </Button>
+          {canManage && (
+            <Button 
+              onClick={() => { setEditingPlan(null); setShowEditModal(true); }}
+              className="h-12 rounded-xl shadow-lg shadow-primary-200"
+            >
+              <Plus className="h-4 w-4" />
+              Create New Plan
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {plans.map((plan) => (
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {(!showDeleted ? plans : deletedPlans).map((plan) => (
           <div
-            key={plan.name}
+            key={plan.id}
             className={cn(
-              'relative flex flex-col rounded-2xl border bg-white shadow-sm transition-all duration-200 hover:shadow-lg',
-              plan.popular ? 'border-primary-300 ring-2 ring-primary-100' : 'border-surface-200'
+              'group relative flex flex-col rounded-[2.5rem] border bg-white p-2 transition-all duration-500 hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]',
+              plan.popular && !showDeleted
+                ? 'border-primary-200 shadow-2xl shadow-primary-100 ring-4 ring-primary-50/50' 
+                : 'border-surface-200 shadow-xl',
+              showDeleted && 'opacity-80'
             )}
           >
-            {plan.popular && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary-600 px-3 py-1 text-xs font-bold text-white shadow-md">
-                Most Popular
+            {/* Action Buttons for Managers */}
+            {canManage && (
+              <div className="absolute right-6 top-6 z-20 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                {!showDeleted ? (
+                  <>
+                    <button 
+                      onClick={() => { setEditingPlan(plan); setShowEditModal(true); }}
+                      className="rounded-full bg-white/20 p-2 text-white backdrop-blur-md hover:bg-white hover:text-surface-900 shadow-lg transition-all"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeletePlan(plan.id)}
+                      className="rounded-full bg-white/20 p-2 text-white backdrop-blur-md hover:bg-red-500 hover:text-white shadow-lg transition-all"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={() => handleRestorePlan(plan.id)}
+                    className="rounded-full bg-white/20 p-2 text-white backdrop-blur-md hover:bg-emerald-500 hover:text-white shadow-lg transition-all"
+                    title="Restore Plan"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {plan.popular && !showDeleted && (
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 rounded-full bg-gradient-to-r from-primary-600 to-purple-600 px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-lg ring-4 ring-white">
+                <div className="flex items-center gap-1.5">
+                  <Star className="h-3 w-3 fill-white" />
+                  Most Popular
+                </div>
+              </div>
+            )}
+
+            {showDeleted && (
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 rounded-full bg-red-600 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg ring-4 ring-white">
+                Auto-deletes in {getRemainingDays((plan as DeletedPlan).deletedAt)} days
               </div>
             )}
 
             {/* Header */}
-            <div className={cn('rounded-t-2xl bg-gradient-to-br p-6 text-white', plan.color)}>
-              <div className="flex items-center gap-2 mb-2">
-                <CreditCard className="h-5 w-5" />
-                <span className="text-sm font-medium opacity-90">{plan.period}</span>
+            <div className={cn('overflow-hidden rounded-[2rem] bg-gradient-to-br p-8 text-white shadow-inner', plan.color)}>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="rounded-xl bg-white/20 p-2 backdrop-blur-md">
+                  <CreditCard className="h-6 w-6" />
+                </div>
+                {plan.promo && (
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
+                    {plan.promo}
+                  </span>
+                )}
               </div>
-              <h3 className="text-xl font-bold">{plan.name}</h3>
-              <div className="mt-3">
-                <span className="text-3xl font-extrabold">{plan.price}</span>
-                <span className="ml-1 text-sm opacity-75">/{plan.period}</span>
-              </div>
+              <h3 className="text-2xl font-black tracking-tight">{plan.name}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-white/80">{plan.description}</p>
             </div>
 
             {/* Body */}
-            <div className="flex flex-1 flex-col p-6">
-              <p className="text-sm text-surface-500">{plan.description}</p>
+            <div className="flex flex-1 flex-col px-6 py-8">
+              {/* Pricing Section */}
+              <div className="mb-8 overflow-hidden rounded-[1.5rem] border border-surface-100 bg-surface-50/50 p-1">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-surface-400">
+                    Pricing Slabs
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  {plan.pricing.map((row) => (
+                    <div 
+                      key={row.rooms} 
+                      className="flex items-center justify-between rounded-xl px-4 py-3 transition-all hover:bg-white hover:shadow-md hover:ring-1 hover:ring-surface-200"
+                    >
+                      <span className="text-xs font-bold text-surface-900">{roomLabel[row.rooms]}</span>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-[9px] font-bold uppercase tracking-tighter text-surface-400">6 Months</p>
+                          <p className="text-sm font-black text-surface-900">{formatInr(row.sixMonths)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[9px] font-bold uppercase tracking-tighter text-surface-400">Annual</p>
+                          <p className="text-sm font-black text-primary-600">{formatInr(row.oneYear)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-              <ul className="mt-4 flex-1 space-y-2.5">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm text-surface-700">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-500" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <Button
-                variant={plan.popular ? 'primary' : 'secondary'}
-                className="mt-6 w-full"
-              >
-                Edit Plan
-              </Button>
+              {/* Features List (Expandable) */}
+              <div className="flex-1 space-y-4">
+                <button 
+                  onClick={() => toggleExpand(plan.id)}
+                  className="flex w-full items-center justify-between px-1"
+                >
+                  <p className="text-[10px] font-black uppercase tracking-widest text-surface-400">
+                    Included Features
+                  </p>
+                  <div className={cn(
+                    "flex h-5 w-5 items-center justify-center rounded-full bg-surface-100 text-surface-500 transition-transform duration-300",
+                    expandedPlans[plan.id] ? "rotate-180" : ""
+                  )}>
+                    <ArrowRight className="h-3 w-3 rotate-90" />
+                  </div>
+                </button>
+                
+                <div className={cn(
+                  "overflow-hidden transition-all duration-500",
+                  expandedPlans[plan.id] ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+                )}>
+                  <div className="space-y-4 py-2">
+                    {plan.features.map((section) => (
+                      <div key={section.title} className="group/item flex gap-3">
+                        <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-600 ring-1 ring-primary-100 group-hover/item:bg-primary-600 group-hover/item:text-white">
+                          <Check className="h-3 w-3" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <p className="text-sm font-bold text-surface-900">{section.title}</p>
+                          {section.items.length > 0 && (
+                            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+                              {section.items.map((item) => (
+                                <span key={item} className="inline-flex items-center text-[11px] font-medium text-surface-500">
+                                  <span className="mr-1.5 h-1 w-1 rounded-full bg-surface-300" />
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ))}
+        
+        {showDeleted && deletedPlans.length === 0 && (
+          <div className="col-span-full flex flex-col items-center justify-center py-20 text-surface-400">
+            <Trash2 className="mb-4 h-12 w-12 opacity-20" />
+          </div>
+        )}
       </div>
 
-      {/* Add Plan */}
-      <button className="flex h-32 w-full items-center justify-center rounded-2xl border-2 border-dashed border-surface-300 bg-surface-50 text-surface-400 transition-all hover:border-primary-400 hover:bg-primary-50 hover:text-primary-600">
-        <div className="flex items-center gap-2">
-          <Plus className="h-5 w-5" />
-          <span className="text-sm font-medium">Add New Plan</span>
+      {/* Add/Edit Plan Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title={editingPlan ? 'Edit Pricing Plan' : 'Create New Pricing Plan'}
+        size="lg"
+      >
+        <form onSubmit={handleSavePlan} className="space-y-6 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Plan Name">
+              <Input name="name" defaultValue={editingPlan?.name} required placeholder="e.g. Standard, Enterprise" />
+            </FormField>
+            <FormField label="Promo Text (Optional)">
+              <Input name="promo" defaultValue={editingPlan?.promo} placeholder="e.g. Most Popular, 20% Off" />
+            </FormField>
+          </div>
+          
+          <FormField label="Description">
+            <Textarea name="description" defaultValue={editingPlan?.description} required rows={2} placeholder="Brief overview of who this plan is for" />
+          </FormField>
+
+          {/* Pricing Grid Inputs */}
+          <div className="rounded-2xl border border-surface-200 p-4 space-y-4">
+            <h4 className="text-xs font-black uppercase tracking-widest text-surface-400">Rate Slabs (INR)</h4>
+            <div className="grid grid-cols-3 gap-4 items-center font-bold text-[10px] text-surface-400 uppercase">
+              <div>Slab</div>
+              <div>6 Months Rate</div>
+              <div>Annual Rate</div>
+            </div>
+            {[
+              { id: 'p1', label: '1-10' },
+              { id: 'p2', label: '11-20' },
+              { id: 'p3', label: '21-30' },
+              { id: 'p4', label: '30+' },
+            ].map((slab, i) => (
+              <div key={slab.id} className="grid grid-cols-3 gap-4 items-center">
+                <div className="text-sm font-bold text-surface-700">{roomLabel[slab.label as RoomSlab]}</div>
+                <Input type="number" name={`${slab.id}-6m`} defaultValue={editingPlan?.pricing[i]?.sixMonths} required placeholder="6m rate" />
+                <Input type="number" name={`${slab.id}-1y`} defaultValue={editingPlan?.pricing[i]?.oneYear} required placeholder="1y rate" />
+              </div>
+            ))}
+          </div>
+
+          {/* Dynamic Features Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-black uppercase tracking-widest text-surface-400 px-1">Plan Features Library</h4>
+              <Button type="button" variant="secondary" onClick={addFeatureGroup} className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider">
+                <Plus className="h-3 w-3 mr-1" />
+                Add Group
+              </Button>
+            </div>
+            
+            <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {modalFeatures.map((group, gIdx) => (
+                <div key={gIdx} className="relative rounded-2xl border border-primary-100 bg-primary-50/30 p-5 pt-8">
+                  <button 
+                    type="button" 
+                    onClick={() => removeFeatureGroup(gIdx)}
+                    className="absolute right-3 top-3 text-surface-400 hover:text-red-500 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  
+                  <div className="mb-4">
+                    <Input 
+                      placeholder="Group Title (e.g. Core PMS Modules)" 
+                      value={group.title} 
+                      onChange={(e) => updateFeatureGroupTitle(gIdx, e.target.value)}
+                      className="bg-white font-bold h-10 ring-primary-100/50"
+                    />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {group.items.map((item, iIdx) => (
+                      <div key={iIdx} className="flex gap-2 group/feat">
+                        <Input 
+                          placeholder="Feature item description..." 
+                          value={item} 
+                          onChange={(e) => updateFeatureItem(gIdx, iIdx, e.target.value)}
+                          className="flex-1 bg-white text-xs h-9 transition-all focus:ring-primary-500/20"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => removeFeatureItem(gIdx, iIdx)}
+                          className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-red-50 hover:text-red-500 text-surface-300 transition-all opacity-0 group-hover/feat:opacity-100"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      onClick={() => addFeatureItem(gIdx)}
+                      className="h-9 w-full border-2 border-dashed border-primary-100 bg-white/50 text-[10px] font-bold uppercase tracking-wider text-primary-600 hover:bg-white hover:border-primary-300 active:scale-[0.98] transition-all"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add Detailed Feature
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Gradient Color Class">
+              <Input name="color" defaultValue={editingPlan?.color} placeholder="from-blue-600 to-blue-800" />
+            </FormField>
+            <div className="flex items-center gap-3 pt-8">
+              <input type="checkbox" id="popular" name="popular" defaultChecked={editingPlan?.popular} className="h-5 w-5 rounded border-surface-300 text-primary-600" />
+              <label htmlFor="popular" className="text-sm font-bold text-surface-700">Set as Popular</label>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-6 border-t border-surface-100">
+            <Button variant="ghost" type="button" onClick={() => setShowEditModal(false)} className="h-12 px-6">Cancel</Button>
+            <Button type="submit" className="px-10 shadow-lg shadow-primary-200 h-12">
+              {editingPlan ? 'Update Plan' : 'Create Plan'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Comparison Modal (Static) */}
+      <Modal isOpen={showComparison} onClose={() => setShowComparison(false)} title="Feature Comparison Matrix" size="xl">
+        <div className="py-4">
+          <div className="overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-sm">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-surface-50 border-b border-surface-200">
+                  <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-surface-500">Feature</th>
+                  <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-surface-500 text-center">Standard</th>
+                  <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-surface-500 text-center">Premium</th>
+                  <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-surface-500 text-center">PRO</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-100 text-sm">
+                {[
+                  { name: 'Cloud PMS & CRS', s: true, p: true, pro: true },
+                  { name: 'Channel Manager', s: true, p: true, pro: true },
+                  { name: 'Banquet & Store', s: false, p: true, pro: true },
+                  { name: 'POS Integration', s: false, p: false, pro: true },
+                  { name: 'API Access', s: false, p: false, pro: true },
+                ].map((row) => (
+                  <tr key={row.name}>
+                    <td className="px-6 py-4 font-semibold text-surface-700">{row.name}</td>
+                    <td className="px-6 py-4 text-center">{row.s ? <Check className="mx-auto h-4 w-4 text-green-500" /> : '—'}</td>
+                    <td className="px-6 py-4 text-center">{row.p ? <Check className="mx-auto h-4 w-4 text-green-500" /> : '—'}</td>
+                    <td className="px-6 py-4 text-center">{row.pro ? <Check className="mx-auto h-4 w-4 text-green-500" /> : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </button>
+      </Modal>
     </div>
   )
 }
+

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -12,9 +12,14 @@ import {
   Hash,
   Globe,
   CheckCircle2,
+  Send,
+  User,
+  MessageCircle,
+  Clock,
+  ChevronRight,
 } from 'lucide-react'
 import { Breadcrumb } from '@/components/Breadcrumb'
-import { Button } from '@/components/FormElements'
+import { Button, Textarea, Input } from '@/components/FormElements'
 import { StatusBadge } from '@/components/StatusBadge'
 import type { BadgeVariant } from '@/components/StatusBadge'
 import { travelAgents, locationHierarchy, type TravelAgent } from '@/data/mockData'
@@ -126,6 +131,15 @@ export default function TravelAgentDetailsPage() {
     [id]
   )
 
+  const [extraComments, setExtraComments] = useState<
+    { author: string; comment: string; createdAt: string }[]
+  >([])
+  const [newComment, setNewComment] = useState({
+    author: '',
+    comment: '',
+  })
+  const canAddComment = true // Simplified for now
+
   /* ─── navigation helpers ─── */
   const stateNode = useMemo(
     () => locationHierarchy.find((s) => s.name === agent?.state),
@@ -220,6 +234,13 @@ export default function TravelAgentDetailsPage() {
     },
     { label: agent.agentName },
   ]
+
+  /* ─── pricing helpers ─── */
+  const daysUntilExpiry = agent.planEndDate
+    ? Math.ceil(
+        (new Date(agent.planEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      )
+    : null
 
   const contractVariant: BadgeVariant =
     agent.contractType === 'Platinum'
@@ -360,7 +381,7 @@ export default function TravelAgentDetailsPage() {
             <div className="border-b border-surface-100 px-5 py-4">
               <h2 className="flex items-center gap-2 text-sm font-bold text-surface-900">
                 <IndianRupee className="h-4 w-4 text-primary-500" />
-                Commercials & Subscription
+                Pricing & Plan Details
               </h2>
             </div>
             <div className="grid grid-cols-1 gap-x-6 gap-y-0 px-5 py-3 sm:grid-cols-2">
@@ -397,6 +418,75 @@ export default function TravelAgentDetailsPage() {
                 label="Trial Status"
                 value={agent.trialStatus ? 'Active Trial' : 'No Trial'}
               />
+              <InfoItem icon={BadgeCheck} label="Membership" value={agent.contractType} />
+            </div>
+
+            {/* Plan Timeline (from PropertyDetailsPage) */}
+            <div className="border-t border-surface-50 px-5 py-5 bg-surface-50/30">
+              <h3 className="mb-4 text-[11px] font-bold uppercase tracking-wider text-surface-400">Plan Timeline</h3>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-8">
+                <div className="flex-1 space-y-1">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-surface-400">Start Date</p>
+                  <p className="text-base font-bold text-surface-800">
+                    {agent.planStartDate || '—'}
+                  </p>
+                </div>
+                <div className="hidden sm:flex flex-col items-center pt-2">
+                  <ChevronRight className="h-4 w-4 text-surface-300" />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-surface-400">Expiry Date</p>
+                  <p className="text-base font-bold text-surface-800">
+                    {agent.planEndDate || '—'}
+                  </p>
+                </div>
+                {daysUntilExpiry !== null && agent.planEndDate && (
+                  <div className="flex-1 space-y-1">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-surface-400">
+                      Days Remaining
+                    </p>
+                    <p
+                      className={`text-base font-bold ${
+                        daysUntilExpiry <= 30
+                          ? 'text-red-600'
+                          : daysUntilExpiry <= 90
+                            ? 'text-amber-600'
+                            : 'text-accent-600'
+                      }`}
+                    >
+                      {daysUntilExpiry > 0 ? daysUntilExpiry : 'Expired'}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {/* Progress bar */}
+              {agent.planStartDate && agent.planEndDate && (
+                <div className="mt-5">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface-100">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        daysUntilExpiry != null && daysUntilExpiry <= 30
+                          ? 'bg-red-500'
+                          : daysUntilExpiry != null && daysUntilExpiry <= 90
+                            ? 'bg-amber-500'
+                            : 'bg-primary-500'
+                      }`}
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.max(
+                            0,
+                            ((Date.now() - new Date(agent.planStartDate).getTime()) /
+                              (new Date(agent.planEndDate).getTime() -
+                                new Date(agent.planStartDate).getTime())) *
+                              100
+                          )
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </SectionCard>
         </div>
@@ -441,6 +531,92 @@ export default function TravelAgentDetailsPage() {
                   <StatusBadge label={agent.contractType} variant={contractVariant} />
                 </div>
               </div>
+            </div>
+          </SectionCard>
+
+          {/* Comments Section (from PropertyDetailsPage) */}
+          <SectionCard>
+            <div className="border-b border-surface-100 px-5 py-4">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-surface-900">
+                <MessageCircle className="h-4 w-4 text-primary-500" />
+                Comments & Follow-ups
+              </h2>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              {/* Follow-up comments list */}
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-surface-400 mb-1.5">
+                  Follow Up History
+                </p>
+                {extraComments.length > 0 ? (
+                  <ul className="space-y-2">
+                    {extraComments.map((c: { author: string; comment: string; createdAt: string }, idx: number) => (
+                      <li
+                        key={idx}
+                        className="rounded-lg border border-surface-100 bg-surface-50 px-3 py-2.5 shadow-sm transition-all hover:border-primary-100"
+                      >
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <span className="text-xs font-bold text-surface-700 flex items-center gap-1.5">
+                            <div className="h-2 w-2 rounded-full bg-primary-500" />
+                            {c.author || 'Admin'}
+                          </span>
+                          <span className="text-[10px] font-medium text-surface-400 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {c.createdAt}
+                          </span>
+                        </div>
+                        <p className="text-sm text-surface-600 leading-relaxed">{c.comment}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-6 rounded-xl border border-dashed border-surface-200 bg-surface-50">
+                    <MessageCircle className="h-6 w-6 text-surface-300 mb-2" />
+                    <p className="text-xs text-surface-400 italic">No follow up comments yet.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Add comment form */}
+              {canAddComment && (
+                <div className="space-y-3 pt-3 border-t border-surface-100">
+                  <Textarea
+                    rows={3}
+                    placeholder="Capture follow-up details..."
+                    value={newComment.comment}
+                    onChange={(e) =>
+                      setNewComment((prev) => ({ ...prev, comment: e.target.value }))
+                    }
+                    className="text-sm shadow-inner overflow-hidden"
+                  />
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (!newComment.comment.trim()) return
+                        setExtraComments((prev: { author: string; comment: string; createdAt: string }[]) => [
+                          ...prev,
+                          {
+                            author: 'Manager (Admin)',
+                            comment: newComment.comment.trim(),
+                            createdAt: new Date().toLocaleString('en-IN', {
+                              day: '2-digit',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }),
+                          },
+                        ])
+                        setNewComment((prev: { author: string; comment: string }) => ({ ...prev, comment: '' }))
+                      }}
+                      className="px-4 py-2 text-xs font-bold shadow-sm"
+                    >
+                      <Send className="mr-2 h-3.5 w-3.5" />
+                      Add Comment
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </SectionCard>
         </div>

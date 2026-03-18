@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Users, Plus, RotateCcw, Trash2, Eye, Edit } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { DataTable } from '@/components/DataTable'
 import { Breadcrumb, type BreadcrumbItem } from '@/components/Breadcrumb'
 import { FolderNavigator } from '@/components/FolderNavigator'
@@ -13,6 +13,7 @@ type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm'
 
 export default function TravelAgentsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [localAgents, setLocalAgents] = useState<TravelAgent[]>(travelAgents)
   const [path, setPath] = useState<string[]>([])
   const [pathLabels, setPathLabels] = useState<string[]>([])
@@ -47,6 +48,14 @@ export default function TravelAgentsPage() {
       // ignore
     }
   }, [])
+
+  useEffect(() => {
+    const state = location.state as { path?: string[]; pathLabels?: string[] } | null
+    if (state?.path && state.path.length > 0) {
+      setPath(state.path)
+      setPathLabels(state.pathLabels ?? [])
+    }
+  }, [location.state])
 
   const canEditOrCreate = currentRole === 'sales' || currentRole === 'crm'
 
@@ -124,10 +133,10 @@ export default function TravelAgentsPage() {
       {
         accessorKey: 'agentName',
         header: 'Agent Name',
-        cell: ({ row }) => (
+        cell: ({ row }: { row: { original: TravelAgent } }) => (
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
-              {row.original.agentName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+              {row.original.agentName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
             </div>
             <div>
               <span className="font-medium text-surface-900">{row.original.agentName}</span>
@@ -152,7 +161,7 @@ export default function TravelAgentsPage() {
       {
         accessorKey: 'location',
         header: 'Location',
-        cell: ({ row }) => (
+        cell: ({ row }: { row: { original: TravelAgent } }) => (
           <span className="text-surface-500">{row.original.location || '—'}</span>
         ),
       },
@@ -231,10 +240,10 @@ export default function TravelAgentsPage() {
       {
         accessorKey: 'agentName',
         header: 'Agent Name',
-        cell: ({ row }) => (
+        cell: ({ row }: { row: { original: TravelAgent } }) => (
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
-              {row.original.agentName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+              {row.original.agentName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
             </div>
             <div>
               <span className="font-medium text-surface-900">{row.original.agentName}</span>

@@ -1,0 +1,190 @@
+
+
+BOOKITO STANDARD
+Rooms
+
+1 Month
+6 Months
+
+1 Year
+
+
+1-10 Rooms 
+
+
+Rs.2000
+
+Rs.10000
+
+Rs. 7500
+
+Rs.18000
+
+Rs. 12000
+
+11-20 Rooms
+
+
+Rs.3000
+
+Rs. 16000
+
+Rs. 12000
+
+Rs. 30000
+
+Rs. 25000
+
+21-30 Rooms
+
+
+Rs.4000
+
+Rs.22000
+
+Rs. 18000
+
+Rs.40000
+
+Rs. 35000
+
+30+ Rooms
+
+
+Rs.6000
+
+Rs.32000
+
+Rs. 28000
+
+Rs.60000
+
+Rs. 50000
+
+
+Rooms
+
+1 Month
+6 Months
+
+1 Year
+
+
+1-10 Rooms 
+
+
+Rs.3000
+
+Rs.16000
+
+Rs. 12000
+
+Rs.28000
+
+Rs.23000
+
+11-20 Rooms
+
+
+Rs.4400
+
+Rs. 24000
+
+Rs. 20000
+
+Rs. 45000
+
+Rs.40000
+
+21-30 Rooms
+
+
+Rs.6000
+
+Rs.32000
+
+Rs.28000
+
+Rs.60000
+
+Rs.55000
+
+30+ Rooms
+
+
+Rs.8400
+
+Rs.45000
+
+Rs. 41000
+
+Rs.85000
+
+Rs. 80000
+BOOKITO PREMIUM
+
+
+
+
+BOOKITO PRO
+
+Rooms
+
+1 Month
+6 Months
+
+1 Year
+
+
+1-10 Rooms 
+
+
+Rs.4000
+
+Rs.22000
+
+Rs.18000
+
+Rs.40000
+
+Rs.31000
+
+11-20 Rooms
+
+
+Rs.6000
+
+Rs. 32000
+
+Rs.28000
+
+Rs. 60000
+
+Rs.55000
+
+21-30 Rooms
+
+
+Rs.8400
+
+Rs.45000
+
+Rs.40000
+
+Rs.85000
+
+Rs.80000
+
+30+ Rooms
+
+
+Rs.11666
+
+Rs.85000
+
+Rs.80000
+
+Rs.120000
+
+Rs. 110000
+

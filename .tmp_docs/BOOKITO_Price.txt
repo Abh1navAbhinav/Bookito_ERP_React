@@ -1,0 +1,188 @@
+BOOKITO STANDARD
+Rooms
+
+6 Months
+1 Year
+
+1-10 Rooms 
+
+
+Rs.10000
+
+Rs.18000
+
+11-20 Rooms
+
+
+Rs. 16000
+
+Rs. 30000
+
+21-30 Rooms
+
+
+Rs.22000
+
+Rs.40000
+
+30+ Rooms
+
+
+Rs.32000
+
+Rs.60000
+
+Features
+	•	CRS (Central Reservation System)
+	•	Booking Engine
+	•	OTA Integration
+	•	Direct Booking
+	•	Travel Agent Booking
+	•	Guest Management
+	•	Inventory Management
+	•	Extra Bed Pricing
+	•	Meal Plan Management
+	•	Daily Rate Adjustment
+	•	Room Configurations
+	•	Channel Manager
+	•	Manage OTA platforms from a single platform
+	•	Travel Agent Integration
+
+
+BOOKITO PREMIUM
+Rooms
+
+6 Months
+1 Year
+
+1-10 Rooms 
+
+
+Rs.16000
+
+Rs.28000
+
+11-20 Rooms
+
+
+Rs. 24000
+
+Rs. 45000
+
+21-30 Rooms
+
+
+Rs.32000
+
+Rs.60000
+
+30+ Rooms
+
+
+Rs.45000
+
+Rs.85000
+
+Features
+CRS (Central Reservation System)
+	•	Booking Engine
+	•	OTA Integration
+	•	Direct Booking
+	•	Travel Agent Booking
+	•	Guest Management
+	•	Hold Room Facility
+Banquet Booking
+Inventory Management
+	•	Extra Bed Pricing
+	•	Meal Plan Management
+	•	Daily Rate Adjustment
+	•	Room Configurations
+	•	Event-Based Price Adjustment
+
+
+Channel Manager
+	•	Manage OTA platforms under a single platform
+Store Management
+	•	Purchase Order / Entry
+	•	Purchase Return
+	•	Sales
+	•	Outlet Sales
+	•	Department-wise Stock Issue
+	•	Sales Return
+
+
+Department Management
+KOT (Kitchen Order Ticket)
+	•	Instant Order Creation
+	•	Table / Room Linking
+	•	Direct Kitchen Communication
+	•	Item-wise Order Details
+	•	Multiple Orders Support
+	•	Edit or Cancel KOT
+	•	Billing Integration
+	•	Order Tracking
+Finance & Accounts
+	•	Cash / Bank Entry
+	•	Trial Balance
+	•	Profit and Loss Report
+
+Travel Agent Integration
+Multi-User Access Control
+Reports & Analytics
+
+
+
+
+
+
+
+
+
+
+
+
+BOOKITO PRO
+Rooms
+
+6 Months
+1 Year
+
+1-10 Rooms 
+
+
+Rs.22000
+
+Rs.40000
+
+11-20 Rooms
+
+
+Rs. 32000
+
+Rs. 60000
+
+21-30 Rooms
+
+
+Rs.45000
+
+Rs.85000
+
+30+ Rooms
+
+
+Rs.85000
+
+Rs.120000
+
+Features
+Includes Everything in PREMIUM, plus:
+	•	BAR 
+	•	Advanced Revenue Management
+	•	POS Integration
+	•	Accounting Integration
+	•	Multi-Property Management
+	•	Advanced Reports
+	•	Dedicated Support
+	•	API Access
+

@@ -534,43 +534,51 @@ export default function FinancePage() {
       {
         id: 'actions',
         header: 'Actions',
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            {paymentTab === 'active' ? (
-              <>
+        cell: ({ row }) => {
+          const isManager = currentRole === 'manager'
+          
+          return (
+            <div className="flex items-center gap-1">
+              {paymentTab === 'active' ? (
+                <>
+                  {!isManager && (
+                    <button 
+                      onClick={() => handleEditPayment(row.original)}
+                      className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600"
+                      title="Edit Payment"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => handleDownloadPaymentPDF(row.original)}
+                    className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600"
+                    title="Download PDF"
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
+                  {!isManager && (
+                    <button 
+                      onClick={() => handleDeletePayment(row.original.id)}
+                      className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                      title="Delete Payment"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </>
+              ) : (
                 <button 
-                  onClick={() => handleEditPayment(row.original)}
-                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600"
-                  title="Edit Payment"
+                  onClick={() => handleRestorePayment(row.original.id)}
+                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-green-50 hover:text-green-600"
+                  title="Restore Payment"
                 >
-                  <Edit className="h-4 w-4" />
+                  <RotateCcw className="h-4 w-4" />
                 </button>
-                <button 
-                  onClick={() => handleDownloadPaymentPDF(row.original)}
-                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600"
-                  title="Download PDF"
-                >
-                  <Download className="h-4 w-4" />
-                </button>
-                <button 
-                  onClick={() => handleDeletePayment(row.original.id)}
-                  className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                  title="Delete Payment"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </>
-            ) : (
-              <button 
-                onClick={() => handleRestorePayment(row.original.id)}
-                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-green-50 hover:text-green-600"
-                title="Restore Payment"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        ),
+              )}
+            </div>
+          )
+        },
       },
     ],
     [paymentTab]
@@ -1053,39 +1061,41 @@ export default function FinancePage() {
         />
       </div>
 
-      <div>
-        <div className="mb-3 flex items-center gap-4">
-          <h2 className="text-lg font-semibold text-surface-900">Expense Tracking</h2>
-          <div className="flex rounded-lg border border-surface-200 p-0.5 ml-4">
-            <button
-              onClick={() => setExpenseTab('active')}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                expenseTab === 'active'
-                  ? 'bg-primary-600 text-white shadow-sm'
-                  : 'text-surface-500 hover:text-surface-700'
-              }`}
-            >
-              All Expenses
-            </button>
-            <button
-              onClick={() => setExpenseTab('deleted')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                expenseTab === 'deleted'
-                  ? 'bg-red-600 text-white shadow-sm'
-                  : 'text-surface-500 hover:text-surface-700'
-              }`}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Trash
-            </button>
+      {currentRole === 'accountant' && (
+        <div>
+          <div className="mb-3 flex items-center gap-4">
+            <h2 className="text-lg font-semibold text-surface-900">Expense Tracking</h2>
+            <div className="flex rounded-lg border border-surface-200 p-0.5 ml-4">
+              <button
+                onClick={() => setExpenseTab('active')}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  expenseTab === 'active'
+                    ? 'bg-primary-600 text-white shadow-sm'
+                    : 'text-surface-500 hover:text-surface-700'
+                }`}
+              >
+                All Expenses
+              </button>
+              <button
+                onClick={() => setExpenseTab('deleted')}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  expenseTab === 'deleted'
+                    ? 'bg-red-600 text-white shadow-sm'
+                    : 'text-surface-500 hover:text-surface-700'
+                }`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Trash
+              </button>
+            </div>
           </div>
+          <DataTable
+            data={filteredExpenses}
+            columns={expenseColumns}
+            searchPlaceholder="Search expenses..."
+          />
         </div>
-        <DataTable
-          data={filteredExpenses}
-          columns={expenseColumns}
-          searchPlaceholder="Search expenses..."
-        />
-      </div>
+      )}
 
       {/* Add/Edit Expense Modal */}
       <Modal
