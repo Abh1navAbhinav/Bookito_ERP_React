@@ -35,7 +35,7 @@ const navItems = [
   { label: 'Properties', icon: Building2, path: '/properties', roles: ['manager', 'sales', 'crm'] },
   { label: 'Finance', icon: Wallet, path: '/finance', roles: ['manager', 'accountant'] },
   { label: 'Travel Agents', icon: Users, path: '/travel-agents', roles: ['manager', 'sales', 'crm'] },
-  { label: 'Trade Fairs', icon: CalendarDays, path: '/trade-fairs', roles: ['manager', 'sales'] },
+  { label: 'Trade Fairs', icon: CalendarDays, path: '/trade-fairs', roles: ['manager', 'sales', 'crm'] },
   { label: 'Pricing Plan', icon: CreditCard, path: '/pricing-plan', roles: ['manager'] },
   { label: 'Reports', icon: FileBarChart, path: '/reports', roles: ['manager', 'accountant'] },
   { label: 'Feature List', icon: Shield, path: '/admin/features', roles: ['manager'] },

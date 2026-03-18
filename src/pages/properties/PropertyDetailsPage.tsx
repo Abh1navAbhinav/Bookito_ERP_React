@@ -287,7 +287,7 @@ export default function PropertyDetailsPage() {
   }, [])
 
   const canAddVisit = currentRole === 'sales'
-  const canAddComment = currentRole === 'crm'
+  const canAddComment = currentRole === 'crm' || currentRole === 'sales'
 
   /* ─── navigation helpers ─── */
   const stateNode = useMemo(
