@@ -19,6 +19,9 @@ import {
   Star,
   GraduationCap,
   LogOut,
+  FileText,
+  Receipt,
+  PiggyBank,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -30,12 +33,25 @@ interface DemoUserInfo {
 }
 
 const navItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/', roles: ['manager', 'sales', 'accountant', 'crm'] },
+  // General Dashboard (Visible to manager, sales, crm)
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/', roles: ['manager', 'sales', 'crm'] },
+  
+  // Accountant Home (Their primary dashboard)
+  { label: 'Finance Dashboard', icon: LayoutDashboard, path: '/finance/dashboard', roles: ['accountant'] },
+
+  // Special Modules
   { label: 'Executive Deck', icon: UserCircle, path: '/executive-dashboard', roles: ['manager'] },
   { label: 'Properties', icon: Building2, path: '/properties', roles: ['manager', 'sales', 'crm'] },
-  { label: 'Finance', icon: Wallet, path: '/finance', roles: ['manager', 'accountant'] },
+  { label: 'Finance', icon: Wallet, path: '/finance', roles: ['manager'] },
   { label: 'Travel Agents', icon: Users, path: '/travel-agents', roles: ['manager', 'sales', 'crm'] },
   { label: 'Trade Fairs', icon: CalendarDays, path: '/trade-fairs', roles: ['manager', 'sales', 'crm'] },
+  
+  // Accountant Operations
+  { label: 'Quotations', icon: FileText, path: '/finance/quotations', roles: ['accountant'] },
+  { label: 'Bills & Payments', icon: Receipt, path: '/finance/invoices', roles: ['accountant'] },
+  { label: 'Expenses', icon: Wallet, path: '/finance/expenses', roles: ['accountant'] },
+  { label: 'Taxation', icon: PiggyBank, path: '/finance/taxation', roles: ['accountant'] },
+
   { label: 'Pricing Plan', icon: CreditCard, path: '/pricing-plan', roles: ['manager', 'crm', 'sales', 'accountant'] },
   { label: 'Reports', icon: FileBarChart, path: '/reports', roles: ['manager', 'accountant'] },
   { label: 'Feature List', icon: Shield, path: '/admin/features', roles: ['manager', 'sales', 'crm'] },
@@ -45,14 +61,14 @@ const navItems = [
   { label: 'Employees', icon: Users, path: '/hr/employees', roles: ['hr'] },
   { label: 'Attendance', icon: CalendarDays, path: '/hr/attendance-v2', roles: ['hr'] },
   { label: 'Leaves', icon: IdCard, path: '/hr/leaves', roles: ['hr'] },
-  { label: 'Payroll', icon: DollarSign, path: '/hr/payroll', roles: ['hr'] },
+  { label: 'Payroll', icon: DollarSign, path: '/hr/payroll', roles: ['hr'] }, // Keep separate for HR order
   { label: 'Recruitment', icon: Briefcase, path: '/hr/recruitment', roles: ['hr'] },
   { label: 'Performance', icon: Star, path: '/hr/performance', roles: ['hr'] },
   { label: 'Training', icon: GraduationCap, path: '/hr/training', roles: ['hr'] },
   { label: 'Exit Management', icon: LogOut, path: '/hr/exit', roles: ['hr'] },
   { label: 'Roles & Permissions', icon: Shield, path: '/hr/users', roles: ['hr'] },
   { label: 'Reports', icon: FileBarChart, path: '/hr/reports', roles: ['hr'] },
-  
+
   // ESS (Visible to everyone)
   { label: 'My Profile', icon: UserCircle, path: '/hr/ess' },
 ]

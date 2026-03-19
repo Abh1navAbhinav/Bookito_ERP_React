@@ -28,6 +28,7 @@ interface DataTableProps<T> {
   searchPlaceholder?: string
   searchColumn?: string
   pageSize?: number
+  onRowClick?: (data: T) => void
 }
 
 export function DataTable<T>({
@@ -36,6 +37,7 @@ export function DataTable<T>({
   searchPlaceholder = 'Search...',
   searchColumn,
   pageSize = 10,
+  onRowClick,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
@@ -186,7 +188,11 @@ export function DataTable<T>({
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="transition-colors hover:bg-surface-50"
+                    onClick={() => onRowClick?.(row.original)}
+                    className={cn(
+                      'transition-colors hover:bg-surface-50',
+                      onRowClick && 'cursor-pointer active:bg-surface-100'
+                    )}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td

@@ -29,6 +29,14 @@ import EmployeeSelfServicePage from './pages/hr/ESS/EmployeeSelfServicePage'
 import HrReportsPage from './pages/hr/HrReportsPage'
 import LoginPage from './pages/auth/LoginPage'
 
+// New Finance Pages
+import FinanceDashboard from './pages/finance/FinanceDashboard'
+import QuotationsPage from './pages/finance/QuotationsPage'
+import InvoicesPage from './pages/finance/InvoicesPage'
+import ExpensesPage from './pages/finance/ExpensesPage'
+import VendorsPage from './pages/finance/VendorsPage'
+import TaxationPage from './pages/finance/TaxationPage'
+
 function App() {
   return (
     <BrowserRouter>
@@ -40,6 +48,12 @@ function App() {
           <Route path="/properties" element={<PropertiesPage />} />
           <Route path="/properties/:id" element={<PropertyDetailsPage />} />
           <Route path="/finance" element={<FinancePage />} />
+          <Route path="/finance/dashboard" element={<FinanceDashboard />} />
+          <Route path="/finance/quotations" element={<QuotationsPage />} />
+          <Route path="/finance/invoices" element={<InvoicesPage />} />
+          <Route path="/finance/expenses" element={<ExpensesPage />} />
+          <Route path="/finance/vendors" element={<VendorsPage />} />
+          <Route path="/finance/taxation" element={<TaxationPage />} />
           <Route path="/travel-agents" element={<TravelAgentsPage />} />
           <Route path="/travel-agents/:id" element={<TravelAgentDetailsPage />} />
           <Route path="/trade-fairs" element={<TradeFairsPage />} />
