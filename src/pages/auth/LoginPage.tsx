@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UserCircle2, Briefcase, DollarSign, Headphones, IdCard } from 'lucide-react'
 import { Button } from '@/components/FormElements'
+import { SelfieCaptureModal } from '@/components/modals/SelfieCaptureModal'
 
 type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
 
@@ -22,21 +24,21 @@ const demoUsers: DemoUser[] = [
   },
   {
     id: 'sales',
-    label: 'Sales Executive',
+    label: 'Sales Executive (John Doe)',
     description: 'Focus on properties, visits and closings.',
     icon: Briefcase,
     defaultRoute: '/properties',
   },
   {
     id: 'accountant',
-    label: 'Accountant',
+    label: 'Accountant (Sarah Jain)',
     description: 'Access to finance, invoices and collections.',
     icon: DollarSign,
     defaultRoute: '/finance',
   },
   {
     id: 'crm',
-    label: 'CRM (Customer Relations)',
+    label: 'CRM (Raveena)',
     description: 'Track follow‑ups, comments and relationships.',
     icon: Headphones,
     defaultRoute: '/properties',
@@ -54,13 +56,17 @@ export default function LoginPage() {
   const navigate = useNavigate()
 
   const handleLogin = (user: DemoUser) => {
-    // For now we just stash the role; real auth can replace this later.
+    performLogin(user)
+  }
+
+  const performLogin = (user: DemoUser) => {
     window.localStorage.setItem(
       'bookito_demo_user',
       JSON.stringify({ role: user.id, label: user.label })
     )
     navigate(user.defaultRoute)
   }
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface-50 px-4">
@@ -111,4 +117,5 @@ export default function LoginPage() {
     </div>
   )
 }
+
 

@@ -22,6 +22,7 @@ import {
   FileText,
   Receipt,
   PiggyBank,
+  Camera,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -35,6 +36,7 @@ interface DemoUserInfo {
 const navItems = [
   // General Dashboard (Visible to manager, sales, crm)
   { label: 'Dashboard', icon: LayoutDashboard, path: '/', roles: ['manager', 'sales', 'crm'] },
+  { label: 'Mark Attendance', icon: Camera, path: '/attendance', roles: ['sales'] },
   
   // Accountant Home (Their primary dashboard)
   { label: 'Finance Dashboard', icon: LayoutDashboard, path: '/finance/dashboard', roles: ['accountant'] },
@@ -56,10 +58,10 @@ const navItems = [
   { label: 'Reports', icon: FileBarChart, path: '/reports', roles: ['manager', 'accountant'] },
   { label: 'Feature List', icon: Shield, path: '/admin/features', roles: ['manager', 'sales', 'crm'] },
   
-  // HR Specific Modules (Visible to HR login only)
+  // HR Specific Modules (Visible to HR login only, but Attendance also to Manager)
   { label: 'Dashboard', icon: LayoutDashboard, path: '/hr/dashboard', roles: ['hr'] },
   { label: 'Employees', icon: Users, path: '/hr/employees', roles: ['hr'] },
-  { label: 'Attendance', icon: CalendarDays, path: '/hr/attendance-v2', roles: ['hr'] },
+  { label: 'Attendance Register', icon: CalendarDays, path: '/hr/attendance', roles: ['hr', 'manager'] },
   { label: 'Leaves', icon: IdCard, path: '/hr/leaves', roles: ['hr'] },
   { label: 'Payroll', icon: DollarSign, path: '/hr/payroll', roles: ['hr'] }, // Keep separate for HR order
   { label: 'Recruitment', icon: Briefcase, path: '/hr/recruitment', roles: ['hr'] },

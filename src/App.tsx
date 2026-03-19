@@ -28,6 +28,7 @@ import ExitManagementPage from './pages/hr/Exit/ExitManagementPage'
 import EmployeeSelfServicePage from './pages/hr/ESS/EmployeeSelfServicePage'
 import HrReportsPage from './pages/hr/HrReportsPage'
 import LoginPage from './pages/auth/LoginPage'
+import SalesAttendancePage from './pages/sales/SalesAttendancePage'
 
 // New Finance Pages
 import FinanceDashboard from './pages/finance/FinanceDashboard'
@@ -76,6 +77,7 @@ function App() {
           <Route path="/hr/reports" element={<HrReportsPage />} />
           <Route path="/hr/users" element={<HrUsersPage />} />
           <Route path="/hr/attendance" element={<HrAttendancePage />} />
+          <Route path="/attendance" element={<SalesAttendancePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

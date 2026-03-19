@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Bell, LogOut, User, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { notifications as mockNotifications } from '@/data/mockData'
+import { SelfieCaptureModal } from '@/components/modals/SelfieCaptureModal'
 
 type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm'
 
@@ -64,6 +65,15 @@ export function Topbar() {
       .join('')
       .slice(0, 2)
       .toUpperCase() || 'AD'
+
+  const handleLogoutClick = () => {
+    performLogout()
+  }
+
+  const performLogout = () => {
+    window.localStorage.removeItem('bookito_demo_user')
+    navigate('/login')
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-surface-200 bg-white/80 px-6 backdrop-blur-md">
@@ -170,10 +180,7 @@ export function Topbar() {
               <div className="my-1 border-t border-surface-200" />
               <button
                 className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50"
-                onClick={() => {
-                  window.localStorage.removeItem('bookito_demo_user')
-                  navigate('/login')
-                }}
+                onClick={handleLogoutClick}
               >
                 <LogOut className="h-4 w-4" />
                 Logout
@@ -182,6 +189,8 @@ export function Topbar() {
           )}
         </div>
       </div>
+
     </header>
   )
 }
+

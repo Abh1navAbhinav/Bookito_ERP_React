@@ -57,8 +57,19 @@ export function PageBreadcrumb() {
   // Skip routes that manage their own breadcrumbs
   if (shouldSkip(pathname)) return null
 
-  const items = routeBreadcrumbs[pathname]
+  let items = routeBreadcrumbs[pathname]
   if (!items) return null
+
+  // Role-based overrides for breadcrumbs
+  try {
+    const rawUser = window.localStorage.getItem('bookito_demo_user')
+    if (rawUser) {
+      const user = JSON.parse(rawUser)
+      if (user.role === 'manager' && pathname === '/hr/attendance') {
+        items = [{ label: 'Manager' }, { label: 'Attendance' }]
+      }
+    }
+  } catch (e) { /* ignore */ }
 
   return (
     <div className="mb-4">
