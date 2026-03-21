@@ -1,9 +1,16 @@
-import { useState, useMemo, useEffect } from 'react'
-import { Plus, LogOut, FileCheck, ClipboardList, TrendingDown, Clock, UserMinus, MoreVertical, Trash2, RotateCcw } from 'lucide-react'
-import { Button, FormField, Input, Select } from '@/components/FormElements'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { LogOut, FileCheck, ClipboardList, TrendingDown, Clock, UserMinus, MoreVertical, Trash2, RotateCcw } from 'lucide-react'
+import { Button } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
 import { differenceInDays, parseISO } from 'date-fns'
+import {
+  fetchDeletedExitRequests,
+  fetchExitRequests,
+  restoreExitRequest,
+  softDeleteExitRequest,
+  type ApiExitRequest,
+} from '@/lib/hrApi'
 
 interface ExitRequest {
   id: string
@@ -19,44 +26,44 @@ interface DeletedExitRequest extends ExitRequest {
   deletedAt: string
 }
 
-const initialExitRequests: ExitRequest[] = [
-  {
-    id: '1',
-    employeeName: 'Sarah Miller',
-    employeeId: 'EMP042',
-    resignationDate: '2026-03-01',
-    lastWorkingDay: '2026-03-31',
-    status: 'Approved',
-    reason: 'Better opportunity'
+function mapExit(r: ApiExitRequest): ExitRequest {
+  return {
+    id: r.id,
+    employeeName: r.employee_name,
+    employeeId: r.employee_code,
+    resignationDate: r.resignation_date,
+    lastWorkingDay: r.last_working_day,
+    status: r.status as ExitRequest['status'],
+    reason: r.reason,
   }
-]
+}
+
+function mapDeleted(r: ApiExitRequest): DeletedExitRequest {
+  return {
+    ...mapExit(r),
+    deletedAt: r.deleted_at || new Date().toISOString(),
+  }
+}
 
 export default function ExitManagementPage() {
-  const [exits, setExits] = useState<ExitRequest[]>(() => {
-    const saved = localStorage.getItem('bookito_exit_requests')
-    return saved ? JSON.parse(saved) : initialExitRequests
-  })
-  
-  const [deletedExits, setDeletedExits] = useState<DeletedExitRequest[]>(() => {
-    const saved = localStorage.getItem('bookito_deleted_exit_requests')
-    return saved ? JSON.parse(saved) : []
-  })
-
+  const [exits, setExits] = useState<ExitRequest[]>([])
+  const [deletedExits, setDeletedExits] = useState<DeletedExitRequest[]>([])
   const [showTrash, setShowTrash] = useState(false)
 
-  useEffect(() => {
-    localStorage.setItem('bookito_exit_requests', JSON.stringify(exits))
-  }, [exits])
-
-  useEffect(() => {
-    localStorage.setItem('bookito_deleted_exit_requests', JSON.stringify(deletedExits))
-  }, [deletedExits])
-
-  useEffect(() => {
-    // Purge logic: Auto-delete after 30 days
-    const now = new Date()
-    setDeletedExits(prev => prev.filter(e => differenceInDays(now, parseISO(e.deletedAt)) < 30))
+  const load = useCallback(async () => {
+    try {
+      const [active, del] = await Promise.all([fetchExitRequests(), fetchDeletedExitRequests()])
+      setExits(active.map(mapExit))
+      setDeletedExits(del.map(mapDeleted))
+    } catch {
+      setExits([])
+      setDeletedExits([])
+    }
   }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
 
   const stats = [
     { label: 'Pending Exits', value: exits.filter(e => e.status === 'Pending').length.toString(), icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
@@ -66,16 +73,11 @@ export default function ExitManagementPage() {
   ]
 
   const handleDelete = (exit: ExitRequest) => {
-    const deletedAt = new Date().toISOString()
-    const entry: DeletedExitRequest = { ...exit, deletedAt }
-    setExits(prev => prev.filter(e => e.id !== exit.id))
-    setDeletedExits(prev => [entry, ...prev])
+    void softDeleteExitRequest(exit.id).then(() => load())
   }
 
   const handleRestore = (exit: DeletedExitRequest) => {
-    const { deletedAt, ...rest } = exit
-    setDeletedExits(prev => prev.filter(e => e.id !== exit.id))
-    setExits(prev => [rest, ...prev])
+    void restoreExitRequest(exit.id).then(() => load())
   }
 
   const getRemainingDays = (deletedAt: string) => {
@@ -135,7 +137,7 @@ export default function ExitManagementPage() {
         </div>
       )
     }
-  ], [exits])
+  ], [exits, showTrash])
 
   const deletedColumns: ColumnDef<DeletedExitRequest, any>[] = useMemo(() => [
     {
@@ -175,7 +177,7 @@ export default function ExitManagementPage() {
         </div>
       )
     }
-  ], [deletedExits])
+  ], [deletedExits, showTrash])
 
   return (
     <div className="space-y-6">

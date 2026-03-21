@@ -1,121 +1,82 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { UserCircle2, Briefcase, DollarSign, Headphones, IdCard } from 'lucide-react'
-import { Button } from '@/components/FormElements'
-import { SelfieCaptureModal } from '@/components/modals/SelfieCaptureModal'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { Button, FormField, Input } from '@/components/FormElements'
+import { loginWithEmailPassword } from '@/lib/auth'
 
-type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
-
-interface DemoUser {
-  id: DemoRole
-  label: string
-  description: string
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-  defaultRoute: string
+/** After login, everyone lands on the main dashboard (`/`). Employee role is redirected to `/hr/ess` by `DashboardLayout`. */
+function defaultRouteAfterLogin(): string {
+  return '/'
 }
-
-const demoUsers: DemoUser[] = [
-  {
-    id: 'manager',
-    label: 'Manager (Admin)',
-    description: 'Full access to dashboards, properties and settings.',
-    icon: UserCircle2,
-    defaultRoute: '/',
-  },
-  {
-    id: 'sales',
-    label: 'Sales Executive (John Doe)',
-    description: 'Focus on properties, visits and closings.',
-    icon: Briefcase,
-    defaultRoute: '/properties',
-  },
-  {
-    id: 'accountant',
-    label: 'Accountant (Sarah Jain)',
-    description: 'Access to finance, invoices and collections.',
-    icon: DollarSign,
-    defaultRoute: '/finance',
-  },
-  {
-    id: 'crm',
-    label: 'CRM (Raveena)',
-    description: 'Track follow‑ups, comments and relationships.',
-    icon: Headphones,
-    defaultRoute: '/properties',
-  },
-  {
-    id: 'hr',
-    label: 'HR (People Ops)',
-    description: 'Comprehensive People Operations dashboard for management and HR teams.',
-    icon: IdCard,
-    defaultRoute: '/hr/dashboard',
-  },
-]
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as { from?: string } | null)?.from ?? null
 
-  const handleLogin = (user: DemoUser) => {
-    performLogin(user)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    void (async () => {
+      try {
+        setError(null)
+        setLoading(true)
+        const user = await loginWithEmailPassword(email, password)
+        navigate(from || defaultRouteAfterLogin(), { replace: true })
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Login failed')
+      } finally {
+        setLoading(false)
+      }
+    })()
   }
-
-  const performLogin = (user: DemoUser) => {
-    window.localStorage.setItem(
-      'bookito_demo_user',
-      JSON.stringify({ role: user.id, label: user.label })
-    )
-    navigate(user.defaultRoute)
-  }
-
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface-50 px-4">
-      <div className="w-full max-w-4xl rounded-2xl border border-surface-200 bg-white p-8 shadow-xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-surface-900">
-            Bookito ERP — Demo Login
-          </h1>
-          <p className="mt-2 text-sm text-surface-500">
-            Choose a role to explore the app. These are demo logins; we&apos;ll connect real
-            authentication and permissions later.
+      <div className="w-full max-w-md rounded-2xl border border-surface-200 bg-white p-8 shadow-xl">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <img
+            src="/Logo.png"
+            alt="Bookito"
+            className="mb-6 h-32 w-auto max-w-full object-contain"
+          />
+          <h1 className="sr-only">Bookito ERP — Sign in</h1>
+          <p className="text-sm text-surface-500">
+            Sign in with the email and password issued by your HR administrator.
           </p>
+          {error && <p className="mt-4 w-full rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {demoUsers.map((user) => {
-            const Icon = user.icon
-            return (
-              <button
-                key={user.id}
-                onClick={() => handleLogin(user)}
-                className="group flex flex-col items-start gap-3 rounded-xl border border-surface-200 bg-surface-50 p-5 text-left transition-all hover:border-primary-300 hover:bg-primary-50 hover:shadow-md"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-surface-900 group-hover:text-primary-700">
-                      {user.label}
-                    </p>
-                    <p className="text-xs text-surface-500">{user.description}</p>
-                  </div>
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="mt-1"
-                  type="button"
-                >
-                  Login as {user.label}
-                </Button>
-              </button>
-            )
-          })}
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FormField label="Email">
+            <Input
+              type="email"
+              autoComplete="username"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@company.com"
+              required
+            />
+          </FormField>
+          <FormField label="Password">
+            <Input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={8}
+            />
+          </FormField>
+          <Button type="submit" className="mt-2 w-full" disabled={loading}>
+            {loading ? 'Signing in…' : 'Sign in'}
+          </Button>
+        </form>
       </div>
     </div>
   )
 }
-
-

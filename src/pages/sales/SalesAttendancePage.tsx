@@ -1,7 +1,13 @@
-import { useState, useEffect } from 'react'
-import { CalendarDays, Camera, Clock, CheckCircle2 } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Camera, Clock, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/FormElements'
 import { SelfieCaptureModal } from '@/components/modals/SelfieCaptureModal'
+import {
+  fetchSalesAttendanceForDate,
+  salesCheckIn,
+  salesCheckOut,
+  type SalesAttendanceRecord,
+} from '@/lib/salesApi'
 
 interface AttendanceEntry {
   id: string
@@ -16,85 +22,109 @@ interface AttendanceEntry {
   checkOutLocation?: { lat: number; lng: number; name?: string } | null
 }
 
+function mapApiToEntry(r: SalesAttendanceRecord): AttendanceEntry {
+  return {
+    id: r.id,
+    employeeName: r.user_name,
+    date: r.date,
+    status: 'present',
+    checkIn: r.check_in_time ?? undefined,
+    checkOut: r.check_out_time ?? undefined,
+    checkInSelfie: r.check_in_selfie || undefined,
+    checkOutSelfie: r.check_out_selfie || undefined,
+    checkInLocation: r.check_in_location ?? undefined,
+    checkOutLocation: r.check_out_location ?? undefined,
+  }
+}
+
 export default function SalesAttendancePage() {
   const [currentUser, setCurrentUser] = useState<{ role: string; label: string } | null>(null)
   const [showSelfieModal, setShowSelfieModal] = useState(false)
   const [captureType, setCaptureType] = useState<'in' | 'out'>('in')
   const [todayRecord, setTodayRecord] = useState<AttendanceEntry | null>(null)
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const today = new Date().toISOString().split('T')[0]
 
-  useEffect(() => {
+  const loadToday = useCallback(async () => {
+    setLoading(true)
+    setError(null)
     try {
       const raw = window.localStorage.getItem('bookito_demo_user')
       if (raw) setCurrentUser(JSON.parse(raw))
-      
-      const rawEntries = window.localStorage.getItem('bookito_hr_attendance')
-      if (rawEntries && raw) {
-        const entries = JSON.parse(rawEntries) as AttendanceEntry[]
-        const user = JSON.parse(raw)
-        const record = entries.find(e => e.employeeName === user?.label && e.date === today)
-        if (record) setTodayRecord(record)
-      }
-    } catch { /* ignore */ }
+      const record = await fetchSalesAttendanceForDate(today)
+      setTodayRecord(record ? mapApiToEntry(record) : null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load attendance')
+      setTodayRecord(null)
+    } finally {
+      setLoading(false)
+    }
   }, [today])
 
-  const handleCapture = ({ image, location }: { image: string; location: { lat: number; lng: number; name?: string } | null }) => {
+  useEffect(() => {
+    loadToday()
+  }, [loadToday])
+
+  const handleCapture = async ({
+    image,
+    location,
+  }: {
+    image: string
+    location: { lat: number; lng: number; name?: string } | null
+  }) => {
     if (!currentUser) return
 
-    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    
+    const now = new Date()
+    const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:00`
+    const locPayload = location
+      ? { lat: location.lat, lng: location.lng, ...(location.name ? { name: location.name } : {}) }
+      : null
+    setSaving(true)
+    setError(null)
     try {
-      const rawEntries = window.localStorage.getItem('bookito_hr_attendance')
-      let entries = rawEntries ? JSON.parse(rawEntries) : []
-      const existingIdx = entries.findIndex((e: any) => e.employeeName === currentUser.label && e.date === today)
-      
-      let updatedRecord: AttendanceEntry
-      
       if (captureType === 'in') {
-        updatedRecord = {
-          id: existingIdx >= 0 ? entries[existingIdx].id : `${Date.now()}`,
-          employeeName: currentUser.label,
-          date: today,
-          status: 'present',
-          checkIn: nowTime,
-          checkInSelfie: image,
-          checkInLocation: location,
-          checkOut: existingIdx >= 0 ? entries[existingIdx].checkOut : undefined,
-          checkOutSelfie: existingIdx >= 0 ? entries[existingIdx].checkOutSelfie : undefined,
-          checkOutLocation: existingIdx >= 0 ? entries[existingIdx].checkOutLocation : undefined,
-        }
+        const created = await salesCheckIn(today, nowTime, {
+          check_in_selfie: image,
+          check_in_location: locPayload,
+        })
+        setTodayRecord(mapApiToEntry(created))
       } else {
-        updatedRecord = {
-          ...(existingIdx >= 0 ? entries[existingIdx] : {
-            id: `${Date.now()}`,
-            employeeName: currentUser.label,
-            date: today,
-            status: 'present',
-          }),
-          checkOut: nowTime,
-          checkOutSelfie: image,
-          checkOutLocation: location,
-        }
+        if (!todayRecord?.id) return
+        const updated = await salesCheckOut(todayRecord.id, nowTime, {
+          check_out_selfie: image,
+          check_out_location: locPayload,
+        })
+        setTodayRecord(mapApiToEntry(updated))
       }
-      
-      if (existingIdx >= 0) {
-        entries[existingIdx] = updatedRecord
-      } else {
-        entries.push(updatedRecord)
-      }
-      
-      window.localStorage.setItem('bookito_hr_attendance', JSON.stringify(entries))
-      setTodayRecord(updatedRecord)
-      setMessage({ 
-        text: `Successfully marked ${captureType === 'in' ? 'Check-In' : 'Check-Out'} at ${nowTime}`, 
-        type: 'success' 
+      setMessage({
+        text: `Successfully marked ${captureType === 'in' ? 'Check-In' : 'Check-Out'} at ${nowTime}`,
+        type: 'success',
       })
       setShowSelfieModal(false)
-    } catch (err) {
-      console.error('Error saving attendance:', err)
+    } catch (e) {
+      console.error('Error saving attendance:', e)
+      setError(e instanceof Error ? e.message : 'Failed to save attendance')
+    } finally {
+      setSaving(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-surface-900 tracking-tight">Daily Attendance</h1>
+          <p className="text-surface-500 mt-2">Mark your daily check-in and check-out with uniform verification.</p>
+        </div>
+        <div className="rounded-2xl border-2 border-surface-200 bg-surface-50 p-12 text-center text-surface-500">
+          Loading today’s attendance…
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -103,6 +133,12 @@ export default function SalesAttendancePage() {
         <h1 className="text-3xl font-bold text-surface-900 tracking-tight">Daily Attendance</h1>
         <p className="text-surface-500 mt-2">Mark your daily check-in and check-out with uniform verification.</p>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-700 border border-red-200 flex items-center gap-3">
+          <span className="text-sm font-semibold">{error}</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Punch In Card */}
@@ -141,13 +177,14 @@ export default function SalesAttendancePage() {
           ) : (
             <Button 
               className="w-full h-12 text-base shadow-lg shadow-primary-500/10" 
+              disabled={saving}
               onClick={() => {
                 setCaptureType('in')
                 setShowSelfieModal(true)
               }}
             >
               <Camera className="mr-2 h-5 w-5" />
-              Punch In Now
+              {saving ? 'Saving…' : 'Punch In Now'}
             </Button>
           )}
         </div>
@@ -186,7 +223,7 @@ export default function SalesAttendancePage() {
           ) : (
             <Button 
               variant="secondary"
-              disabled={!todayRecord?.checkIn}
+              disabled={!todayRecord?.checkIn || saving}
               className="w-full h-12 text-base" 
               onClick={() => {
                 setCaptureType('out')
@@ -194,7 +231,7 @@ export default function SalesAttendancePage() {
               }}
             >
               <Camera className="mr-2 h-5 w-5" />
-              Punch Out Now
+              {saving ? 'Saving…' : 'Punch Out Now'}
             </Button>
           )}
         </div>

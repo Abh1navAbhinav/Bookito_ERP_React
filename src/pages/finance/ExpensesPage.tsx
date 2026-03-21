@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
 import {
   Wallet,
@@ -16,14 +16,63 @@ import { ExpenseDocument } from '@/components/ExpenseDocument'
 import { DataTable } from '@/components/DataTable'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Button, Modal, FormField, Input, Select } from '@/components/FormElements'
-import {
-  expenses,
-  type ExpenseRecord,
-} from '@/data/mockData'
 import { formatCurrency } from '@/lib/utils'
+import {
+  createExpense,
+  fetchDeletedExpenses,
+  fetchExpenses,
+  patchExpense,
+  restoreExpense,
+  softDeleteExpense,
+} from '@/lib/financeApi'
+
+export interface ExpenseRecord {
+  id: string
+  category: string
+  description: string
+  amount: number
+  date: string
+  isDeleted?: boolean
+  deletedAt?: string
+}
 
 export default function ExpensesPage() {
-  const [localExpenses, setLocalExpenses] = useState<ExpenseRecord[]>(expenses)
+  const [localExpenses, setLocalExpenses] = useState<ExpenseRecord[]>([])
+
+  const mapExpense = (e: {
+    id: string
+    category: string
+    description: string
+    amount: string
+    date: string
+    is_deleted?: boolean
+    deleted_at?: string | null
+  }): ExpenseRecord => ({
+    id: e.id,
+    category: e.category,
+    description: e.description,
+    amount: Number(e.amount),
+    date: e.date,
+    isDeleted: !!e.is_deleted,
+    deletedAt: e.deleted_at ?? undefined,
+  })
+
+  const loadExpenses = useCallback(async () => {
+    try {
+      const [active, deleted] = await Promise.all([fetchExpenses(), fetchDeletedExpenses()])
+      const mapped = [
+        ...active.map((e) => mapExpense(e)),
+        ...deleted.map((e) => mapExpense({ ...e, is_deleted: true })),
+      ]
+      setLocalExpenses(mapped)
+    } catch {
+      setLocalExpenses([])
+    }
+  }, [])
+
+  useEffect(() => {
+    loadExpenses()
+  }, [loadExpenses])
   const [expenseTab, setExpenseTab] = useState<'active' | 'deleted'>('active')
   const [showExpenseModal, setShowExpenseModal] = useState(false)
   const [isEditingExpense, setIsEditingExpense] = useState(false)
@@ -53,15 +102,11 @@ export default function ExpensesPage() {
   }
 
   const handleDeleteExpense = (id: string) => {
-    setLocalExpenses(prev => prev.map(e => 
-      e.id === id ? { ...e, isDeleted: true, deletedAt: new Date().toISOString() } : e
-    ))
+    void softDeleteExpense(id).then(() => loadExpenses())
   }
 
   const handleRestoreExpense = (id: string) => {
-    setLocalExpenses(prev => prev.map(e => 
-      e.id === id ? { ...e, isDeleted: false, deletedAt: undefined } : e
-    ))
+    void restoreExpense(id).then(() => loadExpenses())
   }
 
   const handleEditExpense = (record: ExpenseRecord) => {
@@ -77,19 +122,23 @@ export default function ExpensesPage() {
   }
 
   const handleSaveExpense = () => {
-    if (isEditingExpense && currentExpenseId) {
-      setLocalExpenses(prev => prev.map(e => 
-        e.id === currentExpenseId ? { ...e, ...expenseData } : e
-      ))
-    } else {
-      const newExpense: ExpenseRecord = {
-        id: `e-${Date.now()}`,
-        ...expenseData
-      }
-      setLocalExpenses(prev => [newExpense, ...prev])
+    const body = {
+      category: expenseData.category,
+      description: expenseData.description,
+      amount: expenseData.amount,
+      date: expenseData.date,
     }
-    setShowExpenseModal(false)
-    setIsEditingExpense(false)
+    const run = async () => {
+      if (isEditingExpense && currentExpenseId) {
+        await patchExpense(currentExpenseId, body)
+      } else {
+        await createExpense({ id: `exp-${Date.now()}`, ...body })
+      }
+      await loadExpenses()
+      setShowExpenseModal(false)
+      setIsEditingExpense(false)
+    }
+    void run()
   }
 
   const getRemainingDays = (deletedAt?: string) => {

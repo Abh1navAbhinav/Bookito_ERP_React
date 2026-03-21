@@ -1,11 +1,36 @@
 import { useEffect } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { PageBreadcrumb } from '@/components/PageBreadcrumb'
 
 export function DashboardLayout() {
   const location = useLocation()
+  const navigate = useNavigate()
+
+  // Require auth: redirect to login if no access token
+  useEffect(() => {
+    const token = window.localStorage.getItem('bookito_access_token')
+    if (!token && location.pathname !== '/login') {
+      navigate('/login', { replace: true, state: { from: location.pathname } })
+    }
+  }, [location.pathname, navigate])
+
+  // Employee (ESS) demo: only self-service area
+  useEffect(() => {
+    const token = window.localStorage.getItem('bookito_access_token')
+    if (!token) return
+    try {
+      const raw = window.localStorage.getItem('bookito_demo_user')
+      if (!raw) return
+      const u = JSON.parse(raw) as { role?: string }
+      if (u.role === 'employee' && !location.pathname.startsWith('/hr/ess')) {
+        navigate('/hr/ess', { replace: true })
+      }
+    } catch {
+      // ignore
+    }
+  }, [location.pathname, navigate])
 
   // Scroll to top on route change without blocking rendering
   useEffect(() => {

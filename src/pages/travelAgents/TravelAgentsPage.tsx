@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Users, Plus, RotateCcw, Trash2, Eye, Edit } from 'lucide-react'
@@ -6,16 +6,28 @@ import { DataTable } from '@/components/DataTable'
 import { Breadcrumb, type BreadcrumbItem } from '@/components/Breadcrumb'
 import { FolderNavigator } from '@/components/FolderNavigator'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
-import { Button, Modal, FormField, Input, Select } from '@/components/FormElements'
-import { locationHierarchy, travelAgents, type TravelAgent } from '@/data/mockData'
+import { Button } from '@/components/FormElements'
 import { AddAgentModal } from '@/components/modals/AddAgentModal'
+import { fetchConfig, type LocationNode } from '@/lib/configApi'
+import {
+  fetchTravelAgents,
+  fetchDeletedTravelAgents,
+  createTravelAgent,
+  updateTravelAgent,
+  softDeleteTravelAgent,
+  restoreTravelAgent,
+  type TravelAgent,
+} from '@/lib/partnersApi'
 
 type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm'
 
 export default function TravelAgentsPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [localAgents, setLocalAgents] = useState<TravelAgent[]>(travelAgents)
+  const [localAgents, setLocalAgents] = useState<TravelAgent[]>([])
+  const [deletedAgents, setDeletedAgents] = useState<TravelAgent[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [path, setPath] = useState<string[]>([])
   const [pathLabels, setPathLabels] = useState<string[]>([])
   const [tab, setTab] = useState<'active' | 'deleted'>('active')
@@ -23,6 +35,13 @@ export default function TravelAgentsPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingAgent, setEditingAgent] = useState<TravelAgent | null>(null)
   const [currentRole, setCurrentRole] = useState<DemoRole | null>(null)
+  const [config, setConfig] = useState<{ location_hierarchy: LocationNode[] } | null>(null)
+
+  const locationHierarchy = config?.location_hierarchy ?? []
+
+  useEffect(() => {
+    fetchConfig().then(setConfig).catch(() => {})
+  }, [])
 
   const emptyForm = {
     agentName: '',
@@ -35,6 +54,26 @@ export default function TravelAgentsPage() {
   }
   const [createForm, setCreateForm] = useState(emptyForm)
   const [editForm, setEditForm] = useState(emptyForm)
+
+  const loadAgents = useCallback(async () => {
+    setError(null)
+    try {
+      const [active, deleted] = await Promise.all([
+        fetchTravelAgents(),
+        fetchDeletedTravelAgents(),
+      ])
+      setLocalAgents(active)
+      setDeletedAgents(deleted)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load agents')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadAgents()
+  }, [loadAgents])
 
   useEffect(() => {
     try {
@@ -94,35 +133,37 @@ export default function TravelAgentsPage() {
     return Math.max(0, 30 - days)
   }
 
-  const handleDelete = (id: string) => {
-    setLocalAgents(prev => prev.map(a => 
-      a.id === id ? { ...a, isDeleted: true, deletedAt: new Date().toISOString() } : a
-    ))
+  const handleDelete = async (id: string) => {
+    setError(null)
+    try {
+      await softDeleteTravelAgent(id)
+      await loadAgents()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete agent')
+    }
   }
 
-  const handleRestore = (id: string) => {
-    setLocalAgents(prev => prev.map(a => 
-      a.id === id ? { ...a, isDeleted: false, deletedAt: undefined } : a
-    ))
+  const handleRestore = async (id: string) => {
+    setError(null)
+    try {
+      await restoreTravelAgent(id)
+      await loadAgents()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to restore agent')
+    }
   }
 
   const filteredAgents = useMemo(() => {
-    return localAgents.filter(a => {
-      // Tab filter
-      if (tab === 'active' && a.isDeleted) return false
-      if (tab === 'deleted') {
-        if (!a.isDeleted) return false
-        if (getRemainingDays(a.deletedAt) === 0) return false
-      }
-
+    const list = tab === 'active' ? localAgents : deletedAgents
+    return list.filter(a => {
+      if (tab === 'deleted' && getRemainingDays(a.deletedAt) === 0) return false
       if (!isLeafLevel) return true
       const [stateId, districtId] = path
       const state = locationHierarchy.find((s) => s.id === stateId)
       const district = state?.children?.find((d) => d.id === districtId)
-      
       return a.state === state?.name && a.district === district?.name
     })
-  }, [isLeafLevel, path, localAgents, tab])
+  }, [isLeafLevel, path, localAgents, deletedAgents, tab])
 
   const columns: ColumnDef<TravelAgent, any>[] = useMemo(
     () => [
@@ -228,7 +269,7 @@ export default function TravelAgentsPage() {
         )
       }
     ],
-    [canEditOrCreate]
+    [canEditOrCreate, navigate, path]
   )
 
   const deletedColumns: ColumnDef<TravelAgent, any>[] = useMemo(
@@ -303,14 +344,32 @@ export default function TravelAgentsPage() {
         )
       }
     ],
-    [canEditOrCreate]
+    [canEditOrCreate, navigate, path]
   )
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="mb-4">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
+        <div className="rounded-xl border border-surface-200 bg-surface-50 p-12 text-center text-surface-500">
+          Loading travel agents…
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       <div className="mb-4">
         <Breadcrumb items={breadcrumbItems} />
       </div>
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+          {error}
+        </div>
+      )}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-surface-900">Travel Agents</h1>
@@ -330,6 +389,7 @@ export default function TravelAgentsPage() {
           hierarchy={locationHierarchy}
           path={path}
           onNavigate={handleNavigate}
+          propertyList={localAgents}
         />
       ) : (
         <div className="space-y-4">
@@ -404,35 +464,34 @@ export default function TravelAgentsPage() {
           setShowAddModal(false)
           setCreateForm(emptyForm)
         }}
-        onSave={(data: any) => {
+        onSave={async (data: any) => {
           if (!data.agentName.trim()) return
+          setError(null)
           const [stateId, districtId] = path
           const state = locationHierarchy.find((s) => s.id === stateId)
           const district = state?.children?.find((d) => d.id === districtId)
           const stateName = state?.name ?? 'Kerala'
           const districtName = district?.name ?? 'Wayanad'
-
           const nextSlno = Math.max(0, ...localAgents.map((a) => a.slno ?? 0)) + 1
-          const newAgent: TravelAgent = {
-            id: `ta-${Date.now()}`,
-            slno: nextSlno,
-            agentName: data.agentName.trim(),
-            email: data.email.trim(),
-            contactNumber: data.contactNumber.trim(),
-            location: data.location.trim(),
-            contractType: data.contractType,
-            planStartDate: data.planStartDate,
-            planEndDate: data.planEndDate,
-            trialStatus: false,
-            trialRemainingDays: 0,
-            pendingAmount: 0,
-            collectedAmount: 0,
-            state: stateName,
-            district: districtName,
+          try {
+            await createTravelAgent({
+              slno: nextSlno,
+              agentName: data.agentName.trim(),
+              email: data.email.trim(),
+              contactNumber: data.contactNumber.trim(),
+              location: data.location.trim(),
+              contractType: data.contractType ?? 'Bronze',
+              planStartDate: data.planStartDate || new Date().toISOString().slice(0, 10),
+              planEndDate: data.planEndDate || new Date().toISOString().slice(0, 10),
+              state: stateName,
+              district: districtName,
+            })
+            setShowAddModal(false)
+            setCreateForm(emptyForm)
+            await loadAgents()
+          } catch (e) {
+            setError(e instanceof Error ? e.message : 'Failed to add agent')
           }
-          setLocalAgents((prev) => [...prev, newAgent])
-          setShowAddModal(false)
-          setCreateForm(emptyForm)
         }}
       />
 
@@ -446,26 +505,25 @@ export default function TravelAgentsPage() {
           }}
           title={`Edit ${editingAgent.agentName}`}
           initialData={editForm}
-          onSave={(data: any) => {
+          onSave={async (data: any) => {
             if (!editingAgent) return
-            setLocalAgents((prev) =>
-              prev.map((a) =>
-                a.id === editingAgent.id
-                  ? {
-                      ...a,
-                      agentName: data.agentName.trim() || a.agentName,
-                      contactNumber: data.contactNumber.trim() || a.contactNumber,
-                      email: data.email.trim() || a.email,
-                      location: data.location.trim() || a.location,
-                      contractType: data.contractType || a.contractType,
-                      planStartDate: data.planStartDate || a.planStartDate,
-                      planEndDate: data.planEndDate || a.planEndDate,
-                    }
-                  : a
-              )
-            )
-            setShowEditModal(false)
-            setEditingAgent(null)
+            setError(null)
+            try {
+              await updateTravelAgent(editingAgent.id, {
+                agentName: data.agentName?.trim() || editingAgent.agentName,
+                contactNumber: data.contactNumber?.trim() || editingAgent.contactNumber,
+                email: data.email?.trim() || editingAgent.email,
+                location: data.location?.trim() || editingAgent.location,
+                contractType: data.contractType || editingAgent.contractType,
+                planStartDate: data.planStartDate || editingAgent.planStartDate,
+                planEndDate: data.planEndDate || editingAgent.planEndDate,
+              })
+              setShowEditModal(false)
+              setEditingAgent(null)
+              await loadAgents()
+            } catch (e) {
+              setError(e instanceof Error ? e.message : 'Failed to update agent')
+            }
           }}
         />
       )}

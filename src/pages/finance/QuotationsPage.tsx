@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import { type ColumnDef } from '@tanstack/react-table'
 import {
@@ -17,16 +17,93 @@ import { DataTable } from '@/components/DataTable'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Button, Modal, FormField, Input, Select, SearchableSelect } from '@/components/FormElements'
 import { QuotationDocument } from '@/components/QuotationDocument'
-import {
-  properties,
-  quotationRecords,
-  type QuotationRecord,
-} from '@/data/mockData'
 import { formatCurrency } from '@/lib/utils'
+import { fetchProperties } from '@/lib/propertiesApi'
+import {
+  createQuotation,
+  fetchDeletedQuotations,
+  fetchQuotations,
+  patchQuotation,
+  restoreQuotation,
+  softDeleteQuotation,
+} from '@/lib/financeApi'
+
+export interface QuotationRecord {
+  id: string
+  propertyId: string
+  propertyName: string
+  recipientName: string
+  date: string
+  roomCategory: string
+  standardPrice: number
+  sellingPrice: number
+  tenure: string
+  status: string
+  executive?: string
+  isDeleted?: boolean
+  deletedAt?: string
+}
+
+interface PropertyOption {
+  id: string
+  name: string
+  roomCategory?: string
+  proposedPrice?: number
+  finalCommittedPrice?: number
+  tenure?: string
+}
 
 export default function QuotationsPage() {
-  const [localProperties] = useState(properties)
-  const [localQuotationRecords, setLocalQuotationRecords] = useState<QuotationRecord[]>(quotationRecords)
+  const [localProperties, setLocalProperties] = useState<PropertyOption[]>([])
+  const [localQuotationRecords, setLocalQuotationRecords] = useState<QuotationRecord[]>([])
+  const [editingQuotationId, setEditingQuotationId] = useState<string | null>(null)
+
+  const mapQuotation = (q: {
+    id: string
+    property: string
+    property_name: string
+    recipient_name: string
+    date: string
+    room_category: string
+    standard_price: string
+    selling_price: string
+    tenure: string
+    status: string
+    executive: string
+    is_deleted?: boolean
+    deleted_at?: string | null
+  }): QuotationRecord => ({
+    id: q.id,
+    propertyId: q.property,
+    propertyName: q.property_name,
+    recipientName: q.recipient_name,
+    date: q.date,
+    roomCategory: q.room_category,
+    standardPrice: Number(q.standard_price),
+    sellingPrice: Number(q.selling_price),
+    tenure: q.tenure,
+    status: q.status,
+    executive: q.executive ?? '',
+    isDeleted: !!q.is_deleted,
+    deletedAt: q.deleted_at ?? undefined,
+  })
+
+  const loadQuotations = useCallback(async () => {
+    try {
+      const [active, deleted] = await Promise.all([fetchQuotations(), fetchDeletedQuotations()])
+      setLocalQuotationRecords([
+        ...active.map((q) => mapQuotation(q)),
+        ...deleted.map((q) => mapQuotation({ ...q, is_deleted: true })),
+      ])
+    } catch {
+      setLocalQuotationRecords([])
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchProperties().then((list) => setLocalProperties(list.map((p) => ({ id: p.id, name: p.name, roomCategory: p.room_category, proposedPrice: Number(p.proposed_price), finalCommittedPrice: Number(p.final_committed_price), tenure: p.tenure })))).catch(() => {})
+    loadQuotations()
+  }, [loadQuotations])
   const [showQuotationModal, setShowQuotationModal] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [isEditingQuotation, setIsEditingQuotation] = useState(false)
@@ -61,7 +138,9 @@ export default function QuotationsPage() {
   const [executiveFilter, setExecutiveFilter] = useState<string>('all')
 
   const uniqueExecutives = useMemo(() => {
-    return Array.from(new Set(localQuotationRecords.map(r => r.executive)))
+    return Array.from(
+      new Set(localQuotationRecords.map((r) => r.executive).filter((e): e is string => Boolean(e)))
+    )
   }, [localQuotationRecords])
 
   const handlePropertySelect = (propertyId: string) => {
@@ -96,9 +175,11 @@ export default function QuotationsPage() {
     setShowPreview(false)
     setIsEditingQuotation(false)
     setIsViewOnly(false)
+    setEditingQuotationId(null)
   }
 
   const handleEditQuotation = (record: QuotationRecord) => {
+    setEditingQuotationId(record.id)
     setQuotationData({
       propertyId: record.propertyId,
       propertyName: record.propertyName,
@@ -107,7 +188,7 @@ export default function QuotationsPage() {
       standardPrice: record.standardPrice,
       sellingPrice: record.sellingPrice,
       tenure: record.tenure,
-      executiveName: record.executive,
+      executiveName: record.executive ?? '',
       executiveRole: 'Relationship Manager',
       executivePhone: '+91 8891695554'
     })
@@ -117,18 +198,15 @@ export default function QuotationsPage() {
   }
 
   const handleDeleteQuotation = (id: string) => {
-    setLocalQuotationRecords(prev => prev.map(q => 
-      q.id === id ? { ...q, isDeleted: true, deletedAt: new Date().toISOString() } : q
-    ))
+    void softDeleteQuotation(id).then(() => loadQuotations())
   }
 
   const handleRestoreQuotation = (id: string) => {
-    setLocalQuotationRecords(prev => prev.map(q => 
-      q.id === id ? { ...q, isDeleted: false, deletedAt: undefined } : q
-    ))
+    void restoreQuotation(id).then(() => loadQuotations())
   }
 
   const handleViewQuotation = (record: QuotationRecord) => {
+    setEditingQuotationId(record.id)
     setQuotationData({
       propertyId: record.propertyId,
       propertyName: record.propertyName,
@@ -137,7 +215,7 @@ export default function QuotationsPage() {
       standardPrice: record.standardPrice,
       sellingPrice: record.sellingPrice,
       tenure: record.tenure,
-      executiveName: record.executive,
+      executiveName: record.executive ?? '',
       executiveRole: 'Relationship Manager',
       executivePhone: '+91 8891695554'
     })
@@ -152,7 +230,7 @@ export default function QuotationsPage() {
       propertyName: record.propertyName,
       closingAmount: record.sellingPrice,
       collectedAmount: 0,
-      executive: record.executive
+      executive: record.executive ?? '',
     })
     setShowBillModal(true)
   }
@@ -296,7 +374,12 @@ export default function QuotationsPage() {
           <h1 className="text-2xl font-bold tracking-tight text-surface-900">Quotations</h1>
           <p className="text-sm text-surface-500">Create and manage property quotations for clients.</p>
         </div>
-        <Button onClick={() => setShowQuotationModal(true)}>
+        <Button
+          onClick={() => {
+            resetQuotationForm()
+            setShowQuotationModal(true)
+          }}
+        >
           <Plus className="h-4 w-4" />
           Create Quotation
         </Button>
@@ -481,10 +564,42 @@ export default function QuotationsPage() {
                   <Download className="h-4 w-4" />
                   Download PDF
                 </Button>
-                <Button onClick={() => {
-                   setShowQuotationModal(false)
-                   resetQuotationForm()
-                }}>
+                <Button
+                  onClick={() => {
+                    if (isViewOnly) {
+                      setShowQuotationModal(false)
+                      resetQuotationForm()
+                      return
+                    }
+                    const existing = editingQuotationId
+                      ? localQuotationRecords.find((r) => r.id === editingQuotationId)
+                      : null
+                    const qDate = existing?.date ?? new Date().toISOString().split('T')[0]
+                    const exec = quotationData.executiveName || 'Sales Team'
+                    const body = {
+                      property: quotationData.propertyId,
+                      recipient_name: quotationData.recipientName,
+                      date: qDate,
+                      room_category: quotationData.roomCategory,
+                      standard_price: quotationData.standardPrice,
+                      selling_price: quotationData.sellingPrice,
+                      tenure: quotationData.tenure,
+                      status: existing?.status ?? 'Draft',
+                      executive: exec,
+                    }
+                    const done = async () => {
+                      if (editingQuotationId) {
+                        await patchQuotation(editingQuotationId, body)
+                      } else {
+                        await createQuotation({ id: `q-${Date.now()}`, ...body })
+                      }
+                      await loadQuotations()
+                      setShowQuotationModal(false)
+                      resetQuotationForm()
+                    }
+                    void done()
+                  }}
+                >
                   {isViewOnly ? "Close Preview" : isEditingQuotation ? "Update Quotation" : "Finalize Quotation"}
                 </Button>
               </div>

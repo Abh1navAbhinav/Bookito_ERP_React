@@ -1,9 +1,19 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Calendar, Clock, UserCheck, UserX, AlertCircle, CheckCircle2, MoreHorizontal, Plus, LogIn, LogOut, Trash2, RotateCcw, X } from 'lucide-react'
 import { Button, FormField, Input, Select, Modal } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
 import { differenceInDays, parseISO } from 'date-fns'
+import { cn } from '@/lib/utils'
+import {
+  fetchAttendance,
+  fetchDeletedAttendance,
+  createAttendance,
+  softDeleteAttendance,
+  restoreAttendance,
+  fetchEmployees,
+  type ApiAttendance
+} from '@/lib/hrApi'
 
 interface AttendanceRecord {
   id: string
@@ -20,101 +30,129 @@ interface DeletedAttendanceRecord extends AttendanceRecord {
   deletedAt: string
 }
 
-const initialAttendance: AttendanceRecord[] = [
-  {
-    id: '1',
-    employeeName: 'John Doe',
-    employeeId: 'EMP001',
-    date: new Date().toISOString().split('T')[0],
-    checkIn: '09:05 AM',
-    checkOut: '06:30 PM',
-    status: 'Late',
-    workHours: '9h 25m'
-  },
-  {
-    id: '2',
-    employeeName: 'Jane Smith',
-    employeeId: 'EMP002',
-    date: new Date().toISOString().split('T')[0],
-    checkIn: '09:00 AM',
-    checkOut: '06:00 PM',
-    status: 'Present',
-    workHours: '9h 00m'
+function formatTime(t: string | null): string {
+  if (!t) return '—'
+  if (t.length <= 5) return `${t} AM`
+  const [h, m] = t.split(':')
+  const hh = parseInt(h, 10)
+  if (hh >= 12) return `${hh === 12 ? 12 : hh - 12}:${m} PM`
+  return `${t} AM`
+}
+
+function mapStatus(s: string): AttendanceRecord['status'] {
+  if (s === 'present') return 'Present'
+  if (s === 'absent') return 'Absent'
+  if (s === 'leave') return 'On Leave'
+  return 'Present'
+}
+
+function mapApiToRecord(a: ApiAttendance): AttendanceRecord {
+  return {
+    id: a.id,
+    employeeName: a.employee_name,
+    employeeId: a.employee,
+    date: a.date,
+    checkIn: formatTime(a.check_in_time),
+    checkOut: formatTime(a.check_out_time),
+    status: mapStatus(a.status),
+    workHours: '—'
   }
-]
+}
 
 export default function AttendanceDashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-  const [records, setRecords] = useState<AttendanceRecord[]>(() => {
-    const saved = localStorage.getItem('bookito_attendance')
-    return saved ? JSON.parse(saved) : initialAttendance
-  })
-  
-  const [deletedRecords, setDeletedRecords] = useState<DeletedAttendanceRecord[]>(() => {
-    const saved = localStorage.getItem('bookito_deleted_attendance')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [records, setRecords] = useState<AttendanceRecord[]>([])
+  const [deletedRecords, setDeletedRecords] = useState<DeletedAttendanceRecord[]>([])
+  const [loading, setLoading] = useState(true)
 
   const [showDeleted, setShowDeleted] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [manualEntry, setManualEntry] = useState({
-    employeeName: '',
     employeeId: '',
+    employeeName: '',
     checkIn: '09:00',
     checkOut: '18:00',
   })
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([])
 
-  useEffect(() => {
-    localStorage.setItem('bookito_attendance', JSON.stringify(records))
-  }, [records])
-
-  useEffect(() => {
-    localStorage.setItem('bookito_deleted_attendance', JSON.stringify(deletedRecords))
-  }, [deletedRecords])
-
-  useEffect(() => {
-    // Purge logic: Auto-delete after 30 days
-    const now = new Date()
-    setDeletedRecords(prev => prev.filter(r => differenceInDays(now, parseISO(r.deletedAt)) < 30))
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true)
+      const [attList, delList, empList] = await Promise.all([
+        fetchAttendance(),
+        fetchDeletedAttendance(),
+        fetchEmployees()
+      ])
+      setRecords(attList.map(mapApiToRecord))
+      setDeletedRecords(
+        delList.map((a) => ({ ...mapApiToRecord(a), deletedAt: a.deleted_at ?? new Date().toISOString() }))
+      )
+      setEmployees(empList.map((e) => ({ id: e.id, name: `${e.first_name} ${e.last_name}`.trim() })))
+    } catch {
+      setRecords([])
+      setDeletedRecords([])
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
 
   const filteredRecords = useMemo(() => {
     return records.filter(r => r.date === selectedDate)
   }, [records, selectedDate])
 
-  const handleAddManual = () => {
-    const newRecord: AttendanceRecord = {
-        id: Date.now().toString(),
-        employeeName: manualEntry.employeeName,
-        employeeId: manualEntry.employeeId,
-        date: selectedDate,
-        checkIn: manualEntry.checkIn,
-        checkOut: manualEntry.checkOut,
-        status: 'Present',
-        workHours: '9h 00m'
+  const handleAddManual = async () => {
+    if (!manualEntry.employeeId) {
+      alert('Select an employee')
+      return
     }
-    setRecords([newRecord, ...records])
-    setIsModalOpen(false)
+    try {
+      await createAttendance({
+        id: `att-${manualEntry.employeeId}-${selectedDate}-${Date.now()}`,
+        employee: manualEntry.employeeId,
+        date: selectedDate,
+        status: 'present',
+        check_in_time: manualEntry.checkIn,
+        check_out_time: manualEntry.checkOut
+      })
+      setIsModalOpen(false)
+      setManualEntry({ employeeId: '', employeeName: '', checkIn: '09:00', checkOut: '18:00' })
+      await loadData()
+    } catch (err) {
+      alert((err as Error).message ?? 'Failed to add attendance')
+    }
   }
 
-  const handleDelete = (record: AttendanceRecord) => {
-    const deletedAt = new Date().toISOString()
-    const entry: DeletedAttendanceRecord = { ...record, deletedAt }
-    
-    setRecords(prev => prev.filter(r => r.id !== record.id))
-    setDeletedRecords(prev => [entry, ...prev])
+  const handleDelete = async (record: AttendanceRecord) => {
+    try {
+      await softDeleteAttendance(record.id)
+      await loadData()
+    } catch {
+      // ignore
+    }
   }
 
-  const handleRestore = (record: DeletedAttendanceRecord) => {
-    const { deletedAt, ...rest } = record
-    setDeletedRecords(prev => prev.filter(r => r.id !== record.id))
-    setRecords(prev => [...prev, rest])
+  const handleRestore = async (record: DeletedAttendanceRecord) => {
+    try {
+      await restoreAttendance(record.id)
+      await loadData()
+    } catch {
+      // ignore
+    }
   }
 
   const getRemainingDays = (deletedAt: string) => {
     const diff = differenceInDays(new Date(), parseISO(deletedAt))
     return Math.max(0, 30 - diff)
   }
+
+  const displayedDeleted = useMemo(
+    () => deletedRecords.filter((r) => getRemainingDays(r.deletedAt) > 0),
+    [deletedRecords]
+  )
 
   const stats = useMemo(() => {
     const today = filteredRecords
@@ -309,11 +347,15 @@ export default function AttendanceDashboard() {
                     Biometric Synced
                     </span>
                 </div>
+                {loading ? (
+                  <div className="rounded-xl border border-surface-200 bg-white p-8 text-center text-surface-500">Loading attendance...</div>
+                ) : (
                 <DataTable
                     data={filteredRecords}
                     columns={columns}
                     searchPlaceholder="Search employee..."
                 />
+                )}
             </>
         ) : (
             <>
@@ -324,7 +366,7 @@ export default function AttendanceDashboard() {
                     </p>
                 </div>
                 <DataTable
-                    data={deletedRecords}
+                    data={displayedDeleted}
                     columns={deletedColumns}
                     searchPlaceholder="Search deleted records..."
                 />
@@ -334,16 +376,15 @@ export default function AttendanceDashboard() {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Manual Attendance Entry">
         <div className="space-y-4">
-            <FormField label="Employee Name">
-                <Input 
-                    value={manualEntry.employeeName} 
-                    onChange={(e) => setManualEntry({...manualEntry, employeeName: e.target.value})}
-                />
-            </FormField>
-            <FormField label="Employee ID">
-                <Input 
-                    value={manualEntry.employeeId} 
-                    onChange={(e) => setManualEntry({...manualEntry, employeeId: e.target.value})}
+            <FormField label="Employee">
+                <Select
+                    placeholder="Select employee"
+                    value={manualEntry.employeeId}
+                    options={employees.map((e) => ({ label: e.name, value: e.id }))}
+                    onChange={(id) => {
+                      const emp = employees.find((e) => e.id === id)
+                      setManualEntry({ ...manualEntry, employeeId: id, employeeName: emp?.name ?? '' })
+                    }}
                 />
             </FormField>
             <div className="grid grid-cols-2 gap-4">
@@ -370,8 +411,4 @@ export default function AttendanceDashboard() {
       </Modal>
     </div>
   )
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
 }

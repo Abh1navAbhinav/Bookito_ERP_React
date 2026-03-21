@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import { type ColumnDef } from '@tanstack/react-table'
 import {
@@ -35,43 +35,109 @@ import { DataTable } from '@/components/DataTable'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Button, Modal, FormField, Input, Select, SearchableSelect } from '@/components/FormElements'
 import { QuotationDocument } from '@/components/QuotationDocument'
-import {
-  financeRecords,
-  financeStats,
-  dailyRevenueData,
-  weeklyRevenueData,
-  monthlyRevenueData,
-  expenses,
-  properties,
-  quotationRecords,
-  type FinanceRecord,
-  type ExpenseRecord,
-  type QuotationRecord,
-  type Property,
-} from '@/data/mockData'
 import { formatCurrency, formatNumber } from '@/lib/utils'
+import { fetchFinanceSummary, fetchFinanceCharts } from '@/lib/reportsApi'
+import { fetchProperties } from '@/lib/propertiesApi'
+import {
+  createExpense,
+  createFinancePayment,
+  createQuotation,
+  fetchDeletedExpenses,
+  fetchDeletedFinancePayments,
+  fetchDeletedQuotations,
+  fetchExpenses,
+  fetchFinancePayments,
+  fetchQuotations,
+  patchExpense,
+  patchFinancePayment,
+  patchQuotation,
+  restoreExpense,
+  restoreFinancePayment,
+  restoreQuotation,
+  softDeleteExpense,
+  softDeleteFinancePayment,
+  softDeleteQuotation,
+  type ApiExpense,
+  type ApiFinanceRecord,
+  type ApiQuotation,
+} from '@/lib/financeApi'
+
+export interface FinanceRecord {
+  id: string
+  propertyName: string
+  state?: string
+  district?: string
+  location?: string
+  closingAmount: number
+  pendingAmount: number
+  collectedAmount: number
+  invoiceUploaded?: boolean
+  invoiceDate?: string
+  lastPaymentDate?: string
+  executive?: string
+  isDeleted?: boolean
+  deletedAt?: string
+}
+export interface ExpenseRecord {
+  id: string
+  category: string
+  description: string
+  amount: number
+  date: string
+  isDeleted?: boolean
+  deletedAt?: string
+}
+export interface QuotationRecord {
+  id: string
+  propertyId: string
+  propertyName: string
+  recipientName: string
+  date: string
+  roomCategory: string
+  standardPrice: number
+  sellingPrice: number
+  tenure: string
+  status: string
+  executive?: string
+  isDeleted?: boolean
+  deletedAt?: string
+}
+interface PropertyOption {
+  id: string
+  name: string
+  roomCategory?: string
+  proposedPrice?: number
+  finalCommittedPrice?: number
+  tenure?: string
+}
 
 type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
 
-type RevenueView = 'daily' | 'weekly' | 'monthly'
-
 export default function FinancePage() {
-  const [localFinanceRecords, setLocalFinanceRecords] = useState<FinanceRecord[]>(financeRecords)
-  const [localProperties, setLocalProperties] = useState<Property[]>(properties)
-  const [localQuotationRecords, setLocalQuotationRecords] = useState<QuotationRecord[]>(quotationRecords)
+  const [localFinanceRecords, setLocalFinanceRecords] = useState<FinanceRecord[]>([])
+  const [localProperties, setLocalProperties] = useState<PropertyOption[]>([])
+  const [localQuotationRecords, setLocalQuotationRecords] = useState<QuotationRecord[]>([])
+  const [financeSummary, setFinanceSummary] = useState<{ total_closing_amount: string | number; total_collected_amount: string | number; total_pending_amount: string | number } | null>(null)
+  const [monthlyRevenueData, setMonthlyRevenueData] = useState<{ month: string; revenue: number }[]>([])
   const [currentRole, setCurrentRole] = useState<DemoRole | null>(null)
 
-  const [revenueView, setRevenueView] = useState<RevenueView>('monthly')
+  useEffect(() => {
+    fetchFinanceSummary().then(setFinanceSummary).catch(() => {})
+    fetchFinanceCharts().then((c) => setMonthlyRevenueData(c.monthly_revenue_data ?? [])).catch(() => {})
+    fetchProperties().then((list) => setLocalProperties(list.map((p) => ({ id: p.id, name: p.name, roomCategory: p.room_category, proposedPrice: Number(p.proposed_price), finalCommittedPrice: Number(p.final_committed_price), tenure: p.tenure })))).catch(() => {})
+  }, [])
+
   const [showExpenseModal, setShowExpenseModal] = useState(false)
   const [showQuotationModal, setShowQuotationModal] = useState(false)
   const [showBillModal, setShowBillModal] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [isEditingQuotation, setIsEditingQuotation] = useState(false)
+  const [editingQuotationId, setEditingQuotationId] = useState<string | null>(null)
 
   const [quotationTab, setQuotationTab] = useState<'active' | 'deleted'>('active')
   const [paymentTab, setPaymentTab] = useState<'active' | 'deleted'>('active')
   const [expenseTab, setExpenseTab] = useState<'active' | 'deleted'>('active')
-  const [localExpenses, setLocalExpenses] = useState<ExpenseRecord[]>(expenses)
+  const [localExpenses, setLocalExpenses] = useState<ExpenseRecord[]>([])
   const [isEditingExpense, setIsEditingExpense] = useState(false)
   const [currentExpenseId, setCurrentExpenseId] = useState<string | null>(null)
   
@@ -121,6 +187,94 @@ export default function FinancePage() {
     }
   }, [])
 
+  const mapQuotation = (q: ApiQuotation): QuotationRecord => ({
+    id: q.id,
+    propertyId: q.property,
+    propertyName: q.property_name,
+    recipientName: q.recipient_name,
+    date: q.date,
+    roomCategory: q.room_category,
+    standardPrice: Number(q.standard_price),
+    sellingPrice: Number(q.selling_price),
+    tenure: q.tenure,
+    status: q.status,
+    executive: q.executive ?? '',
+    isDeleted: !!q.is_deleted,
+    deletedAt: q.deleted_at ?? undefined,
+  })
+
+  const mapPayment = (r: ApiFinanceRecord): FinanceRecord => ({
+    id: r.id,
+    propertyName: r.property_name,
+    state: r.state,
+    district: r.district,
+    location: r.location,
+    closingAmount: Number(r.closing_amount),
+    pendingAmount: Number(r.pending_amount),
+    collectedAmount: Number(r.collected_amount),
+    invoiceUploaded: r.invoice_uploaded,
+    invoiceDate: r.invoice_date ?? undefined,
+    lastPaymentDate: r.last_payment_date ?? undefined,
+    executive: r.executive ?? '',
+    isDeleted: !!r.is_deleted,
+    deletedAt: r.deleted_at ?? undefined,
+  })
+
+  const mapExpense = (e: ApiExpense): ExpenseRecord => ({
+    id: e.id,
+    category: e.category,
+    description: e.description,
+    amount: Number(e.amount),
+    date: e.date,
+    isDeleted: !!e.is_deleted,
+    deletedAt: e.deleted_at ?? undefined,
+  })
+
+  const loadQuotations = useCallback(async () => {
+    try {
+      const [active, deleted] = await Promise.all([fetchQuotations(), fetchDeletedQuotations()])
+      setLocalQuotationRecords([
+        ...active.map(mapQuotation),
+        ...deleted.map((q) => mapQuotation({ ...q, is_deleted: true })),
+      ])
+    } catch {
+      setLocalQuotationRecords([])
+    }
+  }, [])
+
+  const loadFinanceRecords = useCallback(async () => {
+    try {
+      const [active, deleted] = await Promise.all([
+        fetchFinancePayments(),
+        fetchDeletedFinancePayments(),
+      ])
+      setLocalFinanceRecords([
+        ...active.map(mapPayment),
+        ...deleted.map((r) => mapPayment({ ...r, is_deleted: true })),
+      ])
+    } catch {
+      setLocalFinanceRecords([])
+    }
+  }, [])
+
+  const loadExpenses = useCallback(async () => {
+    try {
+      const [active, deleted] = await Promise.all([fetchExpenses(), fetchDeletedExpenses()])
+      setLocalExpenses([
+        ...active.map(mapExpense),
+        ...deleted.map((e) => mapExpense({ ...e, is_deleted: true })),
+      ])
+    } catch {
+      setLocalExpenses([])
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadQuotations()
+    void loadFinanceRecords()
+    void loadExpenses()
+  }, [loadQuotations, loadFinanceRecords, loadExpenses])
+
   // State to track if a property is selected to handle data fetching
   const [isPropertySelected, setIsPropertySelected] = useState(false)
 
@@ -162,9 +316,11 @@ export default function FinancePage() {
     setIsPropertySelected(false)
     setShowPreview(false)
     setIsEditingQuotation(false)
+    setEditingQuotationId(null)
   }
 
   const handleEditQuotation = (record: QuotationRecord) => {
+    setEditingQuotationId(record.id)
     setQuotationData({
       propertyId: record.propertyId,
       propertyName: record.propertyName,
@@ -173,7 +329,7 @@ export default function FinancePage() {
       standardPrice: record.standardPrice,
       sellingPrice: record.sellingPrice,
       tenure: record.tenure,
-      executiveName: record.executive,
+      executiveName: record.executive ?? '',
       executiveRole: 'Relationship Manager',
       executivePhone: '+91 8891695554'
     })
@@ -200,43 +356,38 @@ export default function FinancePage() {
       collectedAmount: 0,
       tenure: record.tenure,
       roomCategory: record.roomCategory,
-      executive: record.executive
+      executive: record.executive ?? ''
     })
     setShowBillModal(true)
   }
 
   const handleGenerateBill = () => {
-    // 1. Update Property details in localProperties
-    setLocalProperties(prev => prev.map(p => {
-      if (p.id === billData.propertyId) {
-        return {
-          ...p,
-          finalCommittedPrice: billData.closingAmount,
-          tenure: billData.tenure as any,
-          roomCategory: billData.roomCategory as any
-        }
-      }
-      return p
-    }))
-
-    // 2. Add to Finance Records
     const propertyInfo = localProperties.find(p => p.id === billData.propertyId)
-    const newRecord: FinanceRecord = {
+    if (!propertyInfo) {
+      alert('Property not found for this bill')
+      return
+    }
+
+    const payload = {
       id: `f-${Date.now()}`,
-      propertyName: billData.propertyName,
-      state: propertyInfo?.state || 'Kerala',
-      district: propertyInfo?.district || 'Kozhikode',
-      location: propertyInfo?.location || 'Unknown',
-      closingAmount: billData.closingAmount,
-      pendingAmount: billData.closingAmount - billData.collectedAmount,
-      collectedAmount: billData.collectedAmount,
-      invoiceUploaded: false,
-      invoiceDate: new Date().toISOString().split('T')[0],
+      property: propertyInfo.id,
+      closing_amount: billData.closingAmount,
+      pending_amount: billData.closingAmount - billData.collectedAmount,
+      collected_amount: billData.collectedAmount,
+      invoice_uploaded: false,
+      invoice_date: new Date().toISOString().split('T')[0],
       executive: billData.executive
     }
 
-    setLocalFinanceRecords(prev => [newRecord, ...prev])
-    setShowBillModal(false)
+    void (async () => {
+      try {
+        await createFinancePayment(payload)
+        await loadFinanceRecords()
+      } catch {
+        alert('Could not create payment record. Check permissions and try again.')
+      }
+      setShowBillModal(false)
+    })()
   }
 
   const handlePrint = useReactToPrint({
@@ -246,28 +397,20 @@ export default function FinancePage() {
 
   // --- Quotation Handlers ---
   const handleDeleteQuotation = (id: string) => {
-    setLocalQuotationRecords(prev => prev.map(q => 
-      q.id === id ? { ...q, isDeleted: true, deletedAt: new Date().toISOString() } : q
-    ))
+    void softDeleteQuotation(id).then(() => loadQuotations())
   }
 
   const handleRestoreQuotation = (id: string) => {
-    setLocalQuotationRecords(prev => prev.map(q => 
-      q.id === id ? { ...q, isDeleted: false, deletedAt: undefined } : q
-    ))
+    void restoreQuotation(id).then(() => loadQuotations())
   }
 
   // --- Payment Handlers ---
   const handleDeletePayment = (id: string) => {
-    setLocalFinanceRecords(prev => prev.map(r => 
-      r.id === id ? { ...r, isDeleted: true, deletedAt: new Date().toISOString() } : r
-    ))
+    void softDeleteFinancePayment(id).then(() => loadFinanceRecords())
   }
 
   const handleRestorePayment = (id: string) => {
-    setLocalFinanceRecords(prev => prev.map(r => 
-      r.id === id ? { ...r, isDeleted: false, deletedAt: undefined } : r
-    ))
+    void restoreFinancePayment(id).then(() => loadFinanceRecords())
   }
 
   const handleEditPayment = (record: FinanceRecord) => {
@@ -277,27 +420,29 @@ export default function FinancePage() {
       closingAmount: record.closingAmount,
       collectedAmount: record.collectedAmount,
       lastPaymentDate: record.lastPaymentDate || '',
-      executive: record.executive
+      executive: record.executive ?? ''
     })
     setIsEditingPayment(true)
     setShowPaymentEditModal(true)
   }
 
   const handleSavePayment = () => {
-    setLocalFinanceRecords(prev => prev.map(r => 
-      r.id === currentPaymentId ? {
-        ...r,
-        propertyName: paymentData.propertyName,
-        closingAmount: paymentData.closingAmount,
-        collectedAmount: paymentData.collectedAmount,
-        pendingAmount: paymentData.closingAmount - paymentData.collectedAmount,
-        lastPaymentDate: paymentData.lastPaymentDate,
-        executive: paymentData.executive
-      } : r
-    ))
-    setShowPaymentEditModal(false)
-    setIsEditingPayment(false)
-    setCurrentPaymentId(null)
+    if (!currentPaymentId) return
+
+    const payload = {
+      closing_amount: paymentData.closingAmount,
+      collected_amount: paymentData.collectedAmount,
+      pending_amount: paymentData.closingAmount - paymentData.collectedAmount,
+      last_payment_date: paymentData.lastPaymentDate || null,
+      executive: paymentData.executive
+    }
+
+    void patchFinancePayment(currentPaymentId, payload).then(() => {
+      void loadFinanceRecords()
+      setShowPaymentEditModal(false)
+      setIsEditingPayment(false)
+      setCurrentPaymentId(null)
+    })
   }
 
   const handleDownloadPaymentPDF = (record: FinanceRecord) => {
@@ -308,15 +453,11 @@ export default function FinancePage() {
 
   // --- Expense Handlers ---
   const handleDeleteExpense = (id: string) => {
-    setLocalExpenses(prev => prev.map(e => 
-      e.id === id ? { ...e, isDeleted: true, deletedAt: new Date().toISOString() } : e
-    ))
+    void softDeleteExpense(id).then(() => loadExpenses())
   }
 
   const handleRestoreExpense = (id: string) => {
-    setLocalExpenses(prev => prev.map(e => 
-      e.id === id ? { ...e, isDeleted: false, deletedAt: undefined } : e
-    ))
+    void restoreExpense(id).then(() => loadExpenses())
   }
 
   const handleEditExpense = (record: ExpenseRecord) => {
@@ -332,26 +473,32 @@ export default function FinancePage() {
   }
 
   const handleSaveExpense = () => {
-    if (isEditingExpense && currentExpenseId) {
-      setLocalExpenses(prev => prev.map(e => 
-        e.id === currentExpenseId ? { ...e, ...expenseData } : e
-      ))
-    } else {
-      const newExpense: ExpenseRecord = {
-        id: `e-${Date.now()}`,
-        ...expenseData
-      }
-      setLocalExpenses(prev => [newExpense, ...prev])
+    const payload = {
+      category: expenseData.category,
+      description: expenseData.description,
+      amount: expenseData.amount,
+      date: expenseData.date
     }
-    setShowExpenseModal(false)
-    setIsEditingExpense(false)
-    setCurrentExpenseId(null)
-    setExpenseData({
-      category: 'Office Expenses',
-      description: '',
-      amount: 0,
-      date: new Date().toISOString().split('T')[0]
-    })
+    const resetForm = () => {
+      setShowExpenseModal(false)
+      setIsEditingExpense(false)
+      setCurrentExpenseId(null)
+      setExpenseData({
+        category: 'Office Expenses',
+        description: '',
+        amount: 0,
+        date: new Date().toISOString().split('T')[0]
+      })
+    }
+    if (isEditingExpense && currentExpenseId) {
+      void patchExpense(currentExpenseId, payload)
+        .then(() => loadExpenses())
+        .finally(resetForm)
+    } else {
+      void createExpense({ id: `e-${Date.now()}`, ...payload })
+        .then(() => loadExpenses())
+        .finally(resetForm)
+    }
   }
 
   const getRemainingDays = (deletedAt?: string) => {
@@ -371,7 +518,9 @@ export default function FinancePage() {
   const [newFilterValue, setNewFilterValue] = useState('')
 
   const uniqueExecutives = useMemo(() => {
-    return Array.from(new Set(localFinanceRecords.map(r => r.executive)))
+    return Array.from(
+      new Set(localFinanceRecords.map((r) => r.executive).filter((e): e is string => Boolean(e)))
+    )
   }, [localFinanceRecords])
 
   const filteredFinanceRecords = useMemo(() => {
@@ -410,7 +559,9 @@ export default function FinancePage() {
   const [newQuotationFilterValue, setNewQuotationFilterValue] = useState('')
 
   const uniqueQuotationExecutives = useMemo(() => {
-    return Array.from(new Set(localQuotationRecords.map(r => r.executive)))
+    return Array.from(
+      new Set(localQuotationRecords.map((r) => r.executive).filter((e): e is string => Boolean(e)))
+    )
   }, [localQuotationRecords])
 
   const filteredQuotationRecords = useMemo(() => {
@@ -450,13 +601,7 @@ export default function FinancePage() {
     })
   }, [localExpenses, expenseTab])
 
-  const revenueDataMap = {
-    daily: { data: dailyRevenueData, key: 'day' },
-    weekly: { data: weeklyRevenueData, key: 'week' },
-    monthly: { data: monthlyRevenueData, key: 'month' },
-  }
-
-  const activeData = revenueDataMap[revenueView]
+  const activeData = { data: monthlyRevenueData, key: 'month' as const }
 
   const financeColumns: ColumnDef<FinanceRecord, any>[] = useMemo(
     () => [
@@ -761,7 +906,13 @@ export default function FinancePage() {
           <h1 className="text-2xl font-bold tracking-tight text-surface-900">Finance</h1>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="secondary" onClick={() => setShowQuotationModal(true)}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              resetQuotationForm()
+              setShowQuotationModal(true)
+            }}
+          >
             <FileText className="h-4 w-4" />
             Create Quotation
           </Button>
@@ -778,20 +929,19 @@ export default function FinancePage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatsCard
           title="Total Closing Amount"
-          value={formatCurrency(financeStats.totalClosingAmount)}
+          value={financeSummary ? formatCurrency(Number(financeSummary.total_closing_amount)) : '—'}
           icon={DollarSign}
           variant="primary"
         />
         <StatsCard
           title="Collected Amount"
-          value={formatCurrency(financeStats.collectedAmount)}
+          value={financeSummary ? formatCurrency(Number(financeSummary.total_collected_amount)) : '—'}
           icon={TrendingUp}
           variant="accent"
-          trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
           title="Pending Amount"
-          value={formatCurrency(financeStats.pendingAmount)}
+          value={financeSummary ? formatCurrency(Number(financeSummary.total_pending_amount)) : '—'}
           icon={Clock}
           variant="warning"
         />
@@ -800,24 +950,7 @@ export default function FinancePage() {
       {/* Revenue Chart */}
       <ChartCard
         title="Revenue Overview"
-        subtitle={`${revenueView.charAt(0).toUpperCase() + revenueView.slice(1)} revenue breakdown`}
-        action={
-          <div className="flex rounded-lg border border-surface-200 p-0.5">
-            {(['daily', 'weekly', 'monthly'] as RevenueView[]).map((view) => (
-              <button
-                key={view}
-                onClick={() => setRevenueView(view)}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                  revenueView === view
-                    ? 'bg-primary-600 text-white'
-                    : 'text-surface-500 hover:text-surface-700'
-                }`}
-              >
-                {view.charAt(0).toUpperCase() + view.slice(1)}
-              </button>
-            ))}
-          </div>
-        }
+        subtitle="Monthly revenue breakdown"
       >
         <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={activeData.data as any[]}>
@@ -1286,11 +1419,42 @@ export default function FinancePage() {
                 <Button variant="secondary" onClick={() => handlePrint()}>
                   Download PDF
                 </Button>
-                <Button onClick={() => {
-                  handlePrint()
-                  setShowQuotationModal(false)
-                  resetQuotationForm()
-                }}>
+                <Button
+                  onClick={() => {
+                    handlePrint()
+                    const existing = editingQuotationId
+                      ? localQuotationRecords.find((r) => r.id === editingQuotationId)
+                      : null
+                    const qDate = existing?.date ?? new Date().toISOString().split('T')[0]
+                    const exec = quotationData.executiveName?.trim() || 'Sales Team'
+                    const body = {
+                      property: quotationData.propertyId,
+                      recipient_name: quotationData.recipientName,
+                      date: qDate,
+                      room_category: quotationData.roomCategory,
+                      standard_price: quotationData.standardPrice,
+                      selling_price: quotationData.sellingPrice,
+                      tenure: quotationData.tenure,
+                      status: 'Sent',
+                      executive: exec,
+                    }
+                    const done = async () => {
+                      try {
+                        if (editingQuotationId) {
+                          await patchQuotation(editingQuotationId, body)
+                        } else {
+                          await createQuotation({ id: `q-${Date.now()}`, ...body })
+                        }
+                        await loadQuotations()
+                      } catch {
+                        alert('Could not save quotation. Check permissions and try again.')
+                      }
+                      setShowQuotationModal(false)
+                      resetQuotationForm()
+                    }
+                    void done()
+                  }}
+                >
                   {isEditingQuotation ? "Update & Send" : "Send to Client"}
                 </Button>
               </div>

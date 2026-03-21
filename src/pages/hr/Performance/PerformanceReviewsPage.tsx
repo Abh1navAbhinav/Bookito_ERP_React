@@ -1,9 +1,16 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Plus, Star, Award, TrendingUp, User, Target, BarChart, ChevronRight, Trash2, RotateCcw } from 'lucide-react'
 import { Button, FormField, Input, Select } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
 import { differenceInDays, parseISO } from 'date-fns'
+import {
+  fetchDeletedPerformanceReviews,
+  fetchPerformanceReviews,
+  restorePerformanceReview,
+  softDeletePerformanceReview,
+  type ApiPerformanceReview,
+} from '@/lib/hrApi'
 
 interface PerformanceReview {
   id: string
@@ -19,53 +26,44 @@ interface DeletedPerformanceReview extends PerformanceReview {
   deletedAt: string
 }
 
-const initialReviews: PerformanceReview[] = [
-  {
-    id: '1',
-    employeeName: 'John Doe',
-    employeeId: 'EMP001',
-    reviewPeriod: 'Q1 2026',
-    rating: 4.5,
-    reviewer: 'Manager Sarah',
-    status: 'Completed'
-  },
-  {
-    id: '2',
-    employeeName: 'Jane Smith',
-    employeeId: 'EMP002',
-    reviewPeriod: 'Q1 2026',
-    rating: 0,
-    reviewer: 'Manager Mike',
-    status: 'In Progress'
+function mapReview(r: ApiPerformanceReview): PerformanceReview {
+  return {
+    id: r.id,
+    employeeName: r.employee_name,
+    employeeId: r.employee_code,
+    reviewPeriod: r.review_period,
+    rating: Number(r.rating),
+    reviewer: r.reviewer,
+    status: r.status as PerformanceReview['status'],
   }
-]
+}
+
+function mapDeletedReview(r: ApiPerformanceReview): DeletedPerformanceReview {
+  return {
+    ...mapReview(r),
+    deletedAt: r.deleted_at || new Date().toISOString(),
+  }
+}
 
 export default function PerformanceReviewsPage() {
-  const [reviews, setReviews] = useState<PerformanceReview[]>(() => {
-    const saved = localStorage.getItem('bookito_performance_reviews')
-    return saved ? JSON.parse(saved) : initialReviews
-  })
-  
-  const [deletedReviews, setDeletedReviews] = useState<DeletedPerformanceReview[]>(() => {
-    const saved = localStorage.getItem('bookito_deleted_performance_reviews')
-    return saved ? JSON.parse(saved) : []
-  })
-
+  const [reviews, setReviews] = useState<PerformanceReview[]>([])
+  const [deletedReviews, setDeletedReviews] = useState<DeletedPerformanceReview[]>([])
   const [showTrash, setShowTrash] = useState(false)
 
-  useEffect(() => {
-    localStorage.setItem('bookito_performance_reviews', JSON.stringify(reviews))
-  }, [reviews])
-
-  useEffect(() => {
-    localStorage.setItem('bookito_deleted_performance_reviews', JSON.stringify(deletedReviews))
-  }, [deletedReviews])
-
-  useEffect(() => {
-    // Purge logic: Auto-delete after 30 days
-    const now = new Date()
-    setDeletedReviews(prev => prev.filter(r => differenceInDays(now, parseISO(r.deletedAt)) < 30))
+  const load = useCallback(async () => {
+    try {
+      const [a, d] = await Promise.all([fetchPerformanceReviews(), fetchDeletedPerformanceReviews()])
+      setReviews(a.map(mapReview))
+      setDeletedReviews(d.map(mapDeletedReview))
+    } catch {
+      setReviews([])
+      setDeletedReviews([])
+    }
   }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
 
   const stats = [
     { label: 'Avg Rating', value: '4.2', icon: Star, color: 'text-amber-600', bg: 'bg-amber-50' },
@@ -75,16 +73,11 @@ export default function PerformanceReviewsPage() {
   ]
 
   const handleDelete = (review: PerformanceReview) => {
-    const deletedAt = new Date().toISOString()
-    const entry: DeletedPerformanceReview = { ...review, deletedAt }
-    setReviews(prev => prev.filter(r => r.id !== review.id))
-    setDeletedReviews(prev => [entry, ...prev])
+    void softDeletePerformanceReview(review.id).then(() => load())
   }
 
   const handleRestore = (review: DeletedPerformanceReview) => {
-    const { deletedAt, ...rest } = review
-    setDeletedReviews(prev => prev.filter(r => r.id !== review.id))
-    setReviews(prev => [rest, ...prev])
+    void restorePerformanceReview(review.id).then(() => load())
   }
 
   const getRemainingDays = (deletedAt: string) => {

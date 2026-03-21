@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   DollarSign,
   TrendingUp,
@@ -26,36 +26,60 @@ import {
 } from 'recharts'
 import { StatsCard } from '@/components/StatsCard'
 import { ChartCard } from '@/components/ChartCard'
-import {
-  financeStats,
-  dailyRevenueData,
-  weeklyRevenueData,
-  monthlyRevenueData,
-  dashboardStats,
-  salesPerformanceData,
-} from '@/data/mockData'
 import { formatCurrency, formatNumber } from '@/lib/utils'
-
-type RevenueView = 'daily' | 'weekly' | 'monthly'
-
-const expenseDistribution = [
-  { name: 'Office Rent', value: 45000, color: '#6366f1' },
-  { name: 'Salaries', value: 250000, color: '#10b981' },
-  { name: 'Marketing', value: 35000, color: '#f59e0b' },
-  { name: 'Utilities', value: 12000, color: '#ef4444' },
-  { name: 'Other', value: 18000, color: '#8b5cf6' },
-]
+import {
+  fetchCompanyOverview,
+  fetchFinanceCharts,
+  fetchFinanceSummary,
+  fetchDashboardCharts,
+  type CompanyOverview,
+  type FinanceCharts,
+  type FinanceSummary,
+  type DashboardCharts,
+} from '@/lib/reportsApi'
 
 export default function FinanceDashboard() {
-  const [revenueView, setRevenueView] = useState<RevenueView>('monthly')
+  const [summary, setSummary] = useState<FinanceSummary | null>(null)
+  const [overview, setOverview] = useState<CompanyOverview | null>(null)
+  const [financeCharts, setFinanceCharts] = useState<FinanceCharts | null>(null)
+  const [dashboardCharts, setDashboardCharts] = useState<DashboardCharts | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const revenueDataMap = {
-    daily: { data: dailyRevenueData, key: 'day' },
-    weekly: { data: weeklyRevenueData, key: 'week' },
-    monthly: { data: monthlyRevenueData, key: 'month' },
-  }
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    Promise.all([
+      fetchFinanceSummary(),
+      fetchCompanyOverview(),
+      fetchFinanceCharts(),
+      fetchDashboardCharts(),
+    ])
+      .then(([s, o, fc, dc]) => {
+        if (!cancelled) {
+          setSummary(s)
+          setOverview(o)
+          setFinanceCharts(fc)
+          setDashboardCharts(dc)
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Failed to load finance dashboard')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
-  const activeData = revenueDataMap[revenueView]
+  const monthlyRevenueData = financeCharts?.monthly_revenue_data ?? []
+  const expenseDistribution = financeCharts?.expense_distribution_data ?? []
+  const salesPerformanceData = dashboardCharts?.sales_performance_data ?? []
 
   return (
     <div className="space-y-6">
@@ -70,93 +94,92 @@ export default function FinanceDashboard() {
         </div>
       </div>
 
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+          {error}
+        </div>
+      )}
+
+      {loading && (
+        <div className="rounded-xl border border-surface-200 bg-surface-50 p-8 text-center text-surface-500">
+          Loading finance dashboard…
+        </div>
+      )}
+
+      {!loading && summary && (
+        <>
       {/* Financial Stats Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Revenue"
-          value={formatCurrency(financeStats.totalClosingAmount)}
+          value={formatCurrency(Number(summary.total_closing_amount))}
           icon={DollarSign}
           variant="primary"
           trend={{ value: 15.2, isPositive: true }}
         />
         <StatsCard
           title="Total Collected"
-          value={formatCurrency(financeStats.collectedAmount)}
+          value={formatCurrency(Number(summary.total_collected_amount))}
           icon={TrendingUp}
           variant="accent"
           trend={{ value: 12.5, isPositive: true }}
         />
         <StatsCard
           title="Pending Receivables"
-          value={formatCurrency(financeStats.pendingAmount)}
+          value={formatCurrency(Number(summary.total_pending_amount))}
           icon={Clock}
           variant="warning"
           trend={{ value: 5.4, isPositive: false }}
         />
         <StatsCard
           title="Net Profit"
-          value={formatCurrency(financeStats.collectedAmount - 360000)}
+          value={formatCurrency(Number(summary.total_collected_amount) - (360000))}
           icon={PieChart}
           variant="success"
           trend={{ value: 8.1, isPositive: true }}
         />
       </div>
 
-      {/* Operational Overview (Incorporated from Main Dashboard) */}
+      {/* Operational Overview */}
+      {overview && (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Properties"
-          value={dashboardStats.totalProperties}
+          value={overview.total_properties}
           icon={Building2}
           variant="primary"
           trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
           title="Active Agents"
-          value={dashboardStats.activeTravelAgents}
+          value={overview.active_travel_agents}
           icon={Users}
           trend={{ value: 5, isPositive: true }}
         />
         <StatsCard
           title="Sales This Month"
-          value={dashboardStats.salesClosingsThisMonth}
+          value={overview.sales_closings_this_month}
           icon={TrendingUp}
           trend={{ value: 18, isPositive: true }}
         />
         <StatsCard
           title="Expiring Plans"
-          value={dashboardStats.upcomingPlanExpiry}
+          value={overview.upcoming_plan_expiry}
           icon={AlertTriangle}
           variant="danger"
         />
       </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Main Revenue Chart */}
+        {/* Main Revenue Chart - monthly from API */}
         <div className="lg:col-span-2">
           <ChartCard
             title="Revenue Trend"
-            subtitle="Historical revenue breakdown by period"
-            action={
-              <div className="flex rounded-lg border border-surface-200 p-0.5 bg-surface-50">
-                {(['daily', 'weekly', 'monthly'] as RevenueView[]).map((view) => (
-                  <button
-                    key={view}
-                    onClick={() => setRevenueView(view)}
-                    className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
-                      revenueView === view
-                        ? 'bg-white text-primary-600 shadow-sm border border-surface-200'
-                        : 'text-surface-500 hover:text-surface-700'
-                    }`}
-                  >
-                    {view.charAt(0).toUpperCase() + view.slice(1)}
-                  </button>
-                ))}
-              </div>
-            }
+            subtitle="Monthly revenue"
           >
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={activeData.data as any[]}>
+              <AreaChart data={monthlyRevenueData}>
                 <defs>
                   <linearGradient id="financeGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1} />
@@ -164,34 +187,34 @@ export default function FinanceDashboard() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis 
-                  dataKey={activeData.key} 
-                  tick={{ fontSize: 12, fill: '#64748b' }} 
-                  axisLine={false} 
-                  tickLine={false} 
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  axisLine={false}
+                  tickLine={false}
                   dy={10}
                 />
-                <YAxis 
-                  tick={{ fontSize: 12, fill: '#64748b' }} 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tickFormatter={(v) => formatNumber(v)} 
+                <YAxis
+                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => formatNumber(v)}
                 />
                 <Tooltip
-                  contentStyle={{ 
-                    borderRadius: '12px', 
-                    border: 'none', 
+                  contentStyle={{
+                    borderRadius: '12px',
+                    border: 'none',
                     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                     padding: '12px'
                   }}
-                  formatter={(value: any) => [formatCurrency(Number(value)), 'Revenue']}
+                  formatter={(value: unknown) => [formatCurrency(Number(value)), 'Revenue']}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#6366f1" 
-                  strokeWidth={3} 
-                  fill="url(#financeGrad)" 
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#6366f1"
+                  strokeWidth={3}
+                  fill="url(#financeGrad)"
                   animationDuration={1500}
                 />
               </AreaChart>
@@ -324,6 +347,8 @@ export default function FinanceDashboard() {
               ))}
           </div>
       </div>
+        </>
+      )}
     </div>
   )
 }

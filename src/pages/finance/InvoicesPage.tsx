@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
 import {
   DollarSign,
@@ -19,15 +19,73 @@ import { StatsCard } from '@/components/StatsCard'
 import { DataTable } from '@/components/DataTable'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Button, Modal, FormField, Input, Select } from '@/components/FormElements'
-import {
-  financeRecords,
-  financeStats,
-  type FinanceRecord,
-} from '@/data/mockData'
 import { formatCurrency } from '@/lib/utils'
+import { fetchFinanceSummary } from '@/lib/reportsApi'
+import {
+  fetchDeletedFinancePayments,
+  fetchFinancePayments,
+  patchFinancePayment,
+  restoreFinancePayment,
+  softDeleteFinancePayment,
+} from '@/lib/financeApi'
+
+export interface FinanceRecord {
+  id: string
+  propertyName: string
+  closingAmount: number
+  pendingAmount: number
+  collectedAmount: number
+  invoiceUploaded?: boolean
+  lastPaymentDate?: string
+  executive?: string
+  isDeleted?: boolean
+  deletedAt?: string
+}
 
 export default function InvoicesPage() {
-  const [localFinanceRecords, setLocalFinanceRecords] = useState<FinanceRecord[]>(financeRecords)
+  const [localFinanceRecords, setLocalFinanceRecords] = useState<FinanceRecord[]>([])
+  const [financeSummary, setFinanceSummary] = useState<{ total_closing_amount: string | number; total_collected_amount: string | number; total_pending_amount: string | number } | null>(null)
+
+  const mapPayment = (r: {
+    id: string
+    property_name: string
+    closing_amount: string
+    pending_amount: string
+    collected_amount: string
+    invoice_uploaded: boolean
+    last_payment_date?: string | null
+    executive: string
+    is_deleted?: boolean
+    deleted_at?: string | null
+  }): FinanceRecord => ({
+    id: r.id,
+    propertyName: r.property_name,
+    closingAmount: Number(r.closing_amount),
+    pendingAmount: Number(r.pending_amount),
+    collectedAmount: Number(r.collected_amount),
+    invoiceUploaded: r.invoice_uploaded,
+    lastPaymentDate: r.last_payment_date ?? undefined,
+    executive: r.executive,
+    isDeleted: !!r.is_deleted,
+    deletedAt: r.deleted_at ?? undefined,
+  })
+
+  const loadPayments = useCallback(async () => {
+    try {
+      const [active, deleted] = await Promise.all([fetchFinancePayments(), fetchDeletedFinancePayments()])
+      setLocalFinanceRecords([
+        ...active.map((r) => mapPayment(r)),
+        ...deleted.map((r) => mapPayment({ ...r, is_deleted: true })),
+      ])
+    } catch {
+      setLocalFinanceRecords([])
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchFinanceSummary().then(setFinanceSummary).catch(() => {})
+    loadPayments()
+  }, [loadPayments])
   const [paymentTab, setPaymentTab] = useState<'active' | 'deleted'>('active')
   const [showEditModal, setShowEditModal] = useState(false)
   const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null)
@@ -60,15 +118,11 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'full' | 'partial' | 'pending'>('all')
 
   const handleDeletePayment = (id: string) => {
-    setLocalFinanceRecords(prev => prev.map(r => 
-      r.id === id ? { ...r, isDeleted: true, deletedAt: new Date().toISOString() } : r
-    ))
+    void softDeleteFinancePayment(id).then(() => loadPayments())
   }
 
   const handleRestorePayment = (id: string) => {
-    setLocalFinanceRecords(prev => prev.map(r => 
-      r.id === id ? { ...r, isDeleted: false, deletedAt: undefined } : r
-    ))
+    void restoreFinancePayment(id).then(() => loadPayments())
   }
 
   const handleEditPayment = (record: FinanceRecord) => {
@@ -78,20 +132,25 @@ export default function InvoicesPage() {
       closingAmount: record.closingAmount,
       collectedAmount: record.collectedAmount,
       lastPaymentDate: record.lastPaymentDate || '',
-      executive: record.executive
+      executive: record.executive ?? '',
     })
     setShowEditModal(true)
   }
 
   const handleSavePayment = () => {
-    setLocalFinanceRecords(prev => prev.map(r => 
-      r.id === currentPaymentId ? {
-        ...r,
-        ...paymentData,
-        pendingAmount: paymentData.closingAmount - paymentData.collectedAmount,
-      } : r
-    ))
-    setShowEditModal(false)
+    if (!currentPaymentId) return
+    const closing = paymentData.closingAmount
+    const collected = paymentData.collectedAmount
+    void patchFinancePayment(currentPaymentId, {
+      closing_amount: closing,
+      collected_amount: collected,
+      pending_amount: Math.max(0, closing - collected),
+      last_payment_date: paymentData.lastPaymentDate || null,
+      executive: paymentData.executive,
+    }).then(() => {
+      loadPayments()
+      setShowEditModal(false)
+    })
   }
 
   const getRemainingDays = (deletedAt?: string) => {
@@ -215,19 +274,19 @@ export default function InvoicesPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatsCard
           title="Total Receivables"
-          value={formatCurrency(financeStats.totalClosingAmount)}
+          value={financeSummary ? formatCurrency(Number(financeSummary.total_closing_amount)) : '—'}
           icon={DollarSign}
           variant="primary"
         />
         <StatsCard
           title="Total Collected"
-          value={formatCurrency(financeStats.collectedAmount)}
+          value={financeSummary ? formatCurrency(Number(financeSummary.total_collected_amount)) : '—'}
           icon={TrendingUp}
           variant="success"
         />
         <StatsCard
           title="Total Outstanding"
-          value={formatCurrency(financeStats.pendingAmount)}
+          value={financeSummary ? formatCurrency(Number(financeSummary.total_pending_amount)) : '—'}
           icon={Clock}
           variant="warning"
         />
@@ -336,7 +395,7 @@ export default function InvoicesPage() {
             collectedAmount={recordToPrint.collectedAmount}
             pendingAmount={recordToPrint.pendingAmount}
             date={recordToPrint.lastPaymentDate || new Date().toLocaleDateString()}
-            executive={recordToPrint.executive}
+            executive={recordToPrint.executive ?? ''}
             invoiceNo={`BK-${recordToPrint.id.toUpperCase()}`}
           />
         )}

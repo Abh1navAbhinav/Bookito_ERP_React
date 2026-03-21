@@ -1,0 +1,4093 @@
+[
+  {
+    "id": "andaman-and-nicobar",
+    "name": "Andaman and Nicobar",
+    "children": [
+      {
+        "id": "andaman-and-nicobar__nicobar",
+        "name": "Nicobar",
+        "children": []
+      },
+      {
+        "id": "andaman-and-nicobar__north-and-middle-andaman",
+        "name": "North and Middle Andaman",
+        "children": []
+      },
+      {
+        "id": "andaman-and-nicobar__south-andaman",
+        "name": "South Andaman",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "andhra-pradesh",
+    "name": "Andhra Pradesh",
+    "children": [
+      {
+        "id": "andhra-pradesh__alluri-sitharama-raju",
+        "name": "Alluri Sitharama Raju",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__anakapalli",
+        "name": "Anakapalli",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__ananthapuramu",
+        "name": "Ananthapuramu",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__annamayya",
+        "name": "Annamayya",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__bapatla",
+        "name": "Bapatla",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__chittoor",
+        "name": "Chittoor",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__dr-b-r-ambedkar-konaseema",
+        "name": "Dr. B.R. Ambedkar Konaseema",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__east-godavari",
+        "name": "East Godavari",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__eluru",
+        "name": "Eluru",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__guntur",
+        "name": "Guntur",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__kakinada",
+        "name": "Kakinada",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__krishna",
+        "name": "Krishna",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__kurnool",
+        "name": "Kurnool",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__nandyal",
+        "name": "Nandyal",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__nellore",
+        "name": "Nellore",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__ntr",
+        "name": "NTR",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__palnadu",
+        "name": "Palnadu",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__parvathipuram-manyam",
+        "name": "Parvathipuram Manyam",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__prakasam",
+        "name": "Prakasam",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__srikakulam",
+        "name": "Srikakulam",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__sri-sathya-sai",
+        "name": "Sri Sathya Sai",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__tirupati",
+        "name": "Tirupati",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__visakhapatnam",
+        "name": "Visakhapatnam",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__vizianagaram",
+        "name": "Vizianagaram",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__west-godavari",
+        "name": "West Godavari",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__ysr-kadapa",
+        "name": "YSR Kadapa",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__polavaram",
+        "name": "Polavaram",
+        "children": []
+      },
+      {
+        "id": "andhra-pradesh__markapuram",
+        "name": "Markapuram",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "arunachal-pradesh",
+    "name": "Arunachal Pradesh",
+    "children": [
+      {
+        "id": "arunachal-pradesh__anjaw",
+        "name": "Anjaw",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__changlang",
+        "name": "Changlang",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__east-kameng",
+        "name": "East Kameng",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__east-siang",
+        "name": "East Siang",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__kamle",
+        "name": "Kamle",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__kra-daadi",
+        "name": "Kra Daadi",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__kurung-kumey",
+        "name": "Kurung Kumey",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__lepa-rada",
+        "name": "Lepa Rada",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__lohit",
+        "name": "Lohit",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__longding",
+        "name": "Longding",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__lower-dibang-valley",
+        "name": "Lower Dibang Valley",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__west-siang",
+        "name": "West Siang",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__lower-siang",
+        "name": "Lower Siang",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__lower-subansiri",
+        "name": "Lower Subansiri",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__namsai",
+        "name": "Namsai",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__pakke-kessang",
+        "name": "Pakke-Kessang",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__papum-pare",
+        "name": "Papum Pare",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__shi-yomi",
+        "name": "Shi Yomi",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__siang",
+        "name": "Siang",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__tawang",
+        "name": "Tawang",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__tirap",
+        "name": "Tirap",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__upper-dibang-valley",
+        "name": "Upper Dibang Valley",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__upper-siang",
+        "name": "Upper Siang",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__upper-subansiri",
+        "name": "Upper Subansiri",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__west-kameng",
+        "name": "West Kameng",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__keyi-panyor",
+        "name": "Keyi Panyor",
+        "children": []
+      },
+      {
+        "id": "arunachal-pradesh__bichom",
+        "name": "Bichom",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "assam",
+    "name": "Assam",
+    "children": [
+      {
+        "id": "assam__baksa",
+        "name": "Baksa",
+        "children": []
+      },
+      {
+        "id": "assam__bajali",
+        "name": "Bajali",
+        "children": []
+      },
+      {
+        "id": "assam__barpeta",
+        "name": "Barpeta",
+        "children": []
+      },
+      {
+        "id": "assam__biswanath",
+        "name": "Biswanath",
+        "children": []
+      },
+      {
+        "id": "assam__bongaigaon",
+        "name": "Bongaigaon",
+        "children": []
+      },
+      {
+        "id": "assam__cachar",
+        "name": "Cachar",
+        "children": []
+      },
+      {
+        "id": "assam__charaideo",
+        "name": "Charaideo",
+        "children": []
+      },
+      {
+        "id": "assam__chirang",
+        "name": "Chirang",
+        "children": []
+      },
+      {
+        "id": "assam__darrang",
+        "name": "Darrang",
+        "children": []
+      },
+      {
+        "id": "assam__dhemaji",
+        "name": "Dhemaji",
+        "children": []
+      },
+      {
+        "id": "assam__dhubri",
+        "name": "Dhubri",
+        "children": []
+      },
+      {
+        "id": "assam__dibrugarh",
+        "name": "Dibrugarh",
+        "children": []
+      },
+      {
+        "id": "assam__dima-hasao",
+        "name": "Dima Hasao",
+        "children": []
+      },
+      {
+        "id": "assam__goalpara",
+        "name": "Goalpara",
+        "children": []
+      },
+      {
+        "id": "assam__golaghat",
+        "name": "Golaghat",
+        "children": []
+      },
+      {
+        "id": "assam__hailakandi",
+        "name": "Hailakandi",
+        "children": []
+      },
+      {
+        "id": "assam__hojai",
+        "name": "Hojai",
+        "children": []
+      },
+      {
+        "id": "assam__jorhat",
+        "name": "Jorhat",
+        "children": []
+      },
+      {
+        "id": "assam__kamrup",
+        "name": "Kamrup",
+        "children": []
+      },
+      {
+        "id": "assam__kamrup-metropolitan",
+        "name": "Kamrup Metropolitan",
+        "children": []
+      },
+      {
+        "id": "assam__karbi-anglong",
+        "name": "Karbi Anglong",
+        "children": []
+      },
+      {
+        "id": "assam__karimganj",
+        "name": "Karimganj",
+        "children": []
+      },
+      {
+        "id": "assam__kokrajhar",
+        "name": "Kokrajhar",
+        "children": []
+      },
+      {
+        "id": "assam__lakhimpur",
+        "name": "Lakhimpur",
+        "children": []
+      },
+      {
+        "id": "assam__majuli",
+        "name": "Majuli",
+        "children": []
+      },
+      {
+        "id": "assam__morigaon",
+        "name": "Morigaon",
+        "children": []
+      },
+      {
+        "id": "assam__nagaon",
+        "name": "Nagaon",
+        "children": []
+      },
+      {
+        "id": "assam__nalbari",
+        "name": "Nalbari",
+        "children": []
+      },
+      {
+        "id": "assam__sivasagar",
+        "name": "Sivasagar",
+        "children": []
+      },
+      {
+        "id": "assam__sonitpur",
+        "name": "Sonitpur",
+        "children": []
+      },
+      {
+        "id": "assam__south-salmara-mankachar",
+        "name": "South Salmara-Mankachar",
+        "children": []
+      },
+      {
+        "id": "assam__tamulpur",
+        "name": "Tamulpur",
+        "children": []
+      },
+      {
+        "id": "assam__tinsukia",
+        "name": "Tinsukia",
+        "children": []
+      },
+      {
+        "id": "assam__udalguri",
+        "name": "Udalguri",
+        "children": []
+      },
+      {
+        "id": "assam__west-karbi-anglong",
+        "name": "West Karbi Anglong",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "bihar",
+    "name": "Bihar",
+    "children": [
+      {
+        "id": "bihar__araria",
+        "name": "Araria",
+        "children": []
+      },
+      {
+        "id": "bihar__arwal",
+        "name": "Arwal",
+        "children": []
+      },
+      {
+        "id": "bihar__aurangabad",
+        "name": "Aurangabad",
+        "children": []
+      },
+      {
+        "id": "bihar__banka",
+        "name": "Banka",
+        "children": []
+      },
+      {
+        "id": "bihar__begusarai",
+        "name": "Begusarai",
+        "children": []
+      },
+      {
+        "id": "bihar__bhagalpur",
+        "name": "Bhagalpur",
+        "children": []
+      },
+      {
+        "id": "bihar__bhojpur",
+        "name": "Bhojpur",
+        "children": []
+      },
+      {
+        "id": "bihar__buxar",
+        "name": "Buxar",
+        "children": []
+      },
+      {
+        "id": "bihar__darbhanga",
+        "name": "Darbhanga",
+        "children": []
+      },
+      {
+        "id": "bihar__east-champaran",
+        "name": "East Champaran",
+        "children": []
+      },
+      {
+        "id": "bihar__gaya",
+        "name": "Gaya",
+        "children": []
+      },
+      {
+        "id": "bihar__gopalganj",
+        "name": "Gopalganj",
+        "children": []
+      },
+      {
+        "id": "bihar__jamui",
+        "name": "Jamui",
+        "children": []
+      },
+      {
+        "id": "bihar__jehanabad",
+        "name": "Jehanabad",
+        "children": []
+      },
+      {
+        "id": "bihar__kaimur",
+        "name": "Kaimur",
+        "children": []
+      },
+      {
+        "id": "bihar__katihar",
+        "name": "Katihar",
+        "children": []
+      },
+      {
+        "id": "bihar__khagaria",
+        "name": "Khagaria",
+        "children": []
+      },
+      {
+        "id": "bihar__kishanganj",
+        "name": "Kishanganj",
+        "children": []
+      },
+      {
+        "id": "bihar__lakhisarai",
+        "name": "Lakhisarai",
+        "children": []
+      },
+      {
+        "id": "bihar__madhepura",
+        "name": "Madhepura",
+        "children": []
+      },
+      {
+        "id": "bihar__madhubani",
+        "name": "Madhubani",
+        "children": []
+      },
+      {
+        "id": "bihar__munger",
+        "name": "Munger",
+        "children": []
+      },
+      {
+        "id": "bihar__muzaffarpur",
+        "name": "Muzaffarpur",
+        "children": []
+      },
+      {
+        "id": "bihar__nalanda",
+        "name": "Nalanda",
+        "children": []
+      },
+      {
+        "id": "bihar__nawada",
+        "name": "Nawada",
+        "children": []
+      },
+      {
+        "id": "bihar__patna",
+        "name": "Patna",
+        "children": []
+      },
+      {
+        "id": "bihar__purnia",
+        "name": "Purnia",
+        "children": []
+      },
+      {
+        "id": "bihar__rohtas",
+        "name": "Rohtas",
+        "children": []
+      },
+      {
+        "id": "bihar__saharsa",
+        "name": "Saharsa",
+        "children": []
+      },
+      {
+        "id": "bihar__samastipur",
+        "name": "Samastipur",
+        "children": []
+      },
+      {
+        "id": "bihar__saran",
+        "name": "Saran",
+        "children": []
+      },
+      {
+        "id": "bihar__sheikhpura",
+        "name": "Sheikhpura",
+        "children": []
+      },
+      {
+        "id": "bihar__sheohar",
+        "name": "Sheohar",
+        "children": []
+      },
+      {
+        "id": "bihar__sitamarhi",
+        "name": "Sitamarhi",
+        "children": []
+      },
+      {
+        "id": "bihar__siwan",
+        "name": "Siwan",
+        "children": []
+      },
+      {
+        "id": "bihar__supaul",
+        "name": "Supaul",
+        "children": []
+      },
+      {
+        "id": "bihar__vaishali",
+        "name": "Vaishali",
+        "children": []
+      },
+      {
+        "id": "bihar__west-champaran",
+        "name": "West Champaran",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "chandigarh",
+    "name": "Chandigarh",
+    "children": [
+      {
+        "id": "chandigarh__chandigarh",
+        "name": "Chandigarh",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "chhattisgarh",
+    "name": "Chhattisgarh",
+    "children": [
+      {
+        "id": "chhattisgarh__balod",
+        "name": "Balod",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__baloda-bazar",
+        "name": "Baloda Bazar",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__balrampur-ramanujganj",
+        "name": "Balrampur-Ramanujganj",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__bastar",
+        "name": "Bastar",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__bemetara",
+        "name": "Bemetara",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__bijapur",
+        "name": "Bijapur",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__bilaspur",
+        "name": "Bilaspur",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__dantewada",
+        "name": "Dantewada",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__dhamtari",
+        "name": "Dhamtari",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__durg",
+        "name": "Durg",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__gariaband",
+        "name": "Gariaband",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__bilaspur-district",
+        "name": "Bilaspur district",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__gaurela-pendra-marwahi",
+        "name": "Gaurela-Pendra-Marwahi",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__janjgir-champa",
+        "name": "Janjgir-Champa",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__jashpur",
+        "name": "Jashpur",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__kabirdham",
+        "name": "Kabirdham",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__kanker",
+        "name": "Kanker",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__khairagarh-chhuikhadan-gandai",
+        "name": "Khairagarh-Chhuikhadan-Gandai",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__kondagaon",
+        "name": "Kondagaon",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__korba",
+        "name": "Korba",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__korea",
+        "name": "Korea",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__mahasamund",
+        "name": "Mahasamund",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__manendragarh-chirmiri-bharatpur",
+        "name": "Manendragarh-Chirmiri-Bharatpur",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__mohla-manpur-ambagarh-chowki",
+        "name": "Mohla-Manpur-Ambagarh Chowki",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__mungeli",
+        "name": "Mungeli",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__narayanpur",
+        "name": "Narayanpur",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__raigarh",
+        "name": "Raigarh",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__raipur",
+        "name": "Raipur",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__rajnandgaon",
+        "name": "Rajnandgaon",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__sarangarh-bilaigarh",
+        "name": "Sarangarh-Bilaigarh",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__sakti",
+        "name": "Sakti",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__sukma",
+        "name": "Sukma",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__surajpur",
+        "name": "Surajpur",
+        "children": []
+      },
+      {
+        "id": "chhattisgarh__surguja",
+        "name": "Surguja",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "dadra-and-nagar-haveli-and-daman-and-diu",
+    "name": "Dadra and Nagar Haveli and Daman and Diu",
+    "children": [
+      {
+        "id": "dadra-and-nagar-haveli-and-daman-and-diu__dadra-and-nagar-haveli",
+        "name": "Dadra and Nagar Haveli",
+        "children": []
+      },
+      {
+        "id": "dadra-and-nagar-haveli-and-daman-and-diu__daman",
+        "name": "Daman",
+        "children": []
+      },
+      {
+        "id": "dadra-and-nagar-haveli-and-daman-and-diu__diu",
+        "name": "Diu",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "goa",
+    "name": "Goa",
+    "children": [
+      {
+        "id": "goa__kushavati",
+        "name": "Kushavati",
+        "children": []
+      },
+      {
+        "id": "goa__north-goa",
+        "name": "North Goa",
+        "children": []
+      },
+      {
+        "id": "goa__south-goa",
+        "name": "South Goa",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "gujarat",
+    "name": "Gujarat",
+    "children": [
+      {
+        "id": "gujarat__ahmedabad",
+        "name": "Ahmedabad",
+        "children": []
+      },
+      {
+        "id": "gujarat__amreli",
+        "name": "Amreli",
+        "children": []
+      },
+      {
+        "id": "gujarat__anand",
+        "name": "Anand",
+        "children": []
+      },
+      {
+        "id": "gujarat__aravalli",
+        "name": "Aravalli",
+        "children": []
+      },
+      {
+        "id": "gujarat__banaskantha",
+        "name": "Banaskantha",
+        "children": []
+      },
+      {
+        "id": "gujarat__bharuch",
+        "name": "Bharuch",
+        "children": []
+      },
+      {
+        "id": "gujarat__bhavnagar",
+        "name": "Bhavnagar",
+        "children": []
+      },
+      {
+        "id": "gujarat__botad",
+        "name": "Botad",
+        "children": []
+      },
+      {
+        "id": "gujarat__chhota-udaipur",
+        "name": "Chhota Udaipur",
+        "children": []
+      },
+      {
+        "id": "gujarat__dahod",
+        "name": "Dahod",
+        "children": []
+      },
+      {
+        "id": "gujarat__dang",
+        "name": "Dang",
+        "children": []
+      },
+      {
+        "id": "gujarat__devbhumi-dwarka",
+        "name": "Devbhumi Dwarka",
+        "children": []
+      },
+      {
+        "id": "gujarat__gandhinagar",
+        "name": "Gandhinagar",
+        "children": []
+      },
+      {
+        "id": "gujarat__gir-somnath",
+        "name": "Gir Somnath",
+        "children": []
+      },
+      {
+        "id": "gujarat__jamnagar",
+        "name": "Jamnagar",
+        "children": []
+      },
+      {
+        "id": "gujarat__junagadh",
+        "name": "Junagadh",
+        "children": []
+      },
+      {
+        "id": "gujarat__kheda",
+        "name": "Kheda",
+        "children": []
+      },
+      {
+        "id": "gujarat__kutch",
+        "name": "Kutch",
+        "children": []
+      },
+      {
+        "id": "gujarat__mahisagar",
+        "name": "Mahisagar",
+        "children": []
+      },
+      {
+        "id": "gujarat__mehsana",
+        "name": "Mehsana",
+        "children": []
+      },
+      {
+        "id": "gujarat__morbi",
+        "name": "Morbi",
+        "children": []
+      },
+      {
+        "id": "gujarat__narmada",
+        "name": "Narmada",
+        "children": []
+      },
+      {
+        "id": "gujarat__navsari",
+        "name": "Navsari",
+        "children": []
+      },
+      {
+        "id": "gujarat__panchmahal",
+        "name": "Panchmahal",
+        "children": []
+      },
+      {
+        "id": "gujarat__patan",
+        "name": "Patan",
+        "children": []
+      },
+      {
+        "id": "gujarat__porbandar",
+        "name": "Porbandar",
+        "children": []
+      },
+      {
+        "id": "gujarat__rajkot",
+        "name": "Rajkot",
+        "children": []
+      },
+      {
+        "id": "gujarat__sabarkantha",
+        "name": "Sabarkantha",
+        "children": []
+      },
+      {
+        "id": "gujarat__surat",
+        "name": "Surat",
+        "children": []
+      },
+      {
+        "id": "gujarat__surendranagar",
+        "name": "Surendranagar",
+        "children": []
+      },
+      {
+        "id": "gujarat__tapi",
+        "name": "Tapi",
+        "children": []
+      },
+      {
+        "id": "gujarat__vadodara",
+        "name": "Vadodara",
+        "children": []
+      },
+      {
+        "id": "gujarat__valsad",
+        "name": "Valsad",
+        "children": []
+      },
+      {
+        "id": "gujarat__vav-tharad",
+        "name": "Vav-Tharad",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "haryana",
+    "name": "Haryana",
+    "children": [
+      {
+        "id": "haryana__ambala",
+        "name": "Ambala",
+        "children": []
+      },
+      {
+        "id": "haryana__bhiwani",
+        "name": "Bhiwani",
+        "children": []
+      },
+      {
+        "id": "haryana__charkhi-dadri",
+        "name": "Charkhi Dadri",
+        "children": []
+      },
+      {
+        "id": "haryana__faridabad",
+        "name": "Faridabad",
+        "children": []
+      },
+      {
+        "id": "haryana__fatehabad",
+        "name": "Fatehabad",
+        "children": []
+      },
+      {
+        "id": "haryana__gurugram",
+        "name": "Gurugram",
+        "children": []
+      },
+      {
+        "id": "haryana__hisar",
+        "name": "Hisar",
+        "children": []
+      },
+      {
+        "id": "haryana__jhajjar",
+        "name": "Jhajjar",
+        "children": []
+      },
+      {
+        "id": "haryana__jind",
+        "name": "Jind",
+        "children": []
+      },
+      {
+        "id": "haryana__kaithal",
+        "name": "Kaithal",
+        "children": []
+      },
+      {
+        "id": "haryana__karnal",
+        "name": "Karnal",
+        "children": []
+      },
+      {
+        "id": "haryana__kurukshetra",
+        "name": "Kurukshetra",
+        "children": []
+      },
+      {
+        "id": "haryana__mahendragarh",
+        "name": "Mahendragarh",
+        "children": []
+      },
+      {
+        "id": "haryana__nuh",
+        "name": "Nuh",
+        "children": []
+      },
+      {
+        "id": "haryana__palwal",
+        "name": "Palwal",
+        "children": []
+      },
+      {
+        "id": "haryana__panchkula",
+        "name": "Panchkula",
+        "children": []
+      },
+      {
+        "id": "haryana__panipat",
+        "name": "Panipat",
+        "children": []
+      },
+      {
+        "id": "haryana__rewari",
+        "name": "Rewari",
+        "children": []
+      },
+      {
+        "id": "haryana__rohtak",
+        "name": "Rohtak",
+        "children": []
+      },
+      {
+        "id": "haryana__sirsa",
+        "name": "Sirsa",
+        "children": []
+      },
+      {
+        "id": "haryana__sonipat",
+        "name": "Sonipat",
+        "children": []
+      },
+      {
+        "id": "haryana__yamunanagar",
+        "name": "Yamunanagar",
+        "children": []
+      },
+      {
+        "id": "haryana__hansi",
+        "name": "Hansi",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "himachal-pradesh",
+    "name": "Himachal Pradesh",
+    "children": [
+      {
+        "id": "himachal-pradesh__bilaspur",
+        "name": "Bilaspur",
+        "children": []
+      },
+      {
+        "id": "himachal-pradesh__chamba",
+        "name": "Chamba",
+        "children": []
+      },
+      {
+        "id": "himachal-pradesh__hamirpur",
+        "name": "Hamirpur",
+        "children": []
+      },
+      {
+        "id": "himachal-pradesh__kangra",
+        "name": "Kangra",
+        "children": []
+      },
+      {
+        "id": "himachal-pradesh__kinnaur",
+        "name": "Kinnaur",
+        "children": []
+      },
+      {
+        "id": "himachal-pradesh__kullu",
+        "name": "Kullu",
+        "children": []
+      },
+      {
+        "id": "himachal-pradesh__lahaul-and-spiti",
+        "name": "Lahaul and Spiti",
+        "children": []
+      },
+      {
+        "id": "himachal-pradesh__mandi",
+        "name": "Mandi",
+        "children": []
+      },
+      {
+        "id": "himachal-pradesh__shimla",
+        "name": "Shimla",
+        "children": []
+      },
+      {
+        "id": "himachal-pradesh__sirmaur",
+        "name": "Sirmaur",
+        "children": []
+      },
+      {
+        "id": "himachal-pradesh__solan",
+        "name": "Solan",
+        "children": []
+      },
+      {
+        "id": "himachal-pradesh__una",
+        "name": "Una",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "jammu-and-kashmir",
+    "name": "Jammu and Kashmir",
+    "children": [
+      {
+        "id": "jammu-and-kashmir__anantnag",
+        "name": "Anantnag",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__budgam",
+        "name": "Budgam",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__bandipore",
+        "name": "Bandipore",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__baramulla",
+        "name": "Baramulla",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__doda",
+        "name": "Doda",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__ganderbal",
+        "name": "Ganderbal",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__jammu",
+        "name": "Jammu",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__kathua",
+        "name": "Kathua",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__kishtwar",
+        "name": "Kishtwar",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__kulgam",
+        "name": "Kulgam",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__kupwara",
+        "name": "Kupwara",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__poonch",
+        "name": "Poonch",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__pulwama",
+        "name": "Pulwama",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__rajouri",
+        "name": "Rajouri",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__ramban",
+        "name": "Ramban",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__reasi",
+        "name": "Reasi",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__samba",
+        "name": "Samba",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__shopian",
+        "name": "Shopian",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__srinagar",
+        "name": "Srinagar",
+        "children": []
+      },
+      {
+        "id": "jammu-and-kashmir__udhampur",
+        "name": "Udhampur",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "jharkhand",
+    "name": "Jharkhand",
+    "children": [
+      {
+        "id": "jharkhand__bokaro",
+        "name": "Bokaro",
+        "children": []
+      },
+      {
+        "id": "jharkhand__chatra",
+        "name": "Chatra",
+        "children": []
+      },
+      {
+        "id": "jharkhand__deoghar",
+        "name": "Deoghar",
+        "children": []
+      },
+      {
+        "id": "jharkhand__dhanbad",
+        "name": "Dhanbad",
+        "children": []
+      },
+      {
+        "id": "jharkhand__dumka",
+        "name": "Dumka",
+        "children": []
+      },
+      {
+        "id": "jharkhand__east-singhbhum",
+        "name": "East Singhbhum",
+        "children": []
+      },
+      {
+        "id": "jharkhand__garhwa",
+        "name": "Garhwa",
+        "children": []
+      },
+      {
+        "id": "jharkhand__giridih",
+        "name": "Giridih",
+        "children": []
+      },
+      {
+        "id": "jharkhand__godda",
+        "name": "Godda",
+        "children": []
+      },
+      {
+        "id": "jharkhand__gumla",
+        "name": "Gumla",
+        "children": []
+      },
+      {
+        "id": "jharkhand__hazaribag",
+        "name": "Hazaribag",
+        "children": []
+      },
+      {
+        "id": "jharkhand__jamtara",
+        "name": "Jamtara",
+        "children": []
+      },
+      {
+        "id": "jharkhand__khunti",
+        "name": "Khunti",
+        "children": []
+      },
+      {
+        "id": "jharkhand__koderma",
+        "name": "Koderma",
+        "children": []
+      },
+      {
+        "id": "jharkhand__latehar",
+        "name": "Latehar",
+        "children": []
+      },
+      {
+        "id": "jharkhand__lohardaga",
+        "name": "Lohardaga",
+        "children": []
+      },
+      {
+        "id": "jharkhand__pakur",
+        "name": "Pakur",
+        "children": []
+      },
+      {
+        "id": "jharkhand__palamu",
+        "name": "Palamu",
+        "children": []
+      },
+      {
+        "id": "jharkhand__ramgarh",
+        "name": "Ramgarh",
+        "children": []
+      },
+      {
+        "id": "jharkhand__ranchi",
+        "name": "Ranchi",
+        "children": []
+      },
+      {
+        "id": "jharkhand__sahibganj",
+        "name": "Sahibganj",
+        "children": []
+      },
+      {
+        "id": "jharkhand__seraikela-kharsawan",
+        "name": "Seraikela-Kharsawan",
+        "children": []
+      },
+      {
+        "id": "jharkhand__simdega",
+        "name": "Simdega",
+        "children": []
+      },
+      {
+        "id": "jharkhand__west-singhbhum",
+        "name": "West Singhbhum",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "karnataka",
+    "name": "Karnataka",
+    "children": [
+      {
+        "id": "karnataka__bagalkot",
+        "name": "Bagalkot",
+        "children": []
+      },
+      {
+        "id": "karnataka__ballari",
+        "name": "Ballari",
+        "children": []
+      },
+      {
+        "id": "karnataka__belagavi",
+        "name": "Belagavi",
+        "children": []
+      },
+      {
+        "id": "karnataka__bangalore-rural",
+        "name": "Bangalore Rural",
+        "children": []
+      },
+      {
+        "id": "karnataka__bangalore-urban",
+        "name": "Bangalore Urban",
+        "children": []
+      },
+      {
+        "id": "karnataka__bidar",
+        "name": "Bidar",
+        "children": []
+      },
+      {
+        "id": "karnataka__chamarajanagar",
+        "name": "Chamarajanagar",
+        "children": []
+      },
+      {
+        "id": "karnataka__chikkaballapur",
+        "name": "Chikkaballapur",
+        "children": []
+      },
+      {
+        "id": "karnataka__chikmagalur",
+        "name": "Chikmagalur",
+        "children": []
+      },
+      {
+        "id": "karnataka__chitradurga",
+        "name": "Chitradurga",
+        "children": []
+      },
+      {
+        "id": "karnataka__davanagere",
+        "name": "Davanagere",
+        "children": []
+      },
+      {
+        "id": "karnataka__dharwad",
+        "name": "Dharwad",
+        "children": []
+      },
+      {
+        "id": "karnataka__gadaga",
+        "name": "Gadaga",
+        "children": []
+      },
+      {
+        "id": "karnataka__kalaburagi",
+        "name": "Kalaburagi",
+        "children": []
+      },
+      {
+        "id": "karnataka__hassan",
+        "name": "Hassan",
+        "children": []
+      },
+      {
+        "id": "karnataka__haveri",
+        "name": "Haveri",
+        "children": []
+      },
+      {
+        "id": "karnataka__kodagu",
+        "name": "Kodagu",
+        "children": []
+      },
+      {
+        "id": "karnataka__kolar",
+        "name": "Kolar",
+        "children": []
+      },
+      {
+        "id": "karnataka__koppal",
+        "name": "Koppal",
+        "children": []
+      },
+      {
+        "id": "karnataka__mandya",
+        "name": "Mandya",
+        "children": []
+      },
+      {
+        "id": "karnataka__mysore",
+        "name": "Mysore",
+        "children": []
+      },
+      {
+        "id": "karnataka__raichur",
+        "name": "Raichur",
+        "children": []
+      },
+      {
+        "id": "karnataka__ramanagara",
+        "name": "Ramanagara",
+        "children": []
+      },
+      {
+        "id": "karnataka__shimoga",
+        "name": "Shimoga",
+        "children": []
+      },
+      {
+        "id": "karnataka__tumakuru",
+        "name": "Tumakuru",
+        "children": []
+      },
+      {
+        "id": "karnataka__udupi",
+        "name": "Udupi",
+        "children": []
+      },
+      {
+        "id": "karnataka__vijayanagara",
+        "name": "Vijayanagara",
+        "children": []
+      },
+      {
+        "id": "karnataka__bijapur",
+        "name": "Bijapur",
+        "children": []
+      },
+      {
+        "id": "karnataka__yadgir",
+        "name": "Yadgir",
+        "children": []
+      },
+      {
+        "id": "karnataka__dakshina-kannada",
+        "name": "Dakshina Kannada",
+        "children": []
+      },
+      {
+        "id": "karnataka__uttara-kannada",
+        "name": "Uttara Kannada",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "kerala",
+    "name": "Kerala",
+    "children": [
+      {
+        "id": "kerala__alappuzha",
+        "name": "Alappuzha",
+        "children": []
+      },
+      {
+        "id": "kerala__ernakulam",
+        "name": "Ernakulam",
+        "children": []
+      },
+      {
+        "id": "kerala__idukki",
+        "name": "Idukki",
+        "children": []
+      },
+      {
+        "id": "kerala__kannur",
+        "name": "Kannur",
+        "children": []
+      },
+      {
+        "id": "kerala__kasaragod",
+        "name": "Kasaragod",
+        "children": []
+      },
+      {
+        "id": "kerala__kollam",
+        "name": "Kollam",
+        "children": []
+      },
+      {
+        "id": "kerala__kottayam",
+        "name": "Kottayam",
+        "children": []
+      },
+      {
+        "id": "kerala__kozhikode",
+        "name": "Kozhikode",
+        "children": []
+      },
+      {
+        "id": "kerala__malappuram",
+        "name": "Malappuram",
+        "children": []
+      },
+      {
+        "id": "kerala__palakkad",
+        "name": "Palakkad",
+        "children": []
+      },
+      {
+        "id": "kerala__pathanamthitta",
+        "name": "Pathanamthitta",
+        "children": []
+      },
+      {
+        "id": "kerala__thiruvananthapuram",
+        "name": "Thiruvananthapuram",
+        "children": []
+      },
+      {
+        "id": "kerala__thrissur",
+        "name": "Thrissur",
+        "children": []
+      },
+      {
+        "id": "kerala__wayanad",
+        "name": "Wayanad",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "ladakh",
+    "name": "Ladakh",
+    "children": [
+      {
+        "id": "ladakh__kargil",
+        "name": "Kargil",
+        "children": []
+      },
+      {
+        "id": "ladakh__leh",
+        "name": "Leh",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "lakshadweep",
+    "name": "Lakshadweep",
+    "children": [
+      {
+        "id": "lakshadweep__lakshadweep",
+        "name": "Lakshadweep",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "madhya-pradesh",
+    "name": "Madhya Pradesh",
+    "children": [
+      {
+        "id": "madhya-pradesh__agar-malwa",
+        "name": "Agar Malwa",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__alirajpur",
+        "name": "Alirajpur",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__anuppur",
+        "name": "Anuppur",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__ashoknagar",
+        "name": "Ashoknagar",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__balaghat",
+        "name": "Balaghat",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__barwani",
+        "name": "Barwani",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__betul",
+        "name": "Betul",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__bhind",
+        "name": "Bhind",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__bhopal",
+        "name": "Bhopal",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__burhanpur",
+        "name": "Burhanpur",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__chhatarpur",
+        "name": "Chhatarpur",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__chhindwara",
+        "name": "Chhindwara",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__damoh",
+        "name": "Damoh",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__datia",
+        "name": "Datia",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__dewas",
+        "name": "Dewas",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__dhar",
+        "name": "Dhar",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__dindori",
+        "name": "Dindori",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__guna",
+        "name": "Guna",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__gwalior",
+        "name": "Gwalior",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__harda",
+        "name": "Harda",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__hoshangabad",
+        "name": "Hoshangabad",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__indore",
+        "name": "Indore",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__jabalpur",
+        "name": "Jabalpur",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__jhabua",
+        "name": "Jhabua",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__katni",
+        "name": "Katni",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__khandwa",
+        "name": "Khandwa",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__khargone",
+        "name": "Khargone",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__maihar",
+        "name": "Maihar",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__mandla",
+        "name": "Mandla",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__mandsaur",
+        "name": "Mandsaur",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__mauganj",
+        "name": "Mauganj",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__morena",
+        "name": "Morena",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__narsinghpur",
+        "name": "Narsinghpur",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__neemuch",
+        "name": "Neemuch",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__niwari",
+        "name": "Niwari",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__panna",
+        "name": "Panna",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__pandhurna",
+        "name": "Pandhurna",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__raisen",
+        "name": "Raisen",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__rajgarh",
+        "name": "Rajgarh",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__ratlam",
+        "name": "Ratlam",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__rewa",
+        "name": "Rewa",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__sagar",
+        "name": "Sagar",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__satna",
+        "name": "Satna",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__sehore",
+        "name": "Sehore",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__seoni",
+        "name": "Seoni",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__shahdol",
+        "name": "Shahdol",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__shajapur",
+        "name": "Shajapur",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__sheopur",
+        "name": "Sheopur",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__shivpuri",
+        "name": "Shivpuri",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__sidhi",
+        "name": "Sidhi",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__singrauli",
+        "name": "Singrauli",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__tikamgarh",
+        "name": "Tikamgarh",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__ujjain",
+        "name": "Ujjain",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__umaria",
+        "name": "Umaria",
+        "children": []
+      },
+      {
+        "id": "madhya-pradesh__vidisha",
+        "name": "Vidisha",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "maharashtra",
+    "name": "Maharashtra",
+    "children": [
+      {
+        "id": "maharashtra__ahmednagar",
+        "name": "Ahmednagar",
+        "children": []
+      },
+      {
+        "id": "maharashtra__akola",
+        "name": "Akola",
+        "children": []
+      },
+      {
+        "id": "maharashtra__amravati",
+        "name": "Amravati",
+        "children": []
+      },
+      {
+        "id": "maharashtra__aurangabad",
+        "name": "Aurangabad",
+        "children": []
+      },
+      {
+        "id": "maharashtra__beed",
+        "name": "Beed",
+        "children": []
+      },
+      {
+        "id": "maharashtra__bhandara",
+        "name": "Bhandara",
+        "children": []
+      },
+      {
+        "id": "maharashtra__buldhana",
+        "name": "Buldhana",
+        "children": []
+      },
+      {
+        "id": "maharashtra__chandrapur",
+        "name": "Chandrapur",
+        "children": []
+      },
+      {
+        "id": "maharashtra__osmanabad",
+        "name": "Osmanabad",
+        "children": []
+      },
+      {
+        "id": "maharashtra__dhule",
+        "name": "Dhule",
+        "children": []
+      },
+      {
+        "id": "maharashtra__gadchiroli",
+        "name": "Gadchiroli",
+        "children": []
+      },
+      {
+        "id": "maharashtra__gondia",
+        "name": "Gondia",
+        "children": []
+      },
+      {
+        "id": "maharashtra__hingoli",
+        "name": "Hingoli",
+        "children": []
+      },
+      {
+        "id": "maharashtra__jalgaon",
+        "name": "Jalgaon",
+        "children": []
+      },
+      {
+        "id": "maharashtra__jalna",
+        "name": "Jalna",
+        "children": []
+      },
+      {
+        "id": "maharashtra__kolhapur",
+        "name": "Kolhapur",
+        "children": []
+      },
+      {
+        "id": "maharashtra__latur",
+        "name": "Latur",
+        "children": []
+      },
+      {
+        "id": "maharashtra__mumbai-city",
+        "name": "Mumbai City",
+        "children": []
+      },
+      {
+        "id": "maharashtra__mumbai-suburban",
+        "name": "Mumbai Suburban",
+        "children": []
+      },
+      {
+        "id": "maharashtra__nanded",
+        "name": "Nanded",
+        "children": []
+      },
+      {
+        "id": "maharashtra__nandurbar",
+        "name": "Nandurbar",
+        "children": []
+      },
+      {
+        "id": "maharashtra__nagpur",
+        "name": "Nagpur",
+        "children": []
+      },
+      {
+        "id": "maharashtra__nashik",
+        "name": "Nashik",
+        "children": []
+      },
+      {
+        "id": "maharashtra__palghar",
+        "name": "Palghar",
+        "children": []
+      },
+      {
+        "id": "maharashtra__parbhani",
+        "name": "Parbhani",
+        "children": []
+      },
+      {
+        "id": "maharashtra__pune",
+        "name": "Pune",
+        "children": []
+      },
+      {
+        "id": "maharashtra__raigad",
+        "name": "Raigad",
+        "children": []
+      },
+      {
+        "id": "maharashtra__ratnagiri",
+        "name": "Ratnagiri",
+        "children": []
+      },
+      {
+        "id": "maharashtra__sangli",
+        "name": "Sangli",
+        "children": []
+      },
+      {
+        "id": "maharashtra__satara",
+        "name": "Satara",
+        "children": []
+      },
+      {
+        "id": "maharashtra__sindhudurg",
+        "name": "Sindhudurg",
+        "children": []
+      },
+      {
+        "id": "maharashtra__solapur",
+        "name": "Solapur",
+        "children": []
+      },
+      {
+        "id": "maharashtra__thane",
+        "name": "Thane",
+        "children": []
+      },
+      {
+        "id": "maharashtra__wardha",
+        "name": "Wardha",
+        "children": []
+      },
+      {
+        "id": "maharashtra__washim",
+        "name": "Washim",
+        "children": []
+      },
+      {
+        "id": "maharashtra__yavatmal",
+        "name": "Yavatmal",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "manipur",
+    "name": "Manipur",
+    "children": [
+      {
+        "id": "manipur__bishnupur",
+        "name": "Bishnupur",
+        "children": []
+      },
+      {
+        "id": "manipur__chandel",
+        "name": "Chandel",
+        "children": []
+      },
+      {
+        "id": "manipur__churachandpur",
+        "name": "Churachandpur",
+        "children": []
+      },
+      {
+        "id": "manipur__jiribam",
+        "name": "Jiribam",
+        "children": []
+      },
+      {
+        "id": "manipur__kakching",
+        "name": "Kakching",
+        "children": []
+      },
+      {
+        "id": "manipur__kamjong",
+        "name": "Kamjong",
+        "children": []
+      },
+      {
+        "id": "manipur__kangpokpi",
+        "name": "Kangpokpi",
+        "children": []
+      },
+      {
+        "id": "manipur__noney",
+        "name": "Noney",
+        "children": []
+      },
+      {
+        "id": "manipur__pherzawl",
+        "name": "Pherzawl",
+        "children": []
+      },
+      {
+        "id": "manipur__senapati",
+        "name": "Senapati",
+        "children": []
+      },
+      {
+        "id": "manipur__tamenglong",
+        "name": "Tamenglong",
+        "children": []
+      },
+      {
+        "id": "manipur__tengnoupal",
+        "name": "Tengnoupal",
+        "children": []
+      },
+      {
+        "id": "manipur__thoubal",
+        "name": "Thoubal",
+        "children": []
+      },
+      {
+        "id": "manipur__ukhrul",
+        "name": "Ukhrul",
+        "children": []
+      },
+      {
+        "id": "manipur__imphal-east",
+        "name": "Imphal East",
+        "children": []
+      },
+      {
+        "id": "manipur__imphal-west",
+        "name": "Imphal West",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "meghalaya",
+    "name": "Meghalaya",
+    "children": [
+      {
+        "id": "meghalaya__eastern-west-khasi-hills",
+        "name": "Eastern West Khasi Hills",
+        "children": []
+      },
+      {
+        "id": "meghalaya__east-garo-hills",
+        "name": "East Garo Hills",
+        "children": []
+      },
+      {
+        "id": "meghalaya__east-khasi-hills",
+        "name": "East Khasi Hills",
+        "children": []
+      },
+      {
+        "id": "meghalaya__south-garo-hills",
+        "name": "South Garo Hills",
+        "children": []
+      },
+      {
+        "id": "meghalaya__west-garo-hills",
+        "name": "West Garo Hills",
+        "children": []
+      },
+      {
+        "id": "meghalaya__west-jaintia-hills",
+        "name": "West Jaintia Hills",
+        "children": []
+      },
+      {
+        "id": "meghalaya__west-khasi-hills",
+        "name": "West Khasi Hills",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "mizoram",
+    "name": "Mizoram",
+    "children": [
+      {
+        "id": "mizoram__aizawl",
+        "name": "Aizawl",
+        "children": []
+      },
+      {
+        "id": "mizoram__champhai",
+        "name": "Champhai",
+        "children": []
+      },
+      {
+        "id": "mizoram__hnahthial",
+        "name": "Hnahthial",
+        "children": []
+      },
+      {
+        "id": "mizoram__khawzawl",
+        "name": "Khawzawl",
+        "children": []
+      },
+      {
+        "id": "mizoram__kolasib",
+        "name": "Kolasib",
+        "children": []
+      },
+      {
+        "id": "mizoram__lawngtlai",
+        "name": "Lawngtlai",
+        "children": []
+      },
+      {
+        "id": "mizoram__lunglei",
+        "name": "Lunglei",
+        "children": []
+      },
+      {
+        "id": "mizoram__mamit",
+        "name": "Mamit",
+        "children": []
+      },
+      {
+        "id": "mizoram__saiha",
+        "name": "Saiha",
+        "children": []
+      },
+      {
+        "id": "mizoram__saitual",
+        "name": "Saitual",
+        "children": []
+      },
+      {
+        "id": "mizoram__serchhip",
+        "name": "Serchhip",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "nagaland",
+    "name": "Nagaland",
+    "children": [
+      {
+        "id": "nagaland__ch-moukedima",
+        "name": "Chümoukedima",
+        "children": []
+      },
+      {
+        "id": "nagaland__dimapur",
+        "name": "Dimapur",
+        "children": []
+      },
+      {
+        "id": "nagaland__kiphire",
+        "name": "Kiphire",
+        "children": []
+      },
+      {
+        "id": "nagaland__kohima",
+        "name": "Kohima",
+        "children": []
+      },
+      {
+        "id": "nagaland__longleng",
+        "name": "Longleng",
+        "children": []
+      },
+      {
+        "id": "nagaland__mokokchung",
+        "name": "Mokokchung",
+        "children": []
+      },
+      {
+        "id": "nagaland__mon",
+        "name": "Mon",
+        "children": []
+      },
+      {
+        "id": "nagaland__niuland",
+        "name": "Niuland",
+        "children": []
+      },
+      {
+        "id": "nagaland__noklak",
+        "name": "Noklak",
+        "children": []
+      },
+      {
+        "id": "nagaland__peren",
+        "name": "Peren",
+        "children": []
+      },
+      {
+        "id": "nagaland__phek",
+        "name": "Phek",
+        "children": []
+      },
+      {
+        "id": "nagaland__shamator",
+        "name": "Shamator",
+        "children": []
+      },
+      {
+        "id": "nagaland__tseminy",
+        "name": "Tseminyü",
+        "children": []
+      },
+      {
+        "id": "nagaland__tuensang",
+        "name": "Tuensang",
+        "children": []
+      },
+      {
+        "id": "nagaland__wokha",
+        "name": "Wokha",
+        "children": []
+      },
+      {
+        "id": "nagaland__zunheboto",
+        "name": "Zunheboto",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "national-capital-territory-of-delhi",
+    "name": "National Capital Territory of Delhi",
+    "children": [
+      {
+        "id": "national-capital-territory-of-delhi__shahdara",
+        "name": "Shahdara",
+        "children": []
+      },
+      {
+        "id": "national-capital-territory-of-delhi__central-delhi",
+        "name": "Central Delhi",
+        "children": []
+      },
+      {
+        "id": "national-capital-territory-of-delhi__east-delhi",
+        "name": "East Delhi",
+        "children": []
+      },
+      {
+        "id": "national-capital-territory-of-delhi__new-delhi",
+        "name": "New Delhi",
+        "children": []
+      },
+      {
+        "id": "national-capital-territory-of-delhi__north-delhi",
+        "name": "North Delhi",
+        "children": []
+      },
+      {
+        "id": "national-capital-territory-of-delhi__north-east-delhi",
+        "name": "North East Delhi",
+        "children": []
+      },
+      {
+        "id": "national-capital-territory-of-delhi__north-west-delhi",
+        "name": "North West Delhi",
+        "children": []
+      },
+      {
+        "id": "national-capital-territory-of-delhi__south-delhi",
+        "name": "South Delhi",
+        "children": []
+      },
+      {
+        "id": "national-capital-territory-of-delhi__south-east-delhi",
+        "name": "South East Delhi",
+        "children": []
+      },
+      {
+        "id": "national-capital-territory-of-delhi__south-west-delhi",
+        "name": "South West Delhi",
+        "children": []
+      },
+      {
+        "id": "national-capital-territory-of-delhi__west-delhi",
+        "name": "West Delhi",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "odisha",
+    "name": "Odisha",
+    "children": [
+      {
+        "id": "odisha__angul",
+        "name": "Angul",
+        "children": []
+      },
+      {
+        "id": "odisha__boudh",
+        "name": "Boudh",
+        "children": []
+      },
+      {
+        "id": "odisha__bhadrak",
+        "name": "Bhadrak",
+        "children": []
+      },
+      {
+        "id": "odisha__balangir",
+        "name": "Balangir",
+        "children": []
+      },
+      {
+        "id": "odisha__bargarh",
+        "name": "Bargarh",
+        "children": []
+      },
+      {
+        "id": "odisha__balasore",
+        "name": "Balasore",
+        "children": []
+      },
+      {
+        "id": "odisha__cuttack",
+        "name": "Cuttack",
+        "children": []
+      },
+      {
+        "id": "odisha__debagarh",
+        "name": "Debagarh",
+        "children": []
+      },
+      {
+        "id": "odisha__dhenkanal",
+        "name": "Dhenkanal",
+        "children": []
+      },
+      {
+        "id": "odisha__ganjam",
+        "name": "Ganjam",
+        "children": []
+      },
+      {
+        "id": "odisha__gajapati",
+        "name": "Gajapati",
+        "children": []
+      },
+      {
+        "id": "odisha__jharsuguda",
+        "name": "Jharsuguda",
+        "children": []
+      },
+      {
+        "id": "odisha__jajpur",
+        "name": "Jajpur",
+        "children": []
+      },
+      {
+        "id": "odisha__jagatsinghpur",
+        "name": "Jagatsinghpur",
+        "children": []
+      },
+      {
+        "id": "odisha__khordha",
+        "name": "Khordha",
+        "children": []
+      },
+      {
+        "id": "odisha__kendujhar",
+        "name": "Kendujhar",
+        "children": []
+      },
+      {
+        "id": "odisha__kalahandi",
+        "name": "Kalahandi",
+        "children": []
+      },
+      {
+        "id": "odisha__kandhamal",
+        "name": "Kandhamal",
+        "children": []
+      },
+      {
+        "id": "odisha__koraput",
+        "name": "Koraput",
+        "children": []
+      },
+      {
+        "id": "odisha__kendrapara",
+        "name": "Kendrapara",
+        "children": []
+      },
+      {
+        "id": "odisha__malkangiri",
+        "name": "Malkangiri",
+        "children": []
+      },
+      {
+        "id": "odisha__mayurbhanj",
+        "name": "Mayurbhanj",
+        "children": []
+      },
+      {
+        "id": "odisha__nabarangpur",
+        "name": "Nabarangpur",
+        "children": []
+      },
+      {
+        "id": "odisha__nuapada",
+        "name": "Nuapada",
+        "children": []
+      },
+      {
+        "id": "odisha__nayagarh",
+        "name": "Nayagarh",
+        "children": []
+      },
+      {
+        "id": "odisha__puri",
+        "name": "Puri",
+        "children": []
+      },
+      {
+        "id": "odisha__rayagada",
+        "name": "Rayagada",
+        "children": []
+      },
+      {
+        "id": "odisha__sambalpur",
+        "name": "Sambalpur",
+        "children": []
+      },
+      {
+        "id": "odisha__subarnapur",
+        "name": "Subarnapur",
+        "children": []
+      },
+      {
+        "id": "odisha__sundargarh",
+        "name": "Sundargarh",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "puducherry",
+    "name": "Puducherry",
+    "children": [
+      {
+        "id": "puducherry__karaikal",
+        "name": "Karaikal",
+        "children": []
+      },
+      {
+        "id": "puducherry__mah",
+        "name": "Mahé",
+        "children": []
+      },
+      {
+        "id": "puducherry__puducherry",
+        "name": "Puducherry",
+        "children": []
+      },
+      {
+        "id": "puducherry__yanam",
+        "name": "Yanam",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "punjab",
+    "name": "Punjab",
+    "children": [
+      {
+        "id": "punjab__amritsar",
+        "name": "Amritsar",
+        "children": []
+      },
+      {
+        "id": "punjab__barnala",
+        "name": "Barnala",
+        "children": []
+      },
+      {
+        "id": "punjab__bathinda",
+        "name": "Bathinda",
+        "children": []
+      },
+      {
+        "id": "punjab__faridkot",
+        "name": "Faridkot",
+        "children": []
+      },
+      {
+        "id": "punjab__fatehgarh-sahib",
+        "name": "Fatehgarh Sahib",
+        "children": []
+      },
+      {
+        "id": "punjab__fazilka",
+        "name": "Fazilka",
+        "children": []
+      },
+      {
+        "id": "punjab__firozpur",
+        "name": "Firozpur",
+        "children": []
+      },
+      {
+        "id": "punjab__gurdaspur",
+        "name": "Gurdaspur",
+        "children": []
+      },
+      {
+        "id": "punjab__hoshiarpur",
+        "name": "Hoshiarpur",
+        "children": []
+      },
+      {
+        "id": "punjab__jalandhar",
+        "name": "Jalandhar",
+        "children": []
+      },
+      {
+        "id": "punjab__kapurthala",
+        "name": "Kapurthala",
+        "children": []
+      },
+      {
+        "id": "punjab__ludhiana",
+        "name": "Ludhiana",
+        "children": []
+      },
+      {
+        "id": "punjab__malerkotla",
+        "name": "Malerkotla",
+        "children": []
+      },
+      {
+        "id": "punjab__mansa",
+        "name": "Mansa",
+        "children": []
+      },
+      {
+        "id": "punjab__moga",
+        "name": "Moga",
+        "children": []
+      },
+      {
+        "id": "punjab__pathankot",
+        "name": "Pathankot",
+        "children": []
+      },
+      {
+        "id": "punjab__patiala",
+        "name": "Patiala",
+        "children": []
+      },
+      {
+        "id": "punjab__rupnagar",
+        "name": "Rupnagar",
+        "children": []
+      },
+      {
+        "id": "punjab__sahibzada-ajit-singh-nagar",
+        "name": "Sahibzada Ajit Singh Nagar",
+        "children": []
+      },
+      {
+        "id": "punjab__sangrur",
+        "name": "Sangrur",
+        "children": []
+      },
+      {
+        "id": "punjab__shahid-bhagat-singh-nagar",
+        "name": "Shahid Bhagat Singh Nagar",
+        "children": []
+      },
+      {
+        "id": "punjab__sri-muktsar-sahib",
+        "name": "Sri Muktsar Sahib",
+        "children": []
+      },
+      {
+        "id": "punjab__tarn-taran",
+        "name": "Tarn Taran",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "rajasthan",
+    "name": "Rajasthan",
+    "children": [
+      {
+        "id": "rajasthan__ajmer",
+        "name": "Ajmer",
+        "children": []
+      },
+      {
+        "id": "rajasthan__alwar",
+        "name": "Alwar",
+        "children": []
+      },
+      {
+        "id": "rajasthan__balotra",
+        "name": "Balotra",
+        "children": []
+      },
+      {
+        "id": "rajasthan__banswara",
+        "name": "Banswara",
+        "children": []
+      },
+      {
+        "id": "rajasthan__baran",
+        "name": "Baran",
+        "children": []
+      },
+      {
+        "id": "rajasthan__barmer",
+        "name": "Barmer",
+        "children": []
+      },
+      {
+        "id": "rajasthan__beawar",
+        "name": "Beawar",
+        "children": []
+      },
+      {
+        "id": "rajasthan__bharatpur",
+        "name": "Bharatpur",
+        "children": []
+      },
+      {
+        "id": "rajasthan__bhilwara",
+        "name": "Bhilwara",
+        "children": []
+      },
+      {
+        "id": "rajasthan__bikaner",
+        "name": "Bikaner",
+        "children": []
+      },
+      {
+        "id": "rajasthan__bundi",
+        "name": "Bundi",
+        "children": []
+      },
+      {
+        "id": "rajasthan__chittorgarh",
+        "name": "Chittorgarh",
+        "children": []
+      },
+      {
+        "id": "rajasthan__churu",
+        "name": "Churu",
+        "children": []
+      },
+      {
+        "id": "rajasthan__dausa",
+        "name": "Dausa",
+        "children": []
+      },
+      {
+        "id": "rajasthan__deeg",
+        "name": "Deeg",
+        "children": []
+      },
+      {
+        "id": "rajasthan__dholpur",
+        "name": "Dholpur",
+        "children": []
+      },
+      {
+        "id": "rajasthan__didwana-kuchaman",
+        "name": "Didwana Kuchaman",
+        "children": []
+      },
+      {
+        "id": "rajasthan__dungarpur",
+        "name": "Dungarpur",
+        "children": []
+      },
+      {
+        "id": "rajasthan__hanumangarh",
+        "name": "Hanumangarh",
+        "children": []
+      },
+      {
+        "id": "rajasthan__jaipur",
+        "name": "Jaipur",
+        "children": []
+      },
+      {
+        "id": "rajasthan__jaisalmer",
+        "name": "Jaisalmer",
+        "children": []
+      },
+      {
+        "id": "rajasthan__jalore",
+        "name": "Jalore",
+        "children": []
+      },
+      {
+        "id": "rajasthan__jhalawar",
+        "name": "Jhalawar",
+        "children": []
+      },
+      {
+        "id": "rajasthan__jhunjhunu",
+        "name": "Jhunjhunu",
+        "children": []
+      },
+      {
+        "id": "rajasthan__jodhpur",
+        "name": "Jodhpur",
+        "children": []
+      },
+      {
+        "id": "rajasthan__karauli",
+        "name": "Karauli",
+        "children": []
+      },
+      {
+        "id": "rajasthan__khairthal-tijara",
+        "name": "Khairthal-Tijara",
+        "children": []
+      },
+      {
+        "id": "rajasthan__kota",
+        "name": "Kota",
+        "children": []
+      },
+      {
+        "id": "rajasthan__kotputli-behror",
+        "name": "Kotputli-Behror",
+        "children": []
+      },
+      {
+        "id": "rajasthan__nagaur",
+        "name": "Nagaur",
+        "children": []
+      },
+      {
+        "id": "rajasthan__pali",
+        "name": "Pali",
+        "children": []
+      },
+      {
+        "id": "rajasthan__phalodi",
+        "name": "Phalodi",
+        "children": []
+      },
+      {
+        "id": "rajasthan__pratapgarh",
+        "name": "Pratapgarh",
+        "children": []
+      },
+      {
+        "id": "rajasthan__rajsamand",
+        "name": "Rajsamand",
+        "children": []
+      },
+      {
+        "id": "rajasthan__salumbar",
+        "name": "Salumbar",
+        "children": []
+      },
+      {
+        "id": "rajasthan__sawai-madhopur",
+        "name": "Sawai Madhopur",
+        "children": []
+      },
+      {
+        "id": "rajasthan__sikar",
+        "name": "Sikar",
+        "children": []
+      },
+      {
+        "id": "rajasthan__sirohi",
+        "name": "Sirohi",
+        "children": []
+      },
+      {
+        "id": "rajasthan__sri-ganganagar",
+        "name": "Sri Ganganagar",
+        "children": []
+      },
+      {
+        "id": "rajasthan__tonk",
+        "name": "Tonk",
+        "children": []
+      },
+      {
+        "id": "rajasthan__udaipur",
+        "name": "Udaipur",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "sikkim",
+    "name": "Sikkim",
+    "children": [
+      {
+        "id": "sikkim__gangtok",
+        "name": "Gangtok",
+        "children": []
+      },
+      {
+        "id": "sikkim__gyalshing",
+        "name": "Gyalshing",
+        "children": []
+      },
+      {
+        "id": "sikkim__mangan",
+        "name": "Mangan",
+        "children": []
+      },
+      {
+        "id": "sikkim__namchi",
+        "name": "Namchi",
+        "children": []
+      },
+      {
+        "id": "sikkim__pakyong",
+        "name": "Pakyong",
+        "children": []
+      },
+      {
+        "id": "sikkim__soreng",
+        "name": "Soreng",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "tamil-nadu",
+    "name": "Tamil Nadu",
+    "children": [
+      {
+        "id": "tamil-nadu__ariyalur",
+        "name": "Ariyalur",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__chengalpattu",
+        "name": "Chengalpattu",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__chennai",
+        "name": "Chennai",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__coimbatore",
+        "name": "Coimbatore",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__cuddalore",
+        "name": "Cuddalore",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__dharmapuri",
+        "name": "Dharmapuri",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__dindigul",
+        "name": "Dindigul",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__erode",
+        "name": "Erode",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__kallakurichi",
+        "name": "Kallakurichi",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__kanchipuram",
+        "name": "Kanchipuram",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__kanyakumari",
+        "name": "Kanyakumari",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__karur",
+        "name": "Karur",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__krishnagiri",
+        "name": "Krishnagiri",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__madurai",
+        "name": "Madurai",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__mayiladuthurai",
+        "name": "Mayiladuthurai",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__nagapattinam",
+        "name": "Nagapattinam",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__nilgiris",
+        "name": "Nilgiris",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__namakkal",
+        "name": "Namakkal",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__perambalur",
+        "name": "Perambalur",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__pudukkottai",
+        "name": "Pudukkottai",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__ramanathapuram",
+        "name": "Ramanathapuram",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__ranipet",
+        "name": "Ranipet",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__salem",
+        "name": "Salem",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__sivaganga",
+        "name": "Sivaganga",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__tenkasi",
+        "name": "Tenkasi",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__tiruppur",
+        "name": "Tiruppur",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__tiruchirappalli",
+        "name": "Tiruchirappalli",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__theni",
+        "name": "Theni",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__tirunelveli",
+        "name": "Tirunelveli",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__thanjavur",
+        "name": "Thanjavur",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__thoothukudi",
+        "name": "Thoothukudi",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__tirupattur",
+        "name": "Tirupattur",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__tiruvallur",
+        "name": "Tiruvallur",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__tiruvarur",
+        "name": "Tiruvarur",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__tiruvannamalai",
+        "name": "Tiruvannamalai",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__vellore",
+        "name": "Vellore",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__viluppuram",
+        "name": "Viluppuram",
+        "children": []
+      },
+      {
+        "id": "tamil-nadu__virudhunagar",
+        "name": "Virudhunagar",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "telangana",
+    "name": "Telangana",
+    "children": [
+      {
+        "id": "telangana__adilabad",
+        "name": "Adilabad",
+        "children": []
+      },
+      {
+        "id": "telangana__hanamkonda",
+        "name": "Hanamkonda",
+        "children": []
+      },
+      {
+        "id": "telangana__hyderabad",
+        "name": "Hyderabad",
+        "children": []
+      },
+      {
+        "id": "telangana__jagtial",
+        "name": "Jagtial",
+        "children": []
+      },
+      {
+        "id": "telangana__jangaon",
+        "name": "Jangaon",
+        "children": []
+      },
+      {
+        "id": "telangana__jayashankar-bhupalpally",
+        "name": "Jayashankar Bhupalpally",
+        "children": []
+      },
+      {
+        "id": "telangana__kamareddy",
+        "name": "Kamareddy",
+        "children": []
+      },
+      {
+        "id": "telangana__karimnagar",
+        "name": "Karimnagar",
+        "children": []
+      },
+      {
+        "id": "telangana__khammam",
+        "name": "Khammam",
+        "children": []
+      },
+      {
+        "id": "telangana__kumuram-bheem-asifabad",
+        "name": "Kumuram Bheem Asifabad",
+        "children": []
+      },
+      {
+        "id": "telangana__mahabubabad",
+        "name": "Mahabubabad",
+        "children": []
+      },
+      {
+        "id": "telangana__mahbubnagar",
+        "name": "Mahbubnagar",
+        "children": []
+      },
+      {
+        "id": "telangana__mancherial",
+        "name": "Mancherial",
+        "children": []
+      },
+      {
+        "id": "telangana__medak",
+        "name": "Medak",
+        "children": []
+      },
+      {
+        "id": "telangana__mulugu",
+        "name": "Mulugu",
+        "children": []
+      },
+      {
+        "id": "telangana__nalgonda",
+        "name": "Nalgonda",
+        "children": []
+      },
+      {
+        "id": "telangana__nagarkurnool",
+        "name": "Nagarkurnool",
+        "children": []
+      },
+      {
+        "id": "telangana__narayanpet",
+        "name": "Narayanpet",
+        "children": []
+      },
+      {
+        "id": "telangana__nirmal",
+        "name": "Nirmal",
+        "children": []
+      },
+      {
+        "id": "telangana__nizamabad",
+        "name": "Nizamabad",
+        "children": []
+      },
+      {
+        "id": "telangana__peddapalli",
+        "name": "Peddapalli",
+        "children": []
+      },
+      {
+        "id": "telangana__ranga-reddy",
+        "name": "Ranga Reddy",
+        "children": []
+      },
+      {
+        "id": "telangana__sangareddy",
+        "name": "Sangareddy",
+        "children": []
+      },
+      {
+        "id": "telangana__siddipet",
+        "name": "Siddipet",
+        "children": []
+      },
+      {
+        "id": "telangana__suryapet",
+        "name": "Suryapet",
+        "children": []
+      },
+      {
+        "id": "telangana__vikarabad",
+        "name": "Vikarabad",
+        "children": []
+      },
+      {
+        "id": "telangana__wanaparthy",
+        "name": "Wanaparthy",
+        "children": []
+      },
+      {
+        "id": "telangana__warangal",
+        "name": "Warangal",
+        "children": []
+      },
+      {
+        "id": "telangana__bhadradri-kothagudem",
+        "name": "Bhadradri Kothagudem",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "tripura",
+    "name": "Tripura",
+    "children": [
+      {
+        "id": "tripura__dhalai",
+        "name": "Dhalai",
+        "children": []
+      },
+      {
+        "id": "tripura__gomati",
+        "name": "Gomati",
+        "children": []
+      },
+      {
+        "id": "tripura__khowai",
+        "name": "Khowai",
+        "children": []
+      },
+      {
+        "id": "tripura__north-tripura",
+        "name": "North Tripura",
+        "children": []
+      },
+      {
+        "id": "tripura__sepahijala",
+        "name": "Sepahijala",
+        "children": []
+      },
+      {
+        "id": "tripura__south-tripura",
+        "name": "South Tripura",
+        "children": []
+      },
+      {
+        "id": "tripura__unakoti",
+        "name": "Unakoti",
+        "children": []
+      },
+      {
+        "id": "tripura__west-tripura",
+        "name": "West Tripura",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "uttar-pradesh",
+    "name": "Uttar Pradesh",
+    "children": [
+      {
+        "id": "uttar-pradesh__agra",
+        "name": "Agra",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__aligarh",
+        "name": "Aligarh",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__ambedkar-nagar",
+        "name": "Ambedkar Nagar",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__amethi",
+        "name": "Amethi",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__amroha",
+        "name": "Amroha",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__auraiya",
+        "name": "Auraiya",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__ayodhya",
+        "name": "Ayodhya",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__azamgarh",
+        "name": "Azamgarh",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__bagpat",
+        "name": "Bagpat",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__bahraich",
+        "name": "Bahraich",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__ballia",
+        "name": "Ballia",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__balrampur",
+        "name": "Balrampur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__banda",
+        "name": "Banda",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__barabanki",
+        "name": "Barabanki",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__bareilly",
+        "name": "Bareilly",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__basti",
+        "name": "Basti",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__bhadohi",
+        "name": "Bhadohi",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__bijnor",
+        "name": "Bijnor",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__budaun",
+        "name": "Budaun",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__bulandshahr",
+        "name": "Bulandshahr",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__chandauli",
+        "name": "Chandauli",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__chitrakoot",
+        "name": "Chitrakoot",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__deoria",
+        "name": "Deoria",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__etah",
+        "name": "Etah",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__etawah",
+        "name": "Etawah",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__farrukhabad",
+        "name": "Farrukhabad",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__fatehpur",
+        "name": "Fatehpur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__firozabad",
+        "name": "Firozabad",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__gautam-buddha-nagar",
+        "name": "Gautam Buddha Nagar",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__ghaziabad",
+        "name": "Ghaziabad",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__ghazipur",
+        "name": "Ghazipur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__gonda",
+        "name": "Gonda",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__gorakhpur",
+        "name": "Gorakhpur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__hamirpur",
+        "name": "Hamirpur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__hapur",
+        "name": "Hapur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__hardoi",
+        "name": "Hardoi",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__hathras",
+        "name": "Hathras",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__jalaun",
+        "name": "Jalaun",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__jaunpur",
+        "name": "Jaunpur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__jhansi",
+        "name": "Jhansi",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__kannauj",
+        "name": "Kannauj",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__kanpur-dehat",
+        "name": "Kanpur Dehat",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__kanpur-nagar",
+        "name": "Kanpur Nagar",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__kasganj",
+        "name": "Kasganj",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__kaushambi",
+        "name": "Kaushambi",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__kushinagar",
+        "name": "Kushinagar",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__lakhimpur-kheri",
+        "name": "Lakhimpur Kheri",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__lalitpur",
+        "name": "Lalitpur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__lucknow",
+        "name": "Lucknow",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__maharajganj",
+        "name": "Maharajganj",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__mahoba",
+        "name": "Mahoba",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__mainpuri",
+        "name": "Mainpuri",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__mathura",
+        "name": "Mathura",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__mau",
+        "name": "Mau",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__meerut",
+        "name": "Meerut",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__mirzapur",
+        "name": "Mirzapur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__moradabad",
+        "name": "Moradabad",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__muzaffarnagar",
+        "name": "Muzaffarnagar",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__pilibhit",
+        "name": "Pilibhit",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__pratapgarh",
+        "name": "Pratapgarh",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__prayagraj",
+        "name": "Prayagraj",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__raebareli",
+        "name": "Raebareli",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__rampur",
+        "name": "Rampur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__saharanpur",
+        "name": "Saharanpur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__sambhal",
+        "name": "Sambhal",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__sant-kabir-nagar",
+        "name": "Sant Kabir Nagar",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__shahjahanpur",
+        "name": "Shahjahanpur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__shamli",
+        "name": "Shamli",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__shravasti",
+        "name": "Shravasti",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__siddharthnagar",
+        "name": "Siddharthnagar",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__sitapur",
+        "name": "Sitapur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__sonbhadra",
+        "name": "Sonbhadra",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__sultanpur",
+        "name": "Sultanpur",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__unnao",
+        "name": "Unnao",
+        "children": []
+      },
+      {
+        "id": "uttar-pradesh__varanasi",
+        "name": "Varanasi",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "uttarakhand",
+    "name": "Uttarakhand",
+    "children": [
+      {
+        "id": "uttarakhand__almora",
+        "name": "Almora",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__bageshwar",
+        "name": "Bageshwar",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__chamoli",
+        "name": "Chamoli",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__champawat",
+        "name": "Champawat",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__dehradun",
+        "name": "Dehradun",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__haridwar",
+        "name": "Haridwar",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__nainital",
+        "name": "Nainital",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__pauri-garhwal",
+        "name": "Pauri Garhwal",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__pithoragarh",
+        "name": "Pithoragarh",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__rudraprayag",
+        "name": "Rudraprayag",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__tehri-garhwal",
+        "name": "Tehri Garhwal",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__udham-singh-nagar",
+        "name": "Udham Singh Nagar",
+        "children": []
+      },
+      {
+        "id": "uttarakhand__uttarkashi",
+        "name": "Uttarkashi",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "west-bengal",
+    "name": "West Bengal",
+    "children": [
+      {
+        "id": "west-bengal__alipurduar",
+        "name": "Alipurduar",
+        "children": []
+      },
+      {
+        "id": "west-bengal__bankura",
+        "name": "Bankura",
+        "children": []
+      },
+      {
+        "id": "west-bengal__birbhum",
+        "name": "Birbhum",
+        "children": []
+      },
+      {
+        "id": "west-bengal__cooch-behar",
+        "name": "Cooch Behar",
+        "children": []
+      },
+      {
+        "id": "west-bengal__dakshin-dinajpur",
+        "name": "Dakshin Dinajpur",
+        "children": []
+      },
+      {
+        "id": "west-bengal__darjeeling",
+        "name": "Darjeeling",
+        "children": []
+      },
+      {
+        "id": "west-bengal__hooghly",
+        "name": "Hooghly",
+        "children": []
+      },
+      {
+        "id": "west-bengal__howrah",
+        "name": "Howrah",
+        "children": []
+      },
+      {
+        "id": "west-bengal__jalpaiguri",
+        "name": "Jalpaiguri",
+        "children": []
+      },
+      {
+        "id": "west-bengal__jhargram",
+        "name": "Jhargram",
+        "children": []
+      },
+      {
+        "id": "west-bengal__kalimpong",
+        "name": "Kalimpong",
+        "children": []
+      },
+      {
+        "id": "west-bengal__kolkata",
+        "name": "Kolkata",
+        "children": []
+      },
+      {
+        "id": "west-bengal__maldah",
+        "name": "Maldah",
+        "children": []
+      },
+      {
+        "id": "west-bengal__murshidabad",
+        "name": "Murshidabad",
+        "children": []
+      },
+      {
+        "id": "west-bengal__nadia",
+        "name": "Nadia",
+        "children": []
+      },
+      {
+        "id": "west-bengal__north-24-parganas",
+        "name": "North 24 Parganas",
+        "children": []
+      },
+      {
+        "id": "west-bengal__paschim-bardhaman",
+        "name": "Paschim Bardhaman",
+        "children": []
+      },
+      {
+        "id": "west-bengal__paschim-medinipur",
+        "name": "Paschim Medinipur",
+        "children": []
+      },
+      {
+        "id": "west-bengal__purba-bardhaman",
+        "name": "Purba Bardhaman",
+        "children": []
+      },
+      {
+        "id": "west-bengal__purba-medinipur",
+        "name": "Purba Medinipur",
+        "children": []
+      },
+      {
+        "id": "west-bengal__purulia",
+        "name": "Purulia",
+        "children": []
+      },
+      {
+        "id": "west-bengal__uttar-dinajpur",
+        "name": "Uttar Dinajpur",
+        "children": []
+      },
+      {
+        "id": "west-bengal__south-24-parganas",
+        "name": "South 24 Parganas",
+        "children": []
+      }
+    ]
+  }
+]

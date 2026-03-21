@@ -18,6 +18,7 @@ export function SelfieCaptureModal({
   subtitle,
 }: SelfieCaptureModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [location, setLocation] = useState<{ lat: number; lng: number; name?: string } | null>(null)
@@ -26,6 +27,8 @@ export function SelfieCaptureModal({
 
   useEffect(() => {
     if (isOpen) {
+      setCapturedImage(null)
+      setError(null)
       startCamera()
       fetchLocation()
     } else {
@@ -36,7 +39,8 @@ export function SelfieCaptureModal({
 
   const startCamera = async (retryCount = 0) => {
     setError(null)
-    
+    stopCamera()
+
     // Safety check for browser support
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setError('Camera API is not supported in this browser or context (requires HTTPS).')
@@ -75,6 +79,8 @@ export function SelfieCaptureModal({
         throw lastErr || new Error('Failed to get media stream with any constraints')
       }
 
+      streamRef.current = stream
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         // Force play just in case autoPlay is inhibited
@@ -98,10 +104,17 @@ export function SelfieCaptureModal({
   }
 
   const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream
-      const tracks = stream.getTracks()
-      tracks.forEach((track) => track.stop())
+    const fromRef = streamRef.current
+    const fromVideo =
+      videoRef.current?.srcObject instanceof MediaStream
+        ? (videoRef.current.srcObject as MediaStream)
+        : null
+    const stream = fromRef ?? fromVideo
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop())
+    }
+    streamRef.current = null
+    if (videoRef.current) {
       videoRef.current.srcObject = null
     }
   }
@@ -162,6 +175,7 @@ export function SelfieCaptureModal({
         context.drawImage(video, 0, 0, canvas.width, canvas.height)
         const dataUrl = canvas.toDataURL('image/jpeg')
         setCapturedImage(dataUrl)
+        stopCamera()
       }
     }
   }
@@ -281,7 +295,10 @@ export function SelfieCaptureModal({
                   <div className="grid grid-cols-2 gap-3">
                     <Button
                       variant="secondary"
-                      onClick={() => setCapturedImage(null)}
+                      onClick={() => {
+                        setCapturedImage(null)
+                        startCamera()
+                      }}
                       className="w-full"
                     >
                       Retake

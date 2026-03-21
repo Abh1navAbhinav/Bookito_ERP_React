@@ -65,7 +65,7 @@ export function PageBreadcrumb() {
     const rawUser = window.localStorage.getItem('bookito_demo_user')
     if (rawUser) {
       const user = JSON.parse(rawUser)
-      if (user.role === 'manager' && pathname === '/hr/attendance') {
+      if ((user.role === 'manager' || user.role === 'admin') && pathname === '/hr/attendance') {
         items = [{ label: 'Manager' }, { label: 'Attendance' }]
       }
     }

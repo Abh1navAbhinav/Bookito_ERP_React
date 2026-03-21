@@ -1,9 +1,25 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Zap, Plus, Search, Filter, Layers, Globe, Database, Settings2, BarChart3, Users as UsersIcon, ChevronRight, Edit3, Trash2 } from 'lucide-react'
 import { Button, Modal, FormField, Input, Textarea } from '@/components/FormElements'
-import { features as initialFeatures, type Feature } from '@/data/mockData'
 import { cn } from '@/lib/utils'
+import {
+  createCatalogueFeature,
+  deleteCatalogueFeature,
+  fetchCatalogueFeatures,
+  patchCatalogueFeature,
+  type ApiCatalogueFeature,
+} from '@/lib/accountsApi'
+
+export interface Feature {
+  id: string
+  name: string
+  description: string
+  category?: string
+  status?: string
+  version?: string
+  date?: string
+}
 
 type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
 type Category = 'All' | 'Operations' | 'Inventory' | 'Distribution' | 'Finance' | 'Security'
@@ -39,15 +55,46 @@ function getFeatureIcon(category: Exclude<Category, 'All'>) {
   }
 }
 
-const enhancedFeatures: EnforcedFeature[] = initialFeatures.map((f, i) => {
-  const category = getFeatureCategory(f)
-  return {
-    ...f,
-    category,
-    status: i === 0 ? 'New' : (i === 1 ? 'Updated' : 'Stable'),
-    icon: getFeatureIcon(category),
+function iconKeyForCategory(category: string): string {
+  if (category === 'Distribution') return 'Globe'
+  if (category === 'Finance') return 'BarChart3'
+  if (category === 'Inventory') return 'Database'
+  if (category === 'Security') return 'Users'
+  return 'Layers'
+}
+
+function iconFromKey(key: string, category: Exclude<Category, 'All'>) {
+  switch (key) {
+    case 'Globe':
+      return Globe
+    case 'BarChart3':
+      return BarChart3
+    case 'Database':
+      return Database
+    case 'Users':
+      return UsersIcon
+    default:
+      return getFeatureIcon(category)
   }
-})
+}
+
+function apiRowToFeature(row: ApiCatalogueFeature): EnforcedFeature {
+  const category = (
+    ['Operations', 'Inventory', 'Distribution', 'Finance', 'Security'].includes(row.category)
+      ? row.category
+      : getFeatureCategory({ id: row.id, name: row.name, description: row.description })
+  ) as Exclude<Category, 'All'>
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    version: row.version,
+    date: row.release_date,
+    category,
+    status: (row.status || 'Stable') as EnforcedFeature['status'],
+    icon: iconFromKey(row.icon_key, category),
+  }
+}
 
 export default function AdminFeaturesPage() {
   const navigate = useNavigate()
@@ -58,36 +105,27 @@ export default function AdminFeaturesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState<Category>('All')
 
-  useEffect(() => {
-    const savedFeatures = localStorage.getItem('bookito_features_catalogue')
-    if (savedFeatures) {
-      const parsed = JSON.parse(savedFeatures)
-      const withIcons = parsed.map((f: any, i: number) => {
-        const category =
-          typeof f?.category === 'string' && ['Operations', 'Inventory', 'Distribution', 'Finance', 'Security'].includes(f.category)
-            ? f.category
-            : getFeatureCategory(f)
-
-        return {
-          ...f,
-          category,
-          status: f?.status || (i === 0 ? 'New' : (i === 1 ? 'Updated' : 'Stable')),
-          icon: getFeatureIcon(category),
-        }
-      })
-      setFeatures(withIcons)
-    } else {
-      setFeatures(enhancedFeatures)
+  const loadFeatures = useCallback(async () => {
+    try {
+      const rows = await fetchCatalogueFeatures()
+      setFeatures(rows.map(apiRowToFeature))
+    } catch {
+      setFeatures([])
     }
+  }, [])
 
+  useEffect(() => {
+    void loadFeatures()
     try {
       const raw = window.localStorage.getItem('bookito_demo_user')
       if (raw) {
         const parsed = JSON.parse(raw) as { role?: DemoRole }
         if (parsed.role) setCurrentRole(parsed.role)
       }
-    } catch { /* ignore */ }
-  }, [])
+    } catch {
+      /* ignore */
+    }
+  }, [loadFeatures])
 
   const canManage = currentRole === 'manager'
 
@@ -105,36 +143,44 @@ export default function AdminFeaturesPage() {
   const handleSaveFeature = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    
-    const newFeature: EnforcedFeature = {
-      id: editingFeature?.id || `feat-${Date.now()}`,
+    const category = (formData.get('category') as string) || 'Operations'
+    const icon_key = iconKeyForCategory(category)
+    const id = editingFeature?.id || `feat-${Date.now()}`
+    const body = {
+      id,
       name: formData.get('name') as string,
       version: formData.get('version') as string,
-      date: formData.get('date') as string,
-      description: formData.get('description') as string,
-      category: (formData.get('category') as string) || 'Product',
+      release_date: formData.get('date') as string,
+      description: (formData.get('description') as string) || '',
+      category,
       status: editingFeature?.status || 'New',
-      icon: editingFeature?.icon || Globe
+      icon_key,
     }
-
-    let updatedFeatures: EnforcedFeature[]
-    if (editingFeature) {
-      updatedFeatures = features.map(f => f.id === editingFeature.id ? newFeature : f)
-    } else {
-      updatedFeatures = [newFeature, ...features]
+    const run = async () => {
+      if (editingFeature) {
+        await patchCatalogueFeature(editingFeature.id, {
+          name: body.name,
+          version: body.version,
+          release_date: body.release_date,
+          description: body.description,
+          category: body.category,
+          status: body.status,
+          icon_key: body.icon_key,
+        })
+      } else {
+        await createCatalogueFeature(body)
+      }
+      await loadFeatures()
+      setShowAddModal(false)
+      setEditingFeature(null)
     }
-
-    setFeatures(updatedFeatures)
-    localStorage.setItem('bookito_features_catalogue', JSON.stringify(updatedFeatures))
-    setShowAddModal(false)
+    void run()
   }
 
   const handleDeleteFeature = (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     if (window.confirm('Are you sure you want to remove this module from the library?')) {
-      const updatedFeatures = features.filter(f => f.id !== id)
-      setFeatures(updatedFeatures)
-      localStorage.setItem('bookito_features_catalogue', JSON.stringify(updatedFeatures))
+      void deleteCatalogueFeature(id).then(() => loadFeatures())
     }
   }
 

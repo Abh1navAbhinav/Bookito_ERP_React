@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -22,7 +22,8 @@ import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, Textarea, Input } from '@/components/FormElements'
 import { StatusBadge } from '@/components/StatusBadge'
 import type { BadgeVariant } from '@/components/StatusBadge'
-import { travelAgents, locationHierarchy, type TravelAgent } from '@/data/mockData'
+import { fetchConfig, type LocationNode } from '@/lib/configApi'
+import { fetchTravelAgentById, type TravelAgent } from '@/lib/partnersApi'
 import { formatCurrency } from '@/lib/utils'
 
 /* ─── Helpers ─── */
@@ -118,6 +119,34 @@ export default function TravelAgentDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
+  const [agent, setAgent] = useState<TravelAgent | null>(null)
+  const [config, setConfig] = useState<{ location_hierarchy: LocationNode[] } | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const locationHierarchy = config?.location_hierarchy ?? []
+
+  useEffect(() => {
+    fetchConfig().then(setConfig).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!id) {
+      setAgent(null)
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    fetchTravelAgentById(id).then((a) => {
+      if (!cancelled) {
+        setAgent(a ?? null)
+        setLoading(false)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [id])
 
   const navigationState = location.state as
     | {
@@ -125,11 +154,6 @@ export default function TravelAgentDetailsPage() {
         pathLabels?: string[]
       }
     | null
-
-  const agent: TravelAgent | undefined = useMemo(
-    () => travelAgents.find((a) => a.id === id),
-    [id]
-  )
 
   const [extraComments, setExtraComments] = useState<
     { author: string; comment: string; createdAt: string }[]
@@ -143,7 +167,7 @@ export default function TravelAgentDetailsPage() {
   /* ─── navigation helpers ─── */
   const stateNode = useMemo(
     () => locationHierarchy.find((s) => s.name === agent?.state),
-    [agent?.state]
+    [locationHierarchy, agent?.state]
   )
   const districtNode = useMemo(
     () => stateNode?.children?.find((d) => d.name === agent?.district),
@@ -172,6 +196,14 @@ export default function TravelAgentDetailsPage() {
     : stateNode
       ? [stateNode.name]
       : undefined
+
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-surface-200 bg-surface-50 p-12 text-center text-surface-500">
+        Loading agent…
+      </div>
+    )
+  }
 
   if (!agent) {
     return (

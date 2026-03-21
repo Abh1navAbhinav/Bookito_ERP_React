@@ -1,9 +1,11 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { DollarSign, FileText, Download, Play, CheckCircle2, AlertCircle, History, Loader2, Trash2, RotateCcw } from 'lucide-react'
 import { Button, FormField, Input, Select } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
 import { differenceInDays, parseISO } from 'date-fns'
+import { cn } from '@/lib/utils'
+import { fetchPayroll, fetchDeletedPayroll, softDeletePayroll, restorePayroll, type ApiPayroll } from '@/lib/hrApi'
 
 interface PayrollRecord {
   id: string
@@ -21,93 +23,93 @@ interface DeletedPayrollRecord extends PayrollRecord {
   deletedAt: string
 }
 
-const initialPayroll: PayrollRecord[] = [
-  {
-    id: '1',
-    employeeName: 'John Doe',
-    employeeId: 'EMP001',
-    basicSalary: 50000,
-    hra: 20000,
-    allowances: 5000,
-    deductions: 2000,
-    netPay: 73000,
-    status: 'Processed'
-  },
-  {
-    id: '2',
-    employeeName: 'Jane Smith',
-    employeeId: 'EMP002',
-    basicSalary: 60000,
-    hra: 24000,
-    allowances: 6000,
-    deductions: 2500,
-    netPay: 87500,
-    status: 'Pending'
+function mapApiToPayroll(p: ApiPayroll): PayrollRecord {
+  const basic = Number(p.basic_salary)
+  const allowances = Number(p.allowances)
+  const deductions = Number(p.deductions)
+  const net = Number(p.net_salary)
+  return {
+    id: p.id,
+    employeeName: p.employee_name,
+    employeeId: p.employee,
+    basicSalary: basic,
+    hra: 0,
+    allowances,
+    deductions,
+    netPay: net,
+    status: 'Processed',
   }
-]
+}
 
 export default function PayrollProcessingPage() {
   const [selectedMonth, setSelectedMonth] = useState('2026-03')
   const [showTrash, setShowTrash] = useState(false)
-  const [payroll, setPayroll] = useState<PayrollRecord[]>(() => {
-    const saved = localStorage.getItem('bookito_payroll')
-    return saved ? JSON.parse(saved) : initialPayroll
-  })
-  
-  const [deletedPayroll, setDeletedPayroll] = useState<DeletedPayrollRecord[]>(() => {
-    const saved = localStorage.getItem('bookito_deleted_payroll')
-    return saved ? JSON.parse(saved) : []
-  })
-
+  const [payroll, setPayroll] = useState<PayrollRecord[]>([])
+  const [deletedPayroll, setDeletedPayroll] = useState<DeletedPayrollRecord[]>([])
+  const [loading, setLoading] = useState(true)
   const [isRunning, setIsRunning] = useState(false)
 
-  useEffect(() => {
-    localStorage.setItem('bookito_payroll', JSON.stringify(payroll))
-  }, [payroll])
-
-  useEffect(() => {
-    localStorage.setItem('bookito_deleted_payroll', JSON.stringify(deletedPayroll))
-  }, [deletedPayroll])
-
-  useEffect(() => {
-    // Purge logic: Auto-delete after 30 days
-    const now = new Date()
-    setDeletedPayroll(prev => prev.filter(r => differenceInDays(now, parseISO(r.deletedAt)) < 30))
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true)
+      const [list, delList] = await Promise.all([fetchPayroll(), fetchDeletedPayroll()])
+      setPayroll(list.map(mapApiToPayroll))
+      setDeletedPayroll(
+        delList.map((p) => ({ ...mapApiToPayroll(p), deletedAt: p.deleted_at ?? new Date().toISOString() }))
+      )
+    } catch {
+      setPayroll([])
+      setDeletedPayroll([])
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
 
   const handleRunPayroll = () => {
     setIsRunning(true)
     setTimeout(() => {
-        setPayroll(payroll.map(p => ({ ...p, status: 'Processed' })))
-        setIsRunning(false)
-        alert('Payroll processed successfully for all employees!')
+      setIsRunning(false)
+      alert('Payroll processed successfully for all employees!')
     }, 2000)
   }
 
   const handlePayAll = () => {
     if (confirm('Are you sure you want to release payments for all processed records?')) {
-        setPayroll(payroll.map(p => p.status === 'Processed' ? { ...p, status: 'Paid' } : p))
+      setPayroll(payroll.map(p => p.status === 'Processed' ? { ...p, status: 'Paid' } : p))
     }
   }
 
-  const handleDelete = (record: PayrollRecord) => {
-    const deletedAt = new Date().toISOString()
-    const entry: DeletedPayrollRecord = { ...record, deletedAt }
-    
-    setPayroll(prev => prev.filter(r => r.id !== record.id))
-    setDeletedPayroll(prev => [entry, ...prev])
+  const handleDelete = async (record: PayrollRecord) => {
+    try {
+      await softDeletePayroll(record.id)
+      await loadData()
+    } catch {
+      // ignore
+    }
   }
 
-  const handleRestore = (record: DeletedPayrollRecord) => {
-    const { deletedAt, ...rest } = record
-    setDeletedPayroll(prev => prev.filter(r => r.id !== record.id))
-    setPayroll(prev => [...prev, rest])
+  const handleRestore = async (record: DeletedPayrollRecord) => {
+    try {
+      await restorePayroll(record.id)
+      await loadData()
+    } catch {
+      // ignore
+    }
   }
 
   const getRemainingDays = (deletedAt: string) => {
     const diff = differenceInDays(new Date(), parseISO(deletedAt))
     return Math.max(0, 30 - diff)
   }
+
+  const displayedDeleted = useMemo(
+    () => deletedPayroll.filter((r) => getRemainingDays(r.deletedAt) > 0),
+    [deletedPayroll]
+  )
 
   const totals = useMemo(() => {
     return payroll.reduce((acc, curr) => ({
@@ -300,11 +302,15 @@ export default function PayrollProcessingPage() {
                         History
                     </Button>
                 </div>
+                {loading ? (
+                  <div className="rounded-xl border border-surface-200 bg-white p-8 text-center text-surface-500">Loading payroll...</div>
+                ) : (
                 <DataTable
                     data={payroll}
                     columns={columns}
                     searchPlaceholder="Search by employee..."
                 />
+                )}
             </>
         ) : (
             <>
@@ -315,7 +321,7 @@ export default function PayrollProcessingPage() {
                     </p>
                 </div>
                 <DataTable
-                    data={deletedPayroll}
+                    data={displayedDeleted}
                     columns={deletedColumns}
                     searchPlaceholder="Search deleted records..."
                 />
@@ -324,8 +330,4 @@ export default function PayrollProcessingPage() {
       </div>
     </div>
   )
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
 }

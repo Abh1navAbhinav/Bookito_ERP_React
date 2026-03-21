@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { type ColumnDef } from '@tanstack/react-table'
 import {
@@ -10,18 +10,65 @@ import {
   AlertTriangle,
   Trash2,
   RotateCcw,
+  FileText,
 } from 'lucide-react'
 import { DataTable } from '@/components/DataTable'
 import { Breadcrumb, type BreadcrumbItem } from '@/components/Breadcrumb'
 import { FolderNavigator } from '@/components/FolderNavigator'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
 import { Modal, FormField, Input, Select, Button, Textarea } from '@/components/FormElements'
-import { AddPropertyModal } from '@/components/modals/AddPropertyModal'
-import { locationHierarchy, properties, salesRecords, type Property, type SalesRecord, propertyTypes, propertyClasses, roomCategories, tenureOptions, primaryContactOptions, visitStatusOptions, firstVisitStatusOptions, planTypeOptions } from '@/data/mockData'
 import { formatCurrency } from '@/lib/utils'
+import { fetchConfig, type AppConfig, type LocationNode } from '@/lib/configApi'
+import { fetchProperties, fetchDeletedProperties, softDeleteProperty, restoreProperty, deleteProperty, createProperty, updateProperty, type Property as ApiProperty } from '@/lib/propertiesApi'
+import { fetchSalesRecords, type SalesRecord } from '@/lib/salesApi'
 import { differenceInDays, parseISO } from 'date-fns'
 
 type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm'
+
+/** UI shape (camelCase) for property list and forms */
+export interface Property {
+  id: string
+  slno: number
+  name: string
+  propertyType: string
+  propertyClass: string
+  roomCategory: string
+  numberOfRooms: number
+  hasMultipleProperty: boolean
+  numberOfProperties?: number
+  email: string
+  proposedPrice: number
+  finalCommittedPrice: number
+  tenure: string
+  place: string
+  primaryContactPerson: string
+  contactPersonName: string
+  contactNumber: string
+  primaryPersonPosition?: string
+  executiveName?: string
+  firstVisitDate: string
+  firstVisitStatus: string
+  committedProposedRate?: string
+  comments: string
+  rescheduledDate?: string
+  rescheduledComment?: string
+  secondVisitExecutive?: string
+  secondVisitDate?: string
+  secondVisitStatus?: string
+  secondVisitComments?: string
+  currentlyAssignedTo?: string
+  planType?: string
+  closingAmount?: number
+  planStartDate: string
+  planExpiryDate: string
+  locationLink: string
+  currentPMS: string
+  connectedOTAPlatforms: string[]
+  state: string
+  district: string
+  location: string
+  isDraft?: boolean
+}
 
 interface DeletedProperty extends Property {
   deletedAt: string
@@ -32,8 +79,7 @@ export default function PropertiesPage() {
   const location = useLocation()
   const [path, setPath] = useState<string[]>([])
   const [pathLabels, setPathLabels] = useState<string[]>([])
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [propertyList, setPropertyList] = useState<Property[]>(properties)
+  const [propertyList, setPropertyList] = useState<Property[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [editingProperty, setEditingProperty] = useState<Property | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -44,81 +90,13 @@ export default function PropertiesPage() {
   const [typeFilter, setTypeFilter] = useState('')
   const [currentRole, setCurrentRole] = useState<DemoRole | null>(null)
   const [showDeleted, setShowDeleted] = useState(false)
+  const [showDrafts, setShowDrafts] = useState(false)
   const [deletedProperties, setDeletedProperties] = useState<DeletedProperty[]>([])
-  const [editForm, setEditForm] = useState({
-    name: '',
-    propertyType: '',
-    propertyClass: '',
-    roomCategory: '',
-    numberOfRooms: '',
-    location: '',
-    hasMultipleProperty: false,
-    numberOfProperties: '',
-    email: '',
-    proposedPrice: '',
-    finalCommittedPrice: '',
-    tenure: '',
-    place: '',
-    primaryContactPerson: '',
-    contactPersonName: '',
-    contactNumber: '',
-    primaryPersonPosition: '',
-    executiveName: '',
-    firstVisitDate: '',
-    firstVisitStatus: '',
-    committedProposedRate: '',
-    comments: '',
-    secondVisitExecutive: '',
-    secondVisitDate: '',
-    secondVisitStatus: '',
-    secondVisitComments: '',
-    currentlyAssignedTo: '',
-    planType: '',
-    closingAmount: '',
-    planStartDate: '',
-    planExpiryDate: '',
-    locationLink: '',
-    currentPMS: '',
-    connectedOTAPlatforms: '',
-  })
+  const [draftProperties, setDraftProperties] = useState<Property[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  const emptyCreateForm = {
-    name: '',
-    propertyType: '',
-    propertyClass: '',
-    roomCategory: '',
-    numberOfRooms: '',
-    location: '',
-    hasMultipleProperty: false,
-    numberOfProperties: '',
-    email: '',
-    proposedPrice: '',
-    finalCommittedPrice: '',
-    tenure: '',
-    place: '',
-    primaryContactPerson: '',
-    contactPersonName: '',
-    contactNumber: '',
-    primaryPersonPosition: '',
-    executiveName: '',
-    firstVisitDate: '',
-    firstVisitStatus: '',
-    committedProposedRate: '',
-    comments: '',
-    secondVisitExecutive: '',
-    secondVisitDate: '',
-    secondVisitStatus: '',
-    secondVisitComments: '',
-    currentlyAssignedTo: '',
-    planType: '',
-    closingAmount: '',
-    planStartDate: '',
-    planExpiryDate: '',
-    locationLink: '',
-    currentPMS: '',
-    connectedOTAPlatforms: '',
-  }
-  const [createForm, setCreateForm] = useState(emptyCreateForm)
+
 
   const getRemainingDays = (deletedAt?: string) => {
     if (!deletedAt) return 30
@@ -127,40 +105,193 @@ export default function PropertiesPage() {
     return Math.max(0, 30 - days)
   }
 
+  const [config, setConfig] = useState<AppConfig | null>(null)
+  const [salesRecordsList, setSalesRecordsList] = useState<SalesRecord[]>([])
+
+  const mapApiPropertyToProperty = (p: ApiProperty): Property => ({
+    id: p.id,
+    slno: p.slno,
+    name: p.name,
+    propertyType: p.property_type,
+    propertyClass: p.property_class,
+    roomCategory: p.room_category,
+    numberOfRooms: p.number_of_rooms,
+    hasMultipleProperty: p.has_multiple_property,
+    numberOfProperties: p.number_of_properties ?? undefined,
+    email: p.email,
+    proposedPrice: Number(p.proposed_price),
+    finalCommittedPrice: Number(p.final_committed_price),
+    tenure: p.tenure,
+    place: p.place,
+    primaryContactPerson: p.primary_contact_person,
+    contactPersonName: p.contact_person_name,
+    contactNumber: p.contact_number,
+    primaryPersonPosition: p.primary_person_position ?? undefined,
+    executiveName: p.executive_name ?? undefined,
+    firstVisitDate: p.first_visit_date,
+    firstVisitStatus: p.first_visit_status,
+    committedProposedRate: p.committed_proposed_rate ?? undefined,
+    comments: p.comments ?? '',
+    rescheduledDate: p.rescheduled_date ?? undefined,
+    rescheduledComment: p.rescheduled_comment ?? undefined,
+    secondVisitExecutive: p.second_visit_executive ?? undefined,
+    secondVisitDate: p.second_visit_date ?? undefined,
+    secondVisitStatus: p.second_visit_status ?? undefined,
+    secondVisitComments: p.second_visit_comments ?? undefined,
+    currentlyAssignedTo: p.currently_assigned_to ?? undefined,
+    planType: p.plan_type ?? undefined,
+    closingAmount:
+      p.closing_amount !== null && p.closing_amount !== undefined
+        ? Number(p.closing_amount)
+        : undefined,
+    planStartDate: p.plan_start_date,
+    planExpiryDate: p.plan_expiry_date,
+    locationLink: p.location_link,
+    currentPMS: p.current_pms,
+    connectedOTAPlatforms: Array.isArray(p.connected_ota_platforms)
+      ? p.connected_ota_platforms
+      : [],
+    state: p.state,
+    district: p.district,
+    location: p.location,
+    isDraft: p.is_draft,
+  })
+
+  const locationHierarchy: LocationNode[] = config?.location_hierarchy ?? []
+  const propertyTypes = config?.property_types ?? []
+  const propertyClasses = config?.property_classes ?? []
+  const roomCategories = config?.room_categories ?? []
+  const tenureOptions = config?.tenure_options ?? []
+  const primaryContactOptions = config?.primary_contact_options ?? []
+  const visitStatusOptions = config?.visit_status_options ?? []
+  const firstVisitStatusOptions = config?.first_visit_status_options ?? []
+  const planTypeOptions = config?.plan_type_options ?? []
+
+  function toApiPayload(p: Partial<Property>): Partial<ApiProperty> {
+    return {
+      name: p.name,
+      property_type: p.propertyType,
+      property_class: p.propertyClass,
+      room_category: p.roomCategory,
+      number_of_rooms: p.numberOfRooms,
+      has_multiple_property: p.hasMultipleProperty,
+      number_of_properties: p.numberOfProperties ?? null,
+      email: p.email,
+      proposed_price: String(p.proposedPrice ?? 0),
+      final_committed_price: String(p.finalCommittedPrice ?? 0),
+      tenure: p.tenure,
+      place: p.place,
+      primary_contact_person: p.primaryContactPerson,
+      contact_person_name: p.contactPersonName,
+      contact_number: p.contactNumber,
+      primary_person_position: p.primaryPersonPosition ?? null,
+      executive_name: p.executiveName ?? null,
+      first_visit_date: p.firstVisitDate,
+      first_visit_status: p.firstVisitStatus,
+      committed_proposed_rate: p.committedProposedRate ?? null,
+      comments: p.comments ?? '',
+      second_visit_executive: p.secondVisitExecutive ?? null,
+      second_visit_date: p.secondVisitDate ?? null,
+      second_visit_status: p.secondVisitStatus ?? null,
+      second_visit_comments: p.secondVisitComments ?? null,
+      currently_assigned_to: p.currentlyAssignedTo ?? null,
+      plan_type: p.planType ?? null,
+      closing_amount: p.closingAmount != null ? String(p.closingAmount) : null,
+      plan_start_date: p.planStartDate,
+      plan_expiry_date: p.planExpiryDate,
+      location_link: p.locationLink ?? '',
+      current_pms: p.currentPMS ?? 'None',
+      connected_ota_platforms: p.connectedOTAPlatforms ?? [],
+      state: p.state,
+      district: p.district,
+      location: p.location,
+      is_draft: p.isDraft,
+    }
+  }
+  function getPathLabels(hierarchy: LocationNode[], pathIds: string[]): string[] {
+    const labels: string[] = []
+    let current: LocationNode[] = hierarchy
+    for (const id of pathIds) {
+      const node = current.find((n) => n.id === id)
+      if (!node) break
+      labels.push(node.name)
+      current = node.children ?? []
+    }
+    return labels
+  }
+
+  const loadProperties = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setLoadError(null)
+      const items = await fetchProperties({ is_draft: false })
+      setPropertyList(items.map(mapApiPropertyToProperty))
+    } catch (err: unknown) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load properties')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  const loadDraftProperties = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const items = await fetchProperties({ is_draft: true })
+      setDraftProperties(items.map(mapApiPropertyToProperty))
+    } catch {
+      // ignore
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  const loadDeletedProperties = useCallback(async () => {
+    try {
+      const items = await fetchDeletedProperties({ retention_days: 30 })
+      setDeletedProperties(
+        items.map((p) => ({
+          ...mapApiPropertyToProperty(p),
+          deletedAt: p.deleted_at ?? '',
+        }))
+      )
+    } catch {
+      // ignore
+    }
+  }, [])
+
   useEffect(() => {
-    // Load current demo user role
     try {
       const rawUser = window.localStorage.getItem('bookito_demo_user')
       if (rawUser) {
         const parsed = JSON.parse(rawUser) as { role?: DemoRole }
-        if (parsed.role) {
-          setCurrentRole(parsed.role)
-        }
+        if (parsed.role) setCurrentRole(parsed.role)
       }
     } catch {
       // ignore
     }
-
-    // Purge logic for local state
-    const now = new Date()
-    setDeletedProperties((prev) =>
-      prev.filter((p) => differenceInDays(now, parseISO(p.deletedAt)) < 30)
-    )
-  }, [])
+    fetchConfig().then(setConfig).catch(() => {})
+    fetchSalesRecords().then(setSalesRecordsList).catch(() => {})
+    void loadProperties()
+    void loadDeletedProperties()
+    void loadDraftProperties()
+  }, [loadProperties, loadDeletedProperties, loadDraftProperties])
 
   useEffect(() => {
-    const state = location.state as
-      | {
-          path?: string[]
-          pathLabels?: string[]
-        }
-      | null
-
+    const state = location.state as { path?: string[]; pathLabels?: string[] } | null
     if (state?.path && state.path.length > 0) {
       setPath(state.path)
       setPathLabels(state.pathLabels ?? [])
     }
   }, [location.state])
+
+  useEffect(() => {
+    if (config && path.length > 0) {
+      setPathLabels((prev) => {
+        const fromHierarchy = getPathLabels(locationHierarchy, path)
+        return fromHierarchy.length === path.length ? fromHierarchy : prev
+      })
+    }
+  }, [config, path])
 
   const canEditOrCreate = currentRole === 'sales' || currentRole === 'crm'
 
@@ -194,11 +325,9 @@ export default function PropertiesPage() {
     })),
   ]
 
-  const handleNavigate = (newPath: string[], node?: any) => {
+  const handleNavigate = (newPath: string[], _node?: LocationNode) => {
     setPath(newPath)
-    if (node) {
-      setPathLabels([...pathLabels, node.name])
-    }
+    setPathLabels(getPathLabels(locationHierarchy, newPath))
   }
 
   // Filter properties by current path
@@ -257,56 +386,77 @@ export default function PropertiesPage() {
     return deletedProperties.filter(
       (p) => p.state === state?.name && p.district === district?.name
     )
-  }, [isLeafLevel, path, deletedProperties])
+  }, [isLeafLevel, path, deletedProperties, locationHierarchy])
 
-  const getLifecycleStatus = (property: Property): { label: string; variant: Parameters<typeof getStatusVariant>[0] | 'success' | 'warning' | 'info' | 'default' } => {
-    const record: SalesRecord | undefined = salesRecords.find(
-      (s) => s.propertyName === property.name
+  const getLifecycleStatus = useCallback(
+    (property: Property): { label: string; variant: Parameters<typeof getStatusVariant>[0] | 'success' | 'warning' | 'info' | 'default' } => {
+      const record = salesRecordsList.find((s) => s.property_name === property.name)
+      if (record?.is_live) return { label: 'Live', variant: 'success' }
+      if (record?.trial_provided) return { label: 'Trial', variant: 'warning' }
+      if (record?.demo_provided) return { label: 'Demo', variant: 'info' }
+      return { label: 'Prospect', variant: 'default' }
+    },
+    [salesRecordsList]
+  )
+
+  const [draftPendingDelete, setDraftPendingDelete] = useState<Property | null>(null)
+
+  const filteredDrafts = useMemo(() => {
+    if (!isLeafLevel) return []
+    const [stateId, districtId] = path
+    const state = locationHierarchy.find((s) => s.id === stateId)
+    const district = state?.children?.find((d) => d.id === districtId)
+
+    return draftProperties.filter(
+      (p) => p.state === state?.name && p.district === district?.name
     )
+  }, [isLeafLevel, path, draftProperties, locationHierarchy])
 
-    if (record?.isLive) {
-      return { label: 'Live', variant: 'success' }
-    }
+  const handleDelete = useCallback(
+    (property: Property) => {
+      void (async () => {
+        try {
+          await softDeleteProperty(property.id)
+          await loadProperties()
+          await loadDeletedProperties()
+        } catch (err: unknown) {
+          const message =
+            err instanceof Error
+              ? err.message
+              : 'Failed to delete property. This might be due to lack of permissions.'
+          alert(message)
+        }
+      })()
+    },
+    [loadProperties, loadDeletedProperties]
+  )
 
-    if (record?.trialProvided) {
-      return { label: 'Trial', variant: 'warning' }
-    }
+  const confirmDeleteDraft = useCallback(() => {
+    const target = draftPendingDelete
+    if (!target) return
+    void (async () => {
+      try {
+        await deleteProperty(target.id)
+        setDraftProperties((prev) => prev.filter((p) => p.id !== target.id))
+        setDraftPendingDelete(null)
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to delete draft.'
+        alert(message)
+      }
+    })()
+  }, [draftPendingDelete])
 
-    if (record?.demoProvided) {
-      return { label: 'Demo', variant: 'info' }
-    }
-
-    return { label: 'Prospect', variant: 'default' }
-  }
-
-  const handleDelete = (property: Property) => {
-    const deletedAt = new Date().toISOString()
-    const entry: DeletedProperty = { ...property, deletedAt }
-
-    setDeletedProperties((prev) => {
-      const updated = [...prev.filter((p) => p.id !== property.id), entry]
-      window.localStorage.setItem(
-        'bookito_deleted_properties',
-        JSON.stringify(updated)
-      )
-      return updated
-    })
-
-    setPropertyList((prev) => prev.filter((p) => p.id !== property.id))
-  }
-
-  const handleRestore = (property: DeletedProperty) => {
-    setDeletedProperties((prev) => {
-      const updated = prev.filter((p) => p.id !== property.id)
-      window.localStorage.setItem(
-        'bookito_deleted_properties',
-        JSON.stringify(updated)
-      )
-      return updated
-    })
-
-    setPropertyList((prev) => [...prev, property])
-  }
+  const handleRestore = useCallback((property: DeletedProperty) => {
+    void (async () => {
+      try {
+        await restoreProperty(property.id)
+        await loadProperties()
+        await loadDeletedProperties()
+      } catch {
+        // ignore
+      }
+    })()
+  }, [loadProperties, loadDeletedProperties])
 
   const columns: ColumnDef<Property, any>[] = useMemo(
     () => [
@@ -451,53 +601,20 @@ export default function PropertiesPage() {
               <>
                 <button
                   onClick={() => {
-                    const current = row.original
-                    setEditingProperty(current)
-                    setEditForm({
-                      name: current.name,
-                      propertyType: current.propertyType,
-                      propertyClass: current.propertyClass,
-                      roomCategory: current.roomCategory,
-                      numberOfRooms: String(current.numberOfRooms ?? ''),
-                      location: current.location ?? '',
-                      hasMultipleProperty: current.hasMultipleProperty ?? false,
-                      numberOfProperties: current.numberOfProperties != null ? String(current.numberOfProperties) : '',
-                      email: current.email ?? '',
-                      proposedPrice: String(current.proposedPrice ?? ''),
-                      finalCommittedPrice: String(current.finalCommittedPrice ?? ''),
-                      tenure: current.tenure ?? '',
-                      place: current.place ?? '',
-                      primaryContactPerson: current.primaryContactPerson ?? '',
-                      contactPersonName: current.contactPersonName ?? '',
-                      contactNumber: current.contactNumber ?? '',
-                      primaryPersonPosition: current.primaryPersonPosition ?? '',
-                      executiveName: current.executiveName ?? '',
-                      firstVisitDate: current.firstVisitDate ?? '',
-                      firstVisitStatus: current.firstVisitStatus ?? '',
-                      committedProposedRate: current.committedProposedRate ?? '',
-                      comments: current.comments ?? '',
-                      secondVisitExecutive: current.secondVisitExecutive ?? '',
-                      secondVisitDate: current.secondVisitDate ?? '',
-                      secondVisitStatus: current.secondVisitStatus ?? '',
-                      currentlyAssignedTo: current.currentlyAssignedTo ?? '',
-                      secondVisitComments: current.secondVisitComments ?? '',
-                      planType: current.planType ?? '',
-                      closingAmount: current.closingAmount != null ? String(current.closingAmount) : '',
-                      planStartDate: current.planStartDate ?? '',
-                      planExpiryDate: current.planExpiryDate ?? '',
-                      locationLink: current.locationLink ?? '',
-                      currentPMS: current.currentPMS ?? '',
-                      connectedOTAPlatforms: Array.isArray(current.connectedOTAPlatforms) ? current.connectedOTAPlatforms.join(', ') : '',
+                    navigate(`/properties/edit/${row.original.id}`, {
+                      state: { path, pathLabels },
                     })
-                    setShowEditModal(true)
                   }}
                   className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-primary-600"
                 >
-              <Edit className="h-4 w-4" />
-            </button>
+                  <Edit className="h-4 w-4" />
+                </button>
                 <button
-                  onClick={() => handleDelete(row.original)}
+                  onClick={() =>
+                    showDrafts ? setDraftPendingDelete(row.original) : handleDelete(row.original)
+                  }
                   className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                  title={showDrafts ? 'Delete draft' : 'Move to trash'}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -517,7 +634,7 @@ export default function PropertiesPage() {
         ),
       },
     ],
-    [canEditOrCreate]
+    [canEditOrCreate, navigate, path, pathLabels, handleDelete, getLifecycleStatus, showDrafts]
   )
 
   const deletedColumns: ColumnDef<DeletedProperty, any>[] = useMemo(
@@ -572,7 +689,8 @@ export default function PropertiesPage() {
             {canEditOrCreate && (
               <button
                 onClick={() => handleRestore(row.original)}
-                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-emerald-600"
+                className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
+                title="Restore"
               >
                 <RotateCcw className="h-4 w-4" />
               </button>
@@ -581,7 +699,7 @@ export default function PropertiesPage() {
         ),
       },
     ],
-    [canEditOrCreate, navigate]
+    [canEditOrCreate, navigate, path, pathLabels, handleRestore]
   )
 
   return (
@@ -596,7 +714,7 @@ export default function PropertiesPage() {
         </div>
         <div className="flex flex-1 items-center justify-end gap-3 md:flex-none">
           {isLeafLevel && canEditOrCreate && (
-          <Button onClick={() => setShowAddModal(true)}>
+          <Button onClick={() => navigate('/properties/add', { state: { path, pathLabels } })}>
             <Plus className="h-4 w-4" />
               Create Property
           </Button>
@@ -610,14 +728,18 @@ export default function PropertiesPage() {
           hierarchy={locationHierarchy}
           path={path}
           onNavigate={handleNavigate}
+          propertyList={propertyList}
         />
       ) : (
         <div className="space-y-4">
           <div className="flex rounded-lg border border-surface-200 p-0.5 w-fit">
             <button
-              onClick={() => setShowDeleted(false)}
+              onClick={() => {
+                setShowDeleted(false)
+                setShowDrafts(false)
+              }}
               className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                !showDeleted
+                !showDeleted && !showDrafts
                   ? 'bg-primary-600 text-white shadow-sm'
                   : 'text-surface-500 hover:text-surface-700'
               }`}
@@ -625,7 +747,24 @@ export default function PropertiesPage() {
               Active
             </button>
             <button
-              onClick={() => setShowDeleted(true)}
+              onClick={() => {
+                setShowDeleted(false)
+                setShowDrafts(true)
+              }}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                showDrafts
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'text-surface-500 hover:text-surface-700'
+              }`}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Drafts
+            </button>
+            <button
+              onClick={() => {
+                setShowDeleted(true)
+                setShowDrafts(false)
+              }}
               className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                 showDeleted
                   ? 'bg-red-600 text-white shadow-sm'
@@ -637,7 +776,7 @@ export default function PropertiesPage() {
             </button>
           </div>
 
-          {!showDeleted ? (
+          {!showDeleted && !showDrafts ? (
             <div className="space-y-3">
               <p className="text-xs font-medium text-surface-500">
                 {filteredProperties.length}{' '}
@@ -710,6 +849,18 @@ export default function PropertiesPage() {
           searchPlaceholder="Search properties..."
         />
             </div>
+          ) : showDrafts ? (
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-surface-500">
+                {filteredDrafts.length}{' '}
+                {filteredDrafts.length === 1 ? 'draft' : 'drafts'}
+              </p>
+              <DataTable
+                data={filteredDrafts}
+                columns={columns}
+                searchPlaceholder="Search drafts..."
+              />
+            </div>
           ) : (
             <div className="space-y-3">
               <p className="text-xs font-medium text-surface-500">
@@ -728,476 +879,24 @@ export default function PropertiesPage() {
         </div>
       )}
 
-      {/* Edit Property Modal */}
-      {editingProperty && (
-        <Modal
-          isOpen={showEditModal}
-          onClose={() => {
-            setShowEditModal(false)
-            setEditingProperty(null)
-          }}
-          title={`Edit ${editingProperty.name}`}
-          size="xl"
-        >
-          <div className="grid grid-cols-2 gap-4">
-            <FormField label="Property Name">
-              <Input
-                value={editForm.name}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, name: e.target.value }))
-                }
-                placeholder="Enter property name"
-              />
-            </FormField>
-            <FormField label="Property Type">
-              <Select
-                value={editForm.propertyType}
-                onChange={(value) =>
-                  setEditForm((prev) => ({ ...prev, propertyType: value }))
-                }
-                options={propertyTypes.map((t) => ({ label: t, value: t }))}
-                placeholder="Select type"
-              />
-            </FormField>
-            <FormField label="Property Class">
-              <Select
-                value={editForm.propertyClass}
-                onChange={(value) =>
-                  setEditForm((prev) => ({ ...prev, propertyClass: value }))
-                }
-                options={propertyClasses.map((c) => ({ label: c, value: c }))}
-                placeholder="Select class"
-              />
-            </FormField>
-            <FormField label="Room Category">
-              <Select
-                value={editForm.roomCategory}
-                onChange={(value) =>
-                  setEditForm((prev) => ({ ...prev, roomCategory: value }))
-                }
-                options={roomCategories.map((r) => ({ label: r, value: r }))}
-                placeholder="Select category"
-              />
-            </FormField>
-            <FormField label="Number of Rooms">
-              <Input
-                type="number"
-                value={editForm.numberOfRooms}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, numberOfRooms: e.target.value }))
-                }
-                placeholder="0"
-              />
-            </FormField>
-            <FormField label="Property Location">
-              <Input
-                value={editForm.location}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, location: e.target.value }))
-                }
-                placeholder="e.g. Forest Side, Mountain Side"
-              />
-            </FormField>
-            <FormField label="Multiple Property">
-              <Select
-                value={editForm.hasMultipleProperty ? 'Yes' : 'No'}
-                onChange={(value) =>
-                  setEditForm((prev) => ({ ...prev, hasMultipleProperty: value === 'Yes' }))
-                }
-                options={[{ label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' }]}
-                placeholder="Select"
-              />
-            </FormField>
-            {editForm.hasMultipleProperty && (
-              <FormField label="No. of Properties">
-                <Input
-                  type="number"
-                  value={editForm.numberOfProperties}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, numberOfProperties: e.target.value }))
-                  }
-                  placeholder="0"
-                />
-              </FormField>
-            )}
-            <FormField label="Property Place Name">
-              <Input
-                value={editForm.place}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, place: e.target.value }))
-                }
-                placeholder="e.g. Muthanga, Sulthan Bathery"
-              />
-            </FormField>
-            <FormField label="Email">
-              <Input
-                type="email"
-                value={editForm.email}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, email: e.target.value }))
-                }
-                placeholder="property@email.com"
-              />
-            </FormField>
-            <FormField label="Proposed Price">
-              <Input
-                type="number"
-                value={editForm.proposedPrice}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, proposedPrice: e.target.value }))
-                }
-                placeholder="0"
-              />
-            </FormField>
-            <FormField label="Tenure">
-              <Select
-                value={editForm.tenure}
-                onChange={(value) => setEditForm((prev) => ({ ...prev, tenure: value }))}
-                options={tenureOptions.map((t) => ({ label: t, value: t }))}
-                placeholder="Select tenure"
-              />
-            </FormField>
-            <FormField label="Primary Contact Person">
-              <Select
-                value={editForm.primaryContactPerson}
-                onChange={(value) =>
-                  setEditForm((prev) => ({ ...prev, primaryContactPerson: value }))
-                }
-                options={primaryContactOptions.map((p) => ({ label: p, value: p }))}
-                placeholder="Select role"
-              />
-            </FormField>
-            <FormField label="Contact Person Name">
-              <Input
-                value={editForm.contactPersonName}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, contactPersonName: e.target.value }))
-                }
-                placeholder="Enter name"
-              />
-            </FormField>
-            <FormField label="Contact Number">
-              <Input
-                value={editForm.contactNumber}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, contactNumber: e.target.value }))
-                }
-                placeholder="+91 XXXXX XXXXX"
-              />
-            </FormField>
-            <FormField label="First Visit Date">
-              <Input
-                type="date"
-                value={editForm.firstVisitDate}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, firstVisitDate: e.target.value }))
-                }
-              />
-            </FormField>
-            <FormField label="First Visit Status">
-              <Select
-                value={editForm.firstVisitStatus}
-                onChange={(value) =>
-                  setEditForm((prev) => ({ ...prev, firstVisitStatus: value }))
-                }
-                options={firstVisitStatusOptions.map((s) => ({ label: s, value: s }))}
-                placeholder="Select status"
-              />
-            </FormField>
-            <FormField label="Executive Name">
-              <Input
-                value={editForm.executiveName}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, executiveName: e.target.value }))
-                }
-                placeholder="First visit executive"
-              />
-            </FormField>
-            <FormField label="Committed / Proposed Rate">
-              <Input
-                value={editForm.committedProposedRate}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, committedProposedRate: e.target.value }))
-                }
-                placeholder="e.g. 100/250"
-              />
-            </FormField>
-            <FormField label="Location Link">
-              <Input
-                value={editForm.locationLink}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, locationLink: e.target.value }))
-                }
-                placeholder="https://maps.google.com/..."
-              />
-            </FormField>
-            <FormField label="Final Committed Price">
-              <Input
-                type="number"
-                value={editForm.finalCommittedPrice}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, finalCommittedPrice: e.target.value }))
-                }
-                placeholder="0"
-              />
-            </FormField>
-            <FormField label="Visit Status">
-              <Select
-                value={editForm.secondVisitStatus}
-                onChange={(value) =>
-                  setEditForm((prev) => ({ ...prev, secondVisitStatus: value }))
-                }
-                options={visitStatusOptions.map((s) => ({ label: s, value: s }))}
-                placeholder="Select status"
-              />
-            </FormField>
-            <FormField label="Second Visit Executive">
-              <Input
-                value={editForm.secondVisitExecutive}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, secondVisitExecutive: e.target.value }))
-                }
-                placeholder="Name"
-              />
-            </FormField>
-            <FormField label="Second Visit Date">
-              <Input
-                type="date"
-                value={editForm.secondVisitDate}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, secondVisitDate: e.target.value }))
-                }
-              />
-            </FormField>
-            <FormField label="Second Visit Comments">
-              <Input
-                value={editForm.secondVisitComments}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, secondVisitComments: e.target.value }))
-                }
-                placeholder="Comments"
-              />
-            </FormField>
-            <FormField label="Currently Assigned To">
-              <Input
-                value={editForm.currentlyAssignedTo}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, currentlyAssignedTo: e.target.value }))
-                }
-                placeholder="Name or status"
-              />
-            </FormField>
-            <FormField label="Plan Type">
-              <Select
-                value={editForm.planType}
-                onChange={(value) =>
-                  setEditForm((prev) => ({ ...prev, planType: value }))
-                }
-                options={planTypeOptions.map((p) => ({ label: p, value: p }))}
-                placeholder="Select plan"
-              />
-            </FormField>
-            <FormField label="Closing Amount">
-              <Input
-                type="number"
-                value={editForm.closingAmount}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, closingAmount: e.target.value }))
-                }
-                placeholder="0"
-              />
-            </FormField>
-            <FormField label="Current PMS / Software">
-              <Input
-                value={editForm.currentPMS}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, currentPMS: e.target.value }))
-                }
-                placeholder="e.g. NILL, eZee"
-              />
-            </FormField>
-            <FormField label="Connected OTA Platforms">
-              <Input
-                value={editForm.connectedOTAPlatforms}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, connectedOTAPlatforms: e.target.value }))
-                }
-                placeholder="Comma-separated: GO-MMT, Booking.com, Agoda"
-              />
-            </FormField>
-            <FormField label="Plan Expiry Date">
-              <Input
-                type="date"
-                value={editForm.planExpiryDate}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, planExpiryDate: e.target.value }))
-                }
-              />
-            </FormField>
-            <FormField label="Plan Start Date">
-              <Input
-                type="date"
-                value={editForm.planStartDate}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, planStartDate: e.target.value }))
-                }
-              />
-            </FormField>
-              <div className="col-span-2">
-              <FormField label="Comments">
-                <Textarea
-                  rows={3}
-                  value={editForm.comments}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, comments: e.target.value }))
-                  }
-                  placeholder="Any comments..."
-                />
-              </FormField>
-              </div>
-              </div>
-          <div className="mt-6 flex justify-end gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowEditModal(false)
-                setEditingProperty(null)
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                if (!editingProperty) return
-                setPropertyList((prev) =>
-                  prev.map((p) =>
-                    p.id === editingProperty.id
-                      ? {
-                          ...p,
-                          name: editForm.name || p.name,
-                          propertyType: (editForm.propertyType || p.propertyType) as Property['propertyType'],
-                          propertyClass: (editForm.propertyClass || p.propertyClass) as Property['propertyClass'],
-                          roomCategory: (editForm.roomCategory || p.roomCategory) as Property['roomCategory'],
-                          numberOfRooms:
-                            editForm.numberOfRooms.trim() === ''
-                              ? p.numberOfRooms
-                              : Number(editForm.numberOfRooms),
-                          location: editForm.location || p.location,
-                          hasMultipleProperty: editForm.hasMultipleProperty ?? p.hasMultipleProperty,
-                          numberOfProperties: editForm.numberOfProperties.trim() === '' ? undefined : Number(editForm.numberOfProperties),
-                          email: editForm.email || p.email,
-                          proposedPrice:
-                            editForm.proposedPrice.trim() === ''
-                              ? p.proposedPrice
-                              : Number(editForm.proposedPrice),
-                          finalCommittedPrice:
-                            editForm.finalCommittedPrice.trim() === ''
-                              ? p.finalCommittedPrice
-                              : Number(editForm.finalCommittedPrice),
-                          tenure: (editForm.tenure || p.tenure) as Property['tenure'],
-                          place: editForm.place || p.place,
-                          primaryContactPerson:
-                            (editForm.primaryContactPerson || p.primaryContactPerson) as Property['primaryContactPerson'],
-                          contactPersonName: editForm.contactPersonName || p.contactPersonName,
-                          contactNumber: editForm.contactNumber || p.contactNumber,
-                          primaryPersonPosition: editForm.primaryPersonPosition || p.primaryPersonPosition,
-                          executiveName: editForm.executiveName || p.executiveName,
-                          firstVisitDate: editForm.firstVisitDate || p.firstVisitDate,
-                          firstVisitStatus: editForm.firstVisitStatus || p.firstVisitStatus,
-                          committedProposedRate: editForm.committedProposedRate || p.committedProposedRate,
-                          comments: editForm.comments ?? p.comments,
-                          secondVisitExecutive: editForm.secondVisitExecutive || p.secondVisitExecutive,
-                          secondVisitDate: editForm.secondVisitDate || p.secondVisitDate,
-                          secondVisitStatus: editForm.secondVisitStatus
-                            ? (editForm.secondVisitStatus as Property['secondVisitStatus'])
-                            : p.secondVisitStatus,
-                          secondVisitComments: editForm.secondVisitComments || p.secondVisitComments,
-                          currentlyAssignedTo: editForm.currentlyAssignedTo || p.currentlyAssignedTo,
-                          planType: editForm.planType || p.planType,
-                          closingAmount: editForm.closingAmount.trim() === '' ? undefined : Number(editForm.closingAmount),
-                          planStartDate: editForm.planStartDate || p.planStartDate,
-                          planExpiryDate: editForm.planExpiryDate || p.planExpiryDate,
-                          locationLink: editForm.locationLink || p.locationLink,
-                          currentPMS: editForm.currentPMS ?? p.currentPMS,
-                          connectedOTAPlatforms: editForm.connectedOTAPlatforms.trim()
-                            ? editForm.connectedOTAPlatforms.split(',').map((s) => s.trim()).filter(Boolean)
-                            : p.connectedOTAPlatforms,
-                        }
-                      : p
-                  )
-                )
-                setShowEditModal(false)
-                setEditingProperty(null)
-              }}
-            >
-              Save Changes
-            </Button>
-          </div>
-        </Modal>
-      )}
-
-      {/* Add Property Modal (Reused) */}
-      <AddPropertyModal
-        isOpen={showAddModal}
-        onClose={() => {
-          setShowAddModal(false)
-          setCreateForm(emptyCreateForm)
-        }}
-        onSave={(createForm: any) => {
-          if (!createForm.name?.trim()) return
-          const state = path[0] ? locationHierarchy.find((s) => s.id === path[0]) : null
-          const district = state?.children?.find((d) => d.id === path[1])
-          const stateName = state?.name ?? 'Kerala'
-          const districtName = district?.name ?? 'Wayanad'
-          const nextSlno = Math.max(0, ...propertyList.map((p) => p.slno)) + 1
-          const newId = `p-${Date.now()}`
-          const newProperty: Property = {
-            id: newId,
-            slno: nextSlno,
-            name: createForm.name.trim(),
-            propertyType: (createForm.propertyType || propertyTypes[0]) as Property['propertyType'],
-            propertyClass: (createForm.propertyClass || propertyClasses[0]) as Property['propertyClass'],
-            roomCategory: (createForm.roomCategory || roomCategories[0]) as Property['roomCategory'],
-            numberOfRooms: createForm.numberOfRooms.trim() ? Number(createForm.numberOfRooms) : 0,
-            hasMultipleProperty: createForm.hasMultipleProperty ?? false,
-            numberOfProperties: createForm.numberOfProperties.trim() ? Number(createForm.numberOfProperties) : undefined,
-            email: createForm.email?.trim() ?? '',
-            proposedPrice: createForm.proposedPrice.trim() ? Number(createForm.proposedPrice) : 0,
-            finalCommittedPrice: createForm.finalCommittedPrice.trim() ? Number(createForm.finalCommittedPrice) : 0,
-            tenure: (createForm.tenure || tenureOptions[0]) as Property['tenure'],
-            place: createForm.place?.trim() ?? '',
-            primaryContactPerson: (createForm.primaryContactPerson || primaryContactOptions[0]) as Property['primaryContactPerson'],
-            contactPersonName: createForm.contactPersonName?.trim() ?? '',
-            contactNumber: createForm.contactNumber?.trim() ?? '',
-            primaryPersonPosition: createForm.primaryPersonPosition?.trim() || undefined,
-            executiveName: createForm.executiveName?.trim() || undefined,
-            firstVisitDate: createForm.firstVisitDate?.trim() ?? '',
-            firstVisitStatus: createForm.firstVisitStatus?.trim() ?? '',
-            committedProposedRate: createForm.committedProposedRate?.trim() || undefined,
-            comments: createForm.comments?.trim() ?? '',
-            secondVisitExecutive: createForm.secondVisitExecutive?.trim() || undefined,
-            secondVisitDate: createForm.secondVisitDate?.trim() || undefined,
-            secondVisitStatus: createForm.secondVisitStatus ? (createForm.secondVisitStatus as Property['secondVisitStatus']) : undefined,
-            secondVisitComments: createForm.secondVisitComments?.trim() || undefined,
-            currentlyAssignedTo: createForm.currentlyAssignedTo?.trim() || undefined,
-            planType: createForm.planType?.trim() || undefined,
-            closingAmount: createForm.closingAmount.trim() ? Number(createForm.closingAmount) : undefined,
-            planStartDate: createForm.planStartDate?.trim() ?? '',
-            planExpiryDate: createForm.planExpiryDate?.trim() ?? '',
-            locationLink: createForm.locationLink?.trim() ?? '',
-            currentPMS: createForm.currentPMS?.trim() ?? 'None',
-            connectedOTAPlatforms: createForm.connectedOTAPlatforms.trim()
-              ? createForm.connectedOTAPlatforms.split(',').map((s: string) => s.trim()).filter(Boolean)
-              : [],
-            state: stateName,
-            district: districtName,
-            location: (createForm.location?.trim() || createForm.place?.trim()) ?? '',
-          }
-          setPropertyList((prev) => [...prev, newProperty])
-          setShowAddModal(false)
-          setCreateForm(emptyCreateForm)
-        }}
-      />
+      <Modal
+        isOpen={draftPendingDelete !== null}
+        onClose={() => setDraftPendingDelete(null)}
+        title="Delete draft?"
+        size="sm"
+      >
+        <p className="text-sm text-surface-600">
+          Delete &quot;{draftPendingDelete?.name}&quot;? This cannot be undone.
+        </p>
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="secondary" type="button" onClick={() => setDraftPendingDelete(null)}>
+            Cancel
+          </Button>
+          <Button variant="danger" type="button" onClick={confirmDeleteDraft}>
+            Delete
+          </Button>
+        </div>
+      </Modal>
     </div>
   )
 }

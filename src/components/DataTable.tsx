@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type ReactNode } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -29,6 +29,8 @@ interface DataTableProps<T> {
   searchColumn?: string
   pageSize?: number
   onRowClick?: (data: T) => void
+  /** Rendered after the search field on the same row (e.g. Active / Trash toggles) */
+  toolbarActions?: ReactNode
 }
 
 export function DataTable<T>({
@@ -38,6 +40,7 @@ export function DataTable<T>({
   searchColumn,
   pageSize = 10,
   onRowClick,
+  toolbarActions,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
@@ -74,20 +77,25 @@ export function DataTable<T>({
   return (
     <div className="space-y-3">
       {/* Header Controls */}
-      <div className="flex items-center justify-between gap-4">
-        {/* Search */}
-        <div className="relative max-w-sm flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
-          <input
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="w-full rounded-lg border border-surface-300 py-2 pl-9 pr-4 text-sm text-surface-900 transition-colors placeholder:text-surface-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-          />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative max-w-sm min-w-[12rem] flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
+            <input
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="w-full rounded-lg border border-surface-300 py-2 pl-9 pr-4 text-sm text-surface-900 transition-colors placeholder:text-surface-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+            />
+          </div>
+          {toolbarActions != null && (
+            <div className="flex shrink-0 items-center">{toolbarActions}</div>
+          )}
         </div>
 
         {/* Column Toggle */}
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative shrink-0" ref={dropdownRef}>
           <button
             onClick={() => setIsColumnPickerOpen(!isColumnPickerOpen)}
             className={cn(

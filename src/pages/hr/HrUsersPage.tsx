@@ -1,11 +1,18 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { Users, Plus, Trash2, RotateCcw } from 'lucide-react'
 import { Button, FormField, Input, Select } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
 import { differenceInDays, parseISO } from 'date-fns'
+import {
+  createUserAccount,
+  fetchUserAccounts,
+  restoreUserAccount,
+  softDeleteUserAccount,
+  type ApiUserAccount,
+} from '@/lib/accountsApi'
 
-type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
+type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr' | 'employee'
 
 interface DemoUserAccount {
   id: string
@@ -17,15 +24,31 @@ interface DemoUserAccount {
   deletedAt?: string
 }
 
+function mapUser(u: ApiUserAccount): DemoUserAccount {
+  return {
+    id: String(u.id),
+    name: u.name,
+    email: u.email,
+    role: u.role as DemoRole,
+    status: u.status,
+    isDeleted: u.is_deleted,
+    deletedAt: u.deleted_at ?? undefined,
+  }
+}
+
+type NewAccountForm = Omit<DemoUserAccount, 'id'> & { password: string }
+
 export default function HrUsersPage() {
   const [currentRole, setCurrentRole] = useState<DemoRole | null>(null)
   const [users, setUsers] = useState<DemoUserAccount[]>([])
-  const [newUser, setNewUser] = useState<Omit<DemoUserAccount, 'id'>>({
+  const [newUser, setNewUser] = useState<NewAccountForm>({
     name: '',
     email: '',
     role: 'sales',
     status: 'active',
+    password: '',
   })
+  const [createAccountError, setCreateAccountError] = useState<string | null>(null)
   const [tab, setTab] = useState<'active' | 'deleted'>('active')
 
   const getRemainingDays = (deletedAt?: string) => {
@@ -39,49 +62,38 @@ export default function HrUsersPage() {
       const raw = window.localStorage.getItem('bookito_demo_user')
       if (raw) {
         const parsed = JSON.parse(raw) as { role?: DemoRole }
-        if (parsed.role) {
-          setCurrentRole(parsed.role)
-        }
-      }
-    } catch {
-      // ignore
-    }
-
-    try {
-      const rawUsers = window.localStorage.getItem('bookito_hr_users')
-      if (rawUsers) {
-        let parsed = JSON.parse(rawUsers) as DemoUserAccount[]
-        // Purge logic
-        const now = new Date()
-        parsed = parsed.filter(u => !u.isDeleted || (u.deletedAt && differenceInDays(now, parseISO(u.deletedAt)) < 30))
-        setUsers(parsed)
+        if (parsed.role) setCurrentRole(parsed.role)
       }
     } catch {
       // ignore
     }
   }, [])
 
+  const reload = useCallback(async () => {
+    try {
+      const list = await fetchUserAccounts(tab === 'deleted')
+      setUsers(list.map(mapUser))
+    } catch {
+      setUsers([])
+    }
+  }, [tab])
+
+  useEffect(() => {
+    void reload()
+  }, [reload])
+
   const isHr = currentRole === 'hr'
 
-  const saveUsers = (list: DemoUserAccount[]) => {
-    setUsers(list)
-    window.localStorage.setItem('bookito_hr_users', JSON.stringify(list))
-  }
-
   const handleDelete = (id: string) => {
-    saveUsers(users.map(u => 
-      u.id === id ? { ...u, isDeleted: true, deletedAt: new Date().toISOString() } : u
-    ))
+    void softDeleteUserAccount(id).then(() => reload())
   }
 
   const handleRestore = (id: string) => {
-    saveUsers(users.map(u => 
-      u.id === id ? { ...u, isDeleted: false, deletedAt: undefined } : u
-    ))
+    void restoreUserAccount(id).then(() => reload())
   }
 
   const filteredUsers = useMemo(() => {
-    return users.filter(u => {
+    return users.filter((u) => {
       if (tab === 'active') return !u.isDeleted
       if (tab === 'deleted') return !!u.isDeleted
       return true
@@ -94,23 +106,27 @@ export default function HrUsersPage() {
         accessorKey: 'name',
         header: 'Name',
         cell: ({ row }) => (
-            <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-xs uppercase">
-                    {row.original.name[0]}
-                </div>
-                <span className="font-semibold text-surface-900">{row.original.name}</span>
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-xs font-bold uppercase text-primary-600">
+              {row.original.name[0]}
             </div>
-        )
+            <span className="font-semibold text-surface-900">{row.original.name}</span>
+          </div>
+        ),
       },
       {
         accessorKey: 'email',
         header: 'Email',
-        cell: ({ row }) => <span className="text-xs text-surface-500">{row.original.email}</span>
+        cell: ({ row }) => <span className="text-xs text-surface-500">{row.original.email}</span>,
       },
       {
         accessorKey: 'role',
         header: 'Role',
-        cell: ({ row }) => <span className="text-xs capitalize font-medium text-surface-600 px-2 py-1 bg-surface-100 rounded-lg">{row.original.role}</span>
+        cell: ({ row }) => (
+          <span className="rounded-lg bg-surface-100 px-2 py-1 text-xs font-medium capitalize text-surface-600">
+            {row.original.role}
+          </span>
+        ),
       },
       {
         accessorKey: 'status',
@@ -119,7 +135,7 @@ export default function HrUsersPage() {
           if (tab === 'deleted') {
             const days = getRemainingDays(row.original.deletedAt)
             return (
-              <span className="flex items-center gap-1.5 text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full w-fit">
+              <span className="flex w-fit items-center gap-1.5 rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-600">
                 <div className="h-1 w-1 rounded-full bg-red-400" />
                 {days} days
               </span>
@@ -133,11 +149,13 @@ export default function HrUsersPage() {
                   : 'bg-surface-100 text-surface-500'
               }`}
             >
-              <div className={`h-1 w-1 rounded-full ${row.original.status === 'active' ? 'bg-emerald-500' : 'bg-surface-400'}`} />
+              <div
+                className={`h-1 w-1 rounded-full ${row.original.status === 'active' ? 'bg-emerald-500' : 'bg-surface-400'}`}
+              />
               {row.original.status === 'active' ? 'Active' : 'Inactive'}
             </span>
           )
-        }
+        },
       },
     ]
 
@@ -146,18 +164,20 @@ export default function HrUsersPage() {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <div className="text-right flex justify-end gap-2">
+          <div className="flex justify-end gap-2 text-right">
             {tab === 'active' ? (
               <button
+                type="button"
                 className="rounded-md p-1.5 text-surface-400 transition-colors hover:bg-red-50 hover:text-red-500"
                 title="Move to Trash"
                 onClick={() => handleDelete(row.original.id)}
               >
-                <Trash2 className="h-4 w-4" /> 
+                <Trash2 className="h-4 w-4" />
               </button>
             ) : (
               <button
-                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-50 transition-colors border border-emerald-100 shadow-sm"
+                type="button"
+                className="flex items-center gap-1.5 rounded-md border border-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-600 shadow-sm transition-colors hover:bg-emerald-50"
                 title="Restore User"
                 onClick={() => handleRestore(row.original.id)}
               >
@@ -166,11 +186,11 @@ export default function HrUsersPage() {
               </button>
             )}
           </div>
-        )
+        ),
       })
     }
     return cols
-  }, [tab, isHr, users])
+  }, [tab, isHr])
 
   return (
     <div className="space-y-6">
@@ -188,7 +208,7 @@ export default function HrUsersPage() {
           <div>
             <h2 className="text-sm font-semibold text-surface-900">Account Management</h2>
             <p className="text-xs text-surface-500">
-              Create and manage demo accounts for testing different role permissions.
+              Create accounts with a role and initial password. Users sign in on the login page with email and password.
             </p>
           </div>
         </div>
@@ -196,39 +216,40 @@ export default function HrUsersPage() {
         {isHr && (
           <div className="mb-6 rounded-lg border border-surface-200 bg-surface-50 p-4">
             <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-surface-400">
-              Create Demo User
+              Create user account
             </h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
               <FormField label="Name">
                 <Input
                   value={newUser.name}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    setCreateAccountError(null)
                     setNewUser((prev) => ({ ...prev, name: e.target.value }))
-                  }
+                  }}
                   placeholder="Employee name"
                 />
               </FormField>
               <FormField label="Email">
                 <Input
                   value={newUser.email}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    setCreateAccountError(null)
                     setNewUser((prev) => ({ ...prev, email: e.target.value }))
-                  }
+                  }}
                   placeholder="name@company.com"
                 />
               </FormField>
               <FormField label="Role">
                 <Select
                   value={newUser.role}
-                  onChange={(value) =>
-                    setNewUser((prev) => ({ ...prev, role: value as DemoRole }))
-                  }
+                  onChange={(value) => setNewUser((prev) => ({ ...prev, role: value as DemoRole }))}
                   options={[
                     { label: 'Manager (Admin)', value: 'manager' },
                     { label: 'Sales Executive', value: 'sales' },
                     { label: 'Accountant', value: 'accountant' },
                     { label: 'CRM Specialist', value: 'crm' },
                     { label: 'HR Admin', value: 'hr' },
+                    { label: 'Employee (ESS)', value: 'employee' },
                   ]}
                 />
               </FormField>
@@ -247,23 +268,66 @@ export default function HrUsersPage() {
                   ]}
                 />
               </FormField>
+              <FormField label="Initial password">
+                <Input
+                  type="password"
+                  autoComplete="new-password"
+                  value={newUser.password}
+                  onChange={(e) => {
+                    setCreateAccountError(null)
+                    setNewUser((prev) => ({ ...prev, password: e.target.value }))
+                  }}
+                  placeholder="Min. 8 characters"
+                  minLength={8}
+                />
+              </FormField>
             </div>
+            {createAccountError && (
+              <p className="mt-3 text-sm text-red-600" role="alert">
+                {createAccountError}
+              </p>
+            )}
             <div className="mt-4 flex justify-end">
               <Button
+                type="button"
                 size="sm"
                 onClick={() => {
-                  if (!newUser.name.trim() || !newUser.email.trim()) return
-                  const created: DemoUserAccount = {
-                    id: `${Date.now()}`,
-                    ...newUser,
+                  setCreateAccountError(null)
+                  const name = newUser.name.trim()
+                  const email = newUser.email.trim()
+                  const pwd = newUser.password
+                  if (!name) {
+                    setCreateAccountError('Please enter a name.')
+                    return
                   }
-                  saveUsers([...users, created])
-                  setNewUser({
-                    name: '',
-                    email: '',
-                    role: 'sales',
-                    status: 'active',
+                  if (!email) {
+                    setCreateAccountError('Please enter an email.')
+                    return
+                  }
+                  if (pwd.length < 8) {
+                    setCreateAccountError('Password must be at least 8 characters (API requirement).')
+                    return
+                  }
+                  void createUserAccount({
+                    name,
+                    email,
+                    role: newUser.role,
+                    status: newUser.status,
+                    password: pwd,
                   })
+                    .then(() => {
+                      setNewUser({
+                        name: '',
+                        email: '',
+                        role: 'sales',
+                        status: 'active',
+                        password: '',
+                      })
+                      reload()
+                    })
+                    .catch((err) => {
+                      alert(err instanceof Error ? err.message : 'Failed to create user')
+                    })
                 }}
               >
                 Add User Account
@@ -275,48 +339,42 @@ export default function HrUsersPage() {
 
       <div className="space-y-4">
         <div className="flex border-b border-surface-200 bg-white px-2">
-            <button
-              onClick={() => setTab('active')}
-              className={`px-4 py-4 text-sm font-medium transition-colors border-b-2 ${
-                tab === 'active'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-surface-500 hover:text-surface-700'
-              }`}
-            >
-              Active Accounts
-            </button>
-            <button
-              onClick={() => setTab('deleted')}
-              className={`flex items-center gap-2 px-4 py-4 text-sm font-medium transition-colors border-b-2 ${
-                tab === 'deleted'
-                  ? 'border-red-600 text-red-600'
-                  : 'border-transparent text-surface-500 hover:text-surface-700'
-              }`}
-            >
-              <Trash2 className="h-4 w-4" />
-              Trash
-            </button>
+          <button
+            type="button"
+            onClick={() => setTab('active')}
+            className={`border-b-2 px-4 py-4 text-sm font-medium transition-colors ${
+              tab === 'active'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-surface-500 hover:text-surface-700'
+            }`}
+          >
+            Active Accounts
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('deleted')}
+            className={`flex items-center gap-2 border-b-2 px-4 py-4 text-sm font-medium transition-colors ${
+              tab === 'deleted'
+                ? 'border-red-600 text-red-600'
+                : 'border-transparent text-surface-500 hover:text-surface-700'
+            }`}
+          >
+            <Trash2 className="h-4 w-4" />
+            Trash
+          </button>
         </div>
-        
+
         {tab === 'deleted' && (
-            <div className="flex items-center gap-2 px-1">
-                <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
-                <p className="text-sm text-surface-500 italic">
-                    Accounts in trash are automatically deleted after 30 days.
-                </p>
-            </div>
+          <div className="flex items-center gap-2 px-1">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-red-400" />
+            <p className="text-sm italic text-surface-500">
+              Accounts in trash are retained on the server until restored.
+            </p>
+          </div>
         )}
 
-        <DataTable
-            data={filteredUsers}
-            columns={columns}
-            searchPlaceholder="Search accounts..."
-        />
+        <DataTable data={filteredUsers} columns={columns} searchPlaceholder="Search accounts..." />
       </div>
     </div>
   )
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   TrendingUp,
   DollarSign,
@@ -32,58 +32,99 @@ import { ChartCard } from '@/components/ChartCard'
 import { Button, Modal, FormField, Input, Textarea, Select } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
-import { executives, features, salesRecords, type Executive, type SalesRecord } from '@/data/mockData'
 import { formatCurrency, formatNumber, cn } from '@/lib/utils'
 import { type ColumnDef } from '@tanstack/react-table'
+import { fetchExecutives, type Executive } from '@/lib/reportsApi'
+import { fetchSalesRecords, type SalesRecord } from '@/lib/salesApi'
 
 export default function ExecutiveDashboardPage() {
-  const [selectedExecutiveId, setSelectedExecutiveId] = useState<string | null>(null)
+  const [executives, setExecutives] = useState<Executive[]>([])
+  const [salesRecords, setSalesRecords] = useState<SalesRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedExecutiveId, setSelectedExecutiveId] = useState<number | null>(null)
   const [selectedProperty, setSelectedProperty] = useState<SalesRecord | null>(null)
 
-  const selectedExecutive = useMemo(() => 
-    executives.find(ex => ex.id === selectedExecutiveId),
-    [selectedExecutiveId]
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    Promise.all([fetchExecutives(), fetchSalesRecords()])
+      .then(([ex, rec]) => {
+        if (!cancelled) {
+          setExecutives(ex)
+          setSalesRecords(rec)
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  const selectedExecutive = useMemo(
+    () => executives.find((ex) => ex.id === selectedExecutiveId),
+    [executives, selectedExecutiveId]
   )
 
-  const mySalesRecords = useMemo(() => 
-    salesRecords.filter(s => s.executive === selectedExecutive?.name),
-    [selectedExecutive?.name]
+  const executivesForChart = useMemo(
+    () =>
+      executives.map((e) => ({
+        ...e,
+        revenueGenerated: Number(e.revenue_generated),
+        targetClosings: e.target_closings,
+        demosGiven: e.demos_given,
+        trialsProvided: e.trials_provided,
+      })),
+    [executives]
   )
 
-  const rescheduledThisWeek = useMemo(() => 
-    mySalesRecords.filter(s => s.status === 'Rescheduled'),
+  const selectedExecutiveForDetail = useMemo(
+    () => executivesForChart.find((ex) => ex.id === selectedExecutiveId),
+    [executivesForChart, selectedExecutiveId]
+  )
+
+  const mySalesRecords = useMemo(
+    () => salesRecords.filter((s) => s.executive === selectedExecutive?.name),
+    [salesRecords, selectedExecutive?.name]
+  )
+
+  const rescheduledThisWeek = useMemo(
+    () => mySalesRecords.filter((s) => s.status === 'Rescheduled'),
     [mySalesRecords]
   )
 
-  const columns: ColumnDef<SalesRecord, any>[] = useMemo(
+  const columns: ColumnDef<SalesRecord, unknown>[] = useMemo(
     () => [
       {
-        accessorKey: 'propertyName',
+        accessorKey: 'property_name',
         header: 'Property',
         cell: ({ row }) => (
-          <button 
+          <button
             onClick={() => setSelectedProperty(row.original)}
             className="group flex items-center gap-2 text-left"
           >
             <span className="font-semibold text-primary-600 transition-colors group-hover:text-primary-800">
-              {row.original.propertyName}
+              {row.original.property_name}
             </span>
           </button>
         ),
       },
       { accessorKey: 'location', header: 'Location' },
       {
-        accessorKey: 'proposedPrice',
+        accessorKey: 'proposed_price',
         header: 'Price',
-        cell: ({ row }) => formatCurrency(row.original.proposedPrice),
+        cell: ({ row }) => formatCurrency(Number(row.original.proposed_price)),
       },
       {
-        accessorKey: 'isLive',
+        accessorKey: 'is_live',
         header: 'Is Live',
         cell: ({ row }) => (
           <StatusBadge
-            label={row.original.isLive ? 'Live' : 'Inactive'}
-            variant={row.original.isLive ? 'success' : 'default'}
+            label={row.original.is_live ? 'Live' : 'Inactive'}
+            variant={row.original.is_live ? 'success' : 'default'}
             dot
           />
         ),
@@ -103,8 +144,9 @@ export default function ExecutiveDashboardPage() {
         id: 'lastVisit',
         header: 'Last Visit',
         cell: ({ row }) => {
-          const lastVisit = row.original.visitHistory[row.original.visitHistory.length - 1]
-          return <span className="text-xs text-surface-500">{lastVisit?.date || '—'}</span>
+          const hist = row.original.visit_history || []
+          const lastVisit = hist[hist.length - 1]
+          return <span className="text-xs text-surface-500">{lastVisit?.date ?? '—'}</span>
         },
       },
       {
@@ -112,9 +154,9 @@ export default function ExecutiveDashboardPage() {
         header: 'Details',
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            {row.original.locationLink && (
+            {row.original.location_link && (
               <a 
-                href={row.original.locationLink} 
+                href={row.original.location_link} 
                 target="_blank" 
                 rel="noreferrer"
                 className="rounded-md p-1.5 text-surface-400 hover:bg-surface-100 hover:text-primary-600"
@@ -137,6 +179,21 @@ export default function ExecutiveDashboardPage() {
     []
   )
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <p className="text-surface-500">Loading executive deck…</p>
+      </div>
+    )
+  }
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+        {error}
+      </div>
+    )
+  }
+
   // --- Executive List (Comparison View) ---
   if (!selectedExecutive) {
     return (
@@ -151,24 +208,24 @@ export default function ExecutiveDashboardPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatsCard
             title="Properties Closed"
-            value={executives.reduce((acc, ex) => acc + ex.closings, 0)}
+            value={executivesForChart.reduce((acc, ex) => acc + ex.closings, 0)}
             icon={CheckCircle2}
             variant="primary"
           />
           <StatsCard
             title="Total Revenue Collected"
-            value={formatCurrency(executives.reduce((acc, ex) => acc + ex.revenueGenerated, 0))}
+            value={formatCurrency(executivesForChart.reduce((acc, ex) => acc + ex.revenueGenerated, 0))}
             icon={DollarSign}
             variant="accent"
           />
           <StatsCard
             title="Total Demos"
-            value={executives.reduce((acc, ex) => acc + ex.demosGiven, 0)}
+            value={executivesForChart.reduce((acc, ex) => acc + ex.demosGiven, 0)}
             icon={Target}
           />
           <StatsCard
             title="Total Trials"
-            value={executives.reduce((acc, ex) => acc + ex.trialsProvided, 0)}
+            value={executivesForChart.reduce((acc, ex) => acc + ex.trialsProvided, 0)}
             icon={Users}
           />
         </div>
@@ -178,7 +235,7 @@ export default function ExecutiveDashboardPage() {
           subtitle="Revenue vs Units against Targets"
         >
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={executives}>
+            <BarChart data={executivesForChart}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
               <XAxis 
                 dataKey="name" 
@@ -220,7 +277,7 @@ export default function ExecutiveDashboardPage() {
         </ChartCard>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {executives.map((ex) => (
+          {executivesForChart.map((ex) => (
             <button
               key={ex.id}
               onClick={() => setSelectedExecutiveId(ex.id)}
@@ -293,27 +350,26 @@ export default function ExecutiveDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Today's Visits"
-          value={selectedExecutive.todayVisits}
+          value={selectedExecutive?.agenda?.length ?? 0}
           icon={Calendar}
           variant="primary"
         />
         <StatsCard
           title="Total Revenue"
-          value={formatCurrency(selectedExecutive.revenueGenerated)}
+          value={selectedExecutiveForDetail ? formatCurrency(selectedExecutiveForDetail.revenueGenerated) : '—'}
           icon={DollarSign}
           variant="accent"
         />
         <StatsCard
           title="Total Closings"
-          value={selectedExecutive.closings}
+          value={selectedExecutive?.closings ?? 0}
           icon={CheckCircle2}
           variant="success"
         />
         <StatsCard
           title="Active Target"
-          value={selectedExecutive.targetClosings}
+          value={selectedExecutive?.target_closings ?? 0}
           icon={Target}
-          trend={{ value: 15, isPositive: true }}
         />
       </div>
 
@@ -329,7 +385,7 @@ export default function ExecutiveDashboardPage() {
               </h3>
             </div>
             <div className="divide-y divide-surface-100">
-              {selectedExecutive.agenda && selectedExecutive.agenda.length > 0 ? (
+              {selectedExecutive?.agenda && selectedExecutive.agenda.length > 0 ? (
                 selectedExecutive.agenda.map((item, i) => (
                   <div key={i} className="px-5 py-4 hover:bg-surface-50 transition-colors">
                     <div className="flex items-center justify-between gap-2">
@@ -360,7 +416,7 @@ export default function ExecutiveDashboardPage() {
             subtitle="6-month progress for closings and revenue"
           >
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={selectedExecutive.monthlyPerformance}>
+              <BarChart data={selectedExecutive?.monthly_performance ?? []}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis 
                   dataKey="month" 
@@ -422,7 +478,7 @@ export default function ExecutiveDashboardPage() {
                   <div key={record.id} className="p-4 hover:bg-surface-50 transition-colors">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm font-bold text-surface-900">{record.propertyName}</p>
+                        <p className="text-sm font-bold text-surface-900">{record.property_name}</p>
                         <p className="text-xs text-surface-500 mt-1 flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           Upcoming Follow-up
@@ -482,7 +538,7 @@ export default function ExecutiveDashboardPage() {
                     <Building2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-surface-900">{selectedProperty.propertyName}</h4>
+                    <h4 className="font-bold text-surface-900">{selectedProperty.property_name}</h4>
                     <p className="text-xs text-surface-500">{selectedProperty.location}, {selectedProperty.district}</p>
                   </div>
                 </div>
@@ -491,8 +547,8 @@ export default function ExecutiveDashboardPage() {
                   <div className="flex justify-between items-center py-2 border-b border-surface-200">
                     <span className="text-xs text-surface-500 font-medium">Product Status</span>
                     <StatusBadge 
-                      label={selectedProperty.isLive ? 'Live' : 'Inactive'} 
-                      variant={selectedProperty.isLive ? 'success' : 'default'} 
+                      label={selectedProperty.is_live ? 'Live' : 'Inactive'} 
+                      variant={selectedProperty.is_live ? 'success' : 'default'} 
                       dot 
                     />
                   </div>
@@ -506,15 +562,15 @@ export default function ExecutiveDashboardPage() {
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-surface-200">
                     <span className="text-xs text-surface-500 font-medium">Rooms</span>
-                    <span className="text-sm font-semibold text-surface-900">{selectedProperty.numberOfRooms}</span>
+                    <span className="text-sm font-semibold text-surface-900">{selectedProperty.number_of_rooms}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-surface-200">
                     <span className="text-xs text-surface-500 font-medium">Plan Type</span>
-                    <span className="text-sm font-semibold text-surface-900">{selectedProperty.planType}</span>
+                    <span className="text-sm font-semibold text-surface-900">{selectedProperty.plan_type}</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-xs text-surface-500 font-medium">Proposed Price</span>
-                    <span className="text-sm font-bold text-accent-600">{formatCurrency(selectedProperty.proposedPrice)}</span>
+                    <span className="text-sm font-bold text-accent-600">{formatCurrency(Number(selectedProperty.proposed_price))}</span>
                   </div>
                 </div>
               </div>
@@ -522,17 +578,17 @@ export default function ExecutiveDashboardPage() {
               <div className="rounded-xl border border-surface-200 p-5">
                 <h5 className="text-xs font-bold uppercase tracking-wider text-surface-400 mb-3">Primary Contact</h5>
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-surface-900">{selectedProperty.primaryContactPerson}</p>
+                  <p className="text-sm font-semibold text-surface-900">{selectedProperty.primary_contact_person}</p>
                   <p className="text-xs text-surface-500">{selectedProperty.designation}</p>
                   <p className="text-xs text-primary-600 font-medium">{selectedProperty.email}</p>
                 </div>
               </div>
 
-              {selectedProperty.locationLink && (
+              {selectedProperty.location_link && (
                 <div className="rounded-xl border border-surface-200 p-5">
                    <h5 className="text-xs font-bold uppercase tracking-wider text-surface-400 mb-3">Map & Location</h5>
                    <a 
-                    href={selectedProperty.locationLink}
+                    href={selectedProperty.location_link}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center justify-between group p-3 rounded-lg border border-surface-100 hover:border-primary-200 hover:bg-primary-50 transition-all text-sm font-medium text-surface-700"
@@ -553,11 +609,11 @@ export default function ExecutiveDashboardPage() {
                   <Clock className="h-4 w-4 text-primary-600" />
                   Visit Log & Activity
                 </h4>
-                <span className="text-xs text-surface-400">{selectedProperty.visitHistory.length} Interactions</span>
+                <span className="text-xs text-surface-400">{(selectedProperty.visit_history?.length ?? 0)} Interactions</span>
               </div>
 
               <div className="space-y-6 relative before:absolute before:left-[11px] before:top-2 before:h-[calc(100%-16px)] before:w-0.5 before:bg-surface-100">
-                {selectedProperty.visitHistory.map((visit, idx) => (
+                {(selectedProperty.visit_history ?? []).map((visit, idx) => (
                   <div key={idx} className="relative pl-8">
                     <div className={cn(
                       "absolute left-0 top-1.5 h-6 w-6 rounded-full border-4 border-white shadow-sm flex items-center justify-center",

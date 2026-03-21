@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   User,
   Mail,
@@ -15,6 +15,12 @@ import {
 import { Button, FormField, Input, Modal } from '@/components/FormElements'
 import { cn } from '@/lib/utils'
 import { downloadCsv } from '@/lib/exportUtils'
+import {
+  createEssLeave,
+  fetchEssLeaves,
+  fetchEssPayslips,
+  patchEssLeave,
+} from '@/lib/hrApi'
 
 export default function EmployeeSelfServicePage() {
   const [currentUser, setCurrentUser] = useState<any>(null)
@@ -24,19 +30,7 @@ export default function EmployeeSelfServicePage() {
 
   const [essPayslips, setEssPayslips] = useState<
     { id: string; month: string; netPay: string; status: string }[]
-  >(() => {
-    try {
-      const raw = window.localStorage.getItem('ess_payslips')
-      if (raw) return JSON.parse(raw)
-    } catch {
-      // ignore
-    }
-    return [
-      { id: '1', month: 'Jan 2026', netPay: '₹75,000', status: 'Paid' },
-      { id: '2', month: 'Feb 2026', netPay: '₹76,500', status: 'Paid' },
-      { id: '3', month: 'Mar 2026', netPay: '₹78,200', status: 'Processed' },
-    ]
-  })
+  >([])
 
   const [essLeaves, setEssLeaves] = useState<
     {
@@ -48,15 +42,7 @@ export default function EmployeeSelfServicePage() {
       reason?: string
       hrComment?: string
     }[]
-  >(() => {
-    try {
-      const raw = window.localStorage.getItem('ess_leaves')
-      if (raw) return JSON.parse(raw)
-    } catch {
-      // ignore
-    }
-    return []
-  })
+  >([])
 
   const [newLeave, setNewLeave] = useState({
     type: 'Casual Leave',
@@ -78,21 +64,37 @@ export default function EmployeeSelfServicePage() {
     }
   }, [])
 
-  useEffect(() => {
+  const loadEss = useCallback(async () => {
     try {
-      window.localStorage.setItem('ess_payslips', JSON.stringify(essPayslips))
+      const [pays, leaves] = await Promise.all([fetchEssPayslips(), fetchEssLeaves()])
+      setEssPayslips(
+        pays.map((p) => ({
+          id: String(p.id),
+          month: p.month_label,
+          netPay: p.net_pay,
+          status: p.status,
+        }))
+      )
+      setEssLeaves(
+        leaves.map((l) => ({
+          id: String(l.id),
+          type: l.leave_type,
+          startDate: l.start_date,
+          endDate: l.end_date,
+          status: l.status,
+          reason: l.reason,
+          hrComment: l.hr_comment,
+        }))
+      )
     } catch {
-      // ignore
+      setEssPayslips([])
+      setEssLeaves([])
     }
-  }, [essPayslips])
+  }, [])
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem('ess_leaves', JSON.stringify(essLeaves))
-    } catch {
-      // ignore
-    }
-  }, [essLeaves])
+    void loadEss()
+  }, [loadEss])
 
   const stats = [
     { key: 'leaves', label: 'Available Leaves', value: '12 Days', icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50' },
@@ -300,11 +302,7 @@ export default function EmployeeSelfServicePage() {
                     <button
                       type="button"
                       onClick={() =>
-                        setEssLeaves((prev) =>
-                          prev.map((l) =>
-                            l.id === leave.id ? { ...l, status: 'Revoked' } : l
-                          )
-                        )
+                        void patchEssLeave(leave.id, { status: 'Revoked' }).then(() => loadEss())
                       }
                       className="text-xs font-medium text-red-600 hover:text-red-700"
                     >
@@ -435,21 +433,20 @@ export default function EmployeeSelfServicePage() {
             <Button
               onClick={() => {
                 if (!newLeave.startDate || !newLeave.endDate) return
-                const entry = {
-                  id: Date.now().toString(),
-                  type: newLeave.type,
-                  startDate: newLeave.startDate,
-                  endDate: newLeave.endDate,
+                void createEssLeave({
+                  leave_type: newLeave.type,
+                  start_date: newLeave.startDate,
+                  end_date: newLeave.endDate,
                   reason: newLeave.reason,
-                  status: 'Pending',
-                }
-                setEssLeaves((prev) => [entry, ...prev])
-                setIsLeaveModalOpen(false)
-                setNewLeave({
-                  type: 'Casual Leave',
-                  startDate: '',
-                  endDate: '',
-                  reason: '',
+                }).then(() => {
+                  void loadEss()
+                  setIsLeaveModalOpen(false)
+                  setNewLeave({
+                    type: 'Casual Leave',
+                    startDate: '',
+                    endDate: '',
+                    reason: '',
+                  })
                 })
               }}
             >

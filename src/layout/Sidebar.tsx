@@ -10,7 +10,6 @@ import {
   FileBarChart,
   ChevronLeft,
   ChevronRight,
-  Building,
   Shield,
   UserCircle,
   IdCard,
@@ -26,7 +25,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
+type DemoRole = 'manager' | 'admin' | 'sales' | 'accountant' | 'crm' | 'hr' | 'employee'
 
 interface DemoUserInfo {
   role: DemoRole
@@ -35,18 +34,18 @@ interface DemoUserInfo {
 
 const navItems = [
   // General Dashboard (Visible to manager, sales, crm)
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/', roles: ['manager', 'sales', 'crm'] },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/', roles: ['manager', 'admin', 'sales', 'crm', 'hr', 'accountant'] },
   { label: 'Mark Attendance', icon: Camera, path: '/attendance', roles: ['sales'] },
   
   // Accountant Home (Their primary dashboard)
   { label: 'Finance Dashboard', icon: LayoutDashboard, path: '/finance/dashboard', roles: ['accountant'] },
 
   // Special Modules
-  { label: 'Executive Deck', icon: UserCircle, path: '/executive-dashboard', roles: ['manager'] },
-  { label: 'Properties', icon: Building2, path: '/properties', roles: ['manager', 'sales', 'crm'] },
-  { label: 'Finance', icon: Wallet, path: '/finance', roles: ['manager'] },
-  { label: 'Travel Agents', icon: Users, path: '/travel-agents', roles: ['manager', 'sales', 'crm'] },
-  { label: 'Trade Fairs', icon: CalendarDays, path: '/trade-fairs', roles: ['manager', 'sales', 'crm'] },
+  { label: 'Executive Deck', icon: UserCircle, path: '/executive-dashboard', roles: ['manager', 'admin'] },
+  { label: 'Properties', icon: Building2, path: '/properties', roles: ['manager', 'admin', 'sales', 'crm'] },
+  { label: 'Finance', icon: Wallet, path: '/finance', roles: ['manager', 'admin'] },
+  { label: 'Travel Agents', icon: Users, path: '/travel-agents', roles: ['manager', 'admin', 'sales', 'crm'] },
+  { label: 'Trade Fairs', icon: CalendarDays, path: '/trade-fairs', roles: ['manager', 'admin', 'sales', 'crm'] },
   
   // Accountant Operations
   { label: 'Quotations', icon: FileText, path: '/finance/quotations', roles: ['accountant'] },
@@ -59,9 +58,9 @@ const navItems = [
   { label: 'Feature List', icon: Shield, path: '/admin/features', roles: ['manager', 'sales', 'crm'] },
   
   // HR Specific Modules (Visible to HR login only, but Attendance also to Manager)
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/hr/dashboard', roles: ['hr'] },
+  { label: 'HR Dashboard', icon: LayoutDashboard, path: '/hr/dashboard', roles: ['hr'] },
   { label: 'Employees', icon: Users, path: '/hr/employees', roles: ['hr'] },
-  { label: 'Attendance Register', icon: CalendarDays, path: '/hr/attendance', roles: ['hr', 'manager'] },
+  { label: 'Attendance Register', icon: CalendarDays, path: '/hr/attendance', roles: ['hr', 'manager', 'admin'] },
   { label: 'Leaves', icon: IdCard, path: '/hr/leaves', roles: ['hr'] },
   { label: 'Payroll', icon: DollarSign, path: '/hr/payroll', roles: ['hr'] }, // Keep separate for HR order
   { label: 'Recruitment', icon: Briefcase, path: '/hr/recruitment', roles: ['hr'] },
@@ -112,22 +111,21 @@ export function Sidebar() {
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center overflow-hidden border-b border-surface-200 px-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-800 shadow-md">
-            <Building className="h-5 w-5 text-white" />
-          </div>
-          <div className={cn(
-            'flex flex-col transition-opacity duration-300',
-            isHovered ? 'opacity-100' : 'pointer-events-none opacity-0'
-          )}>
-            <span className="whitespace-nowrap text-base font-bold tracking-tight text-surface-900">
-              Bookito
-            </span>
-            <span className="text-[10px] font-medium uppercase tracking-widest text-primary-500">
-              ERP
-            </span>
-          </div>
+      <div className="flex h-16 items-center overflow-hidden border-b border-surface-200 px-3">
+        <div
+          className={cn(
+            'flex w-full items-center',
+            isHovered ? 'justify-start' : 'justify-center'
+          )}
+        >
+          <img
+            src="/Logo.png"
+            alt="Bookito"
+            className={cn(
+              'object-contain object-left transition-all duration-300',
+              isHovered ? 'h-11 w-auto max-w-[188px]' : 'h-9 w-9 max-w-9'
+            )}
+          />
         </div>
       </div>
 
@@ -183,7 +181,7 @@ export function Sidebar() {
                {currentUser?.label || 'Admin'}
              </span>
              <span className="text-[10px] text-surface-500">
-               {currentUser?.role === 'manager'
+               {currentUser?.role === 'manager' || currentUser?.role === 'admin'
                  ? 'Administrator'
                  : currentUser?.role === 'sales'
                    ? 'Sales Executive'
@@ -193,7 +191,9 @@ export function Sidebar() {
                        ? 'CRM'
                        : currentUser?.role === 'hr'
                          ? 'HR'
-                         : 'Administrator'}
+                         : currentUser?.role === 'employee'
+                           ? 'Employee'
+                           : 'User'}
              </span>
            </div>
         </div>

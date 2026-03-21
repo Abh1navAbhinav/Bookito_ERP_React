@@ -1,9 +1,16 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Plus, BookOpen, GraduationCap, CheckCircle, Clock, User, Download, ExternalLink, Trash2, RotateCcw } from 'lucide-react'
 import { Button, FormField, Input, Select } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
 import { differenceInDays, parseISO } from 'date-fns'
+import {
+  fetchDeletedTrainingPrograms,
+  fetchTrainingPrograms,
+  restoreTrainingProgram,
+  softDeleteTrainingProgram,
+  type ApiTrainingProgram,
+} from '@/lib/hrApi'
 
 interface TrainingProgram {
   id: string
@@ -19,53 +26,44 @@ interface DeletedTrainingProgram extends TrainingProgram {
   deletedAt: string
 }
 
-const initialPrograms: TrainingProgram[] = [
-  {
-    id: '1',
-    title: 'Advanced CRM Training',
-    instructor: 'Alex Mercer',
-    employeesEnrolled: 15,
-    completionRate: '80%',
-    startDate: '2026-03-20',
-    status: 'Published'
-  },
-  {
-    id: '2',
-    title: 'Soft Skills & Communication',
-    instructor: 'Jane Doe',
-    employeesEnrolled: 25,
-    completionRate: '0%',
-    startDate: '2026-04-01',
-    status: 'Draft'
+function mapProgram(p: ApiTrainingProgram): TrainingProgram {
+  return {
+    id: p.id,
+    title: p.title,
+    instructor: p.instructor,
+    employeesEnrolled: p.employees_enrolled,
+    completionRate: p.completion_rate,
+    startDate: p.start_date,
+    status: p.status as TrainingProgram['status'],
   }
-]
+}
+
+function mapDeletedProgram(p: ApiTrainingProgram): DeletedTrainingProgram {
+  return {
+    ...mapProgram(p),
+    deletedAt: p.deleted_at || new Date().toISOString(),
+  }
+}
 
 export default function TrainingProgramsPage() {
-  const [programs, setPrograms] = useState<TrainingProgram[]>(() => {
-    const saved = localStorage.getItem('bookito_training_programs')
-    return saved ? JSON.parse(saved) : initialPrograms
-  })
-  
-  const [deletedPrograms, setDeletedPrograms] = useState<DeletedTrainingProgram[]>(() => {
-    const saved = localStorage.getItem('bookito_deleted_training_programs')
-    return saved ? JSON.parse(saved) : []
-  })
-
+  const [programs, setPrograms] = useState<TrainingProgram[]>([])
+  const [deletedPrograms, setDeletedPrograms] = useState<DeletedTrainingProgram[]>([])
   const [showTrash, setShowTrash] = useState(false)
 
-  useEffect(() => {
-    localStorage.setItem('bookito_training_programs', JSON.stringify(programs))
-  }, [programs])
-
-  useEffect(() => {
-    localStorage.setItem('bookito_deleted_training_programs', JSON.stringify(deletedPrograms))
-  }, [deletedPrograms])
-
-  useEffect(() => {
-    // Purge logic: Auto-delete after 30 days
-    const now = new Date()
-    setDeletedPrograms(prev => prev.filter(p => differenceInDays(now, parseISO(p.deletedAt)) < 30))
+  const load = useCallback(async () => {
+    try {
+      const [a, d] = await Promise.all([fetchTrainingPrograms(), fetchDeletedTrainingPrograms()])
+      setPrograms(a.map(mapProgram))
+      setDeletedPrograms(d.map(mapDeletedProgram))
+    } catch {
+      setPrograms([])
+      setDeletedPrograms([])
+    }
   }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
 
   const stats = [
     { label: 'Active Programs', value: programs.filter(p => p.status === 'Published').length.toString(), icon: BookOpen, color: 'text-primary-600', bg: 'bg-primary-50' },
@@ -75,16 +73,11 @@ export default function TrainingProgramsPage() {
   ]
 
   const handleDelete = (program: TrainingProgram) => {
-    const deletedAt = new Date().toISOString()
-    const entry: DeletedTrainingProgram = { ...program, deletedAt }
-    setPrograms(prev => prev.filter(p => p.id !== program.id))
-    setDeletedPrograms(prev => [entry, ...prev])
+    void softDeleteTrainingProgram(program.id).then(() => load())
   }
 
   const handleRestore = (program: DeletedTrainingProgram) => {
-    const { deletedAt, ...rest } = program
-    setDeletedPrograms(prev => prev.filter(p => p.id !== program.id))
-    setPrograms(prev => [rest, ...prev])
+    void restoreTrainingProgram(program.id).then(() => load())
   }
 
   const getRemainingDays = (deletedAt: string) => {

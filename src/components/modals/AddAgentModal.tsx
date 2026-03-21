@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Modal, FormField, Input, Select, Button } from '@/components/FormElements'
-import { type TravelAgent } from '@/data/mockData'
+import type { TravelAgent } from '@/lib/partnersApi'
+import { cn } from '@/lib/utils'
 
 interface AddAgentModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (agent: Partial<TravelAgent>) => void
   initialData?: Partial<TravelAgent>
+  /** Form keys that cannot be edited (e.g. trade-fair lead fields) */
+  lockedFields?: string[]
   title?: string
 }
 
@@ -15,8 +18,12 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
   onClose, 
   onSave, 
   initialData,
+  lockedFields: lockedFieldsProp,
   title = "Add Travel Agent"
 }) => {
+  const lockedFields = useMemo(() => new Set(lockedFieldsProp ?? []), [lockedFieldsProp])
+  const isFieldLocked = useCallback((field: string) => lockedFields.has(field), [lockedFields])
+
   const emptyForm = {
     agentName: '',
     contactNumber: '',
@@ -60,6 +67,11 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
             value={form.agentName}
             onChange={(e) => setForm((p) => ({ ...p, agentName: e.target.value }))}
             placeholder="Enter agency name"
+            disabled={isFieldLocked('agentName')}
+            className={cn(
+              isFieldLocked('agentName') &&
+                'cursor-not-allowed bg-surface-50 text-surface-700 disabled:border-surface-200 disabled:opacity-100'
+            )}
           />
         </FormField>
         <FormField label="Contact Number">
@@ -67,6 +79,11 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
             value={form.contactNumber}
             onChange={(e) => setForm((p) => ({ ...p, contactNumber: e.target.value }))}
             placeholder="+91 XXXXX XXXXX"
+            disabled={isFieldLocked('contactNumber')}
+            className={cn(
+              isFieldLocked('contactNumber') &&
+                'cursor-not-allowed bg-surface-50 text-surface-700 disabled:border-surface-200 disabled:opacity-100'
+            )}
           />
         </FormField>
         <FormField label="Email">
@@ -75,6 +92,11 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
             value={form.email}
             onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
             placeholder="agent@email.com"
+            disabled={isFieldLocked('email')}
+            className={cn(
+              isFieldLocked('email') &&
+                'cursor-not-allowed bg-surface-50 text-surface-700 disabled:border-surface-200 disabled:opacity-100'
+            )}
           />
         </FormField>
         <FormField label="Location">
@@ -82,6 +104,11 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
             value={form.location}
             onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))}
             placeholder="e.g. Chelode, Wayanad"
+            disabled={isFieldLocked('location')}
+            className={cn(
+              isFieldLocked('location') &&
+                'cursor-not-allowed bg-surface-50 text-surface-700 disabled:border-surface-200 disabled:opacity-100'
+            )}
           />
         </FormField>
         <FormField label="Contract Type">

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   ArrowLeft, 
@@ -17,23 +17,9 @@ import {
 import { Button, Textarea } from '@/components/FormElements'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
-import { 
-  tradeFairProperties, 
-  tradeFairVenues, 
-  type TradeFairProperty,
-  type TradeFairVenue,
-  propertyTypes,
-  propertyClasses,
-  roomCategories,
-  tenureOptions,
-  primaryContactOptions,
-  firstVisitStatusOptions,
-  visitStatusOptions,
-  planTypeOptions,
-  type Property
-} from '@/data/mockData'
+import { fetchConfig } from '@/lib/configApi'
+import { fetchFairPropertyById, type TradeFairProperty } from '@/lib/partnersApi'
 import { Modal, FormField, Input, Select } from '@/components/FormElements'
-import { AddPropertyModal } from '@/components/modals/AddPropertyModal'
 
 /* --- Helper Components --- */
 function SectionCard({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) {
@@ -49,6 +35,16 @@ function SectionCard({ title, icon: Icon, children }: { title: string, icon: any
     </div>
   )
 }
+
+/** Form keys on /properties/add that must stay fixed after trade-fair convert */
+const TRADE_FAIR_CONVERT_LOCKED_FIELDS = [
+  'name',
+  'email',
+  'contactPersonName',
+  'contactNumber',
+  'location',
+  'place',
+] as const
 
 function DetailItem({ label, value, icon: Icon, href }: { label: string, value: string, icon: any, href?: string }) {
   const content = (
@@ -80,10 +76,39 @@ function DetailItem({ label, value, icon: Icon, href }: { label: string, value: 
 export default function TradeFairPropertyDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [property, setProperty] = useState<TradeFairProperty | null>(null)
+  const [config, setConfig] = useState<{
+    property_types: string[]
+    property_classes: string[]
+    room_categories: string[]
+    tenure_options: string[]
+    primary_contact_options: string[]
+    first_visit_status_options: string[]
+    visit_status_options: string[]
+    plan_type_options: string[]
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const property = useMemo(() => 
-    tradeFairProperties.find(p => p.id === id),
-  [id])
+  useEffect(() => {
+    fetchConfig().then(setConfig).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!id) {
+      setProperty(null)
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    fetchFairPropertyById(id).then((p) => {
+      if (!cancelled) {
+        setProperty(p ?? null)
+        setLoading(false)
+      }
+    })
+    return () => { cancelled = true }
+  }, [id])
 
   const [extraComments, setExtraComments] = useState<
     { author: string; comment: string; createdAt: string }[]
@@ -97,7 +122,6 @@ export default function TradeFairPropertyDetailsPage() {
 
   const [showMailModal, setShowMailModal] = useState(false)
   const [showViewSentMailModal, setShowViewSentMailModal] = useState(false)
-  const [showConvertModal, setShowConvertModal] = useState(false)
 
   const initialConvertData = useMemo(() => ({
     name: property?.propertyName || '',
@@ -105,11 +129,20 @@ export default function TradeFairPropertyDetailsPage() {
     contactPersonName: property?.contactPerson || '',
     contactNumber: property?.contactNumber || '',
     location: property?.location || '',
+    place: property?.location || '',
   }), [property])
 
   const fair = useMemo(() => 
-    property ? tradeFairVenues.find(v => v.id === property.fairId) : null,
+    property ? { id: property.fairId, venue: property.fairVenue ?? '', date: property.fairDate ?? '' } : null,
   [property])
+
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-surface-200 bg-surface-50 p-12 text-center text-surface-500">
+        Loading property…
+      </div>
+    )
+  }
 
   if (!property) {
     return (
@@ -233,7 +266,9 @@ export default function TradeFairPropertyDetailsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-surface-900">{fair?.venue || 'Unknown Event'}</h3>
-                  <p className="text-sm text-surface-500">{fair?.city}, {fair?.location} • {fair?.date}</p>
+                  <p className="text-sm text-surface-500">
+                    {property?.location ?? '—'} • {fair?.date}
+                  </p>
                 </div>
               </div>
               <p className="text-sm leading-relaxed text-surface-600">
@@ -288,7 +323,14 @@ export default function TradeFairPropertyDetailsPage() {
                 </div>
               ) : (
                 <button 
-                  onClick={() => setShowConvertModal(true)}
+                  onClick={() =>
+                    navigate('/properties/add', {
+                      state: {
+                        initialData: initialConvertData,
+                        lockedFields: [...TRADE_FAIR_CONVERT_LOCKED_FIELDS],
+                      },
+                    })
+                  }
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-50 px-4 py-3 text-sm font-bold text-accent-600 transition-all hover:bg-accent-100 active:scale-95"
                 >
                   Convert to Property
@@ -480,17 +522,6 @@ export default function TradeFairPropertyDetailsPage() {
           </div>
         </div>
       </Modal>
-
-      {/* Convert to Property Modal (Reused from Properties Module) */}
-      <AddPropertyModal
-        isOpen={showConvertModal}
-        onClose={() => setShowConvertModal(false)}
-        initialData={initialConvertData}
-        onSave={(data) => {
-          console.log('Converted Property Data:', data)
-          setIsConverted(true)
-        }}
-      />
     </div>
   )
 }

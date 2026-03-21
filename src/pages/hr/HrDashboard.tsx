@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect } from 'react'
-import { 
-  Users, 
-  UserCheck, 
-  UserMinus, 
+import {
+  Users,
+  UserCheck,
+  UserMinus,
   UserPlus,
   TrendingUp,
   BarChart3,
@@ -20,21 +20,60 @@ import {
   Pie,
   Cell,
 } from 'recharts'
+import { fetchEmployees, fetchAttendance, fetchLeaves } from '@/lib/hrApi'
 
 const COLORS = ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']
 
+function mapAttendanceStatus(s: string): string {
+  if (s === 'present') return 'Present'
+  if (s === 'absent') return 'Absent'
+  if (s === 'leave') return 'On Leave'
+  return s
+}
+
+function mapLeaveStatus(s: string): string {
+  if (s === 'pending') return 'Pending'
+  if (s === 'approved') return 'Approved'
+  if (s === 'rejected') return 'Rejected'
+  return s
+}
+
 export default function HrDashboard() {
-  const [data, setData] = useState({
-    employees: [],
-    leaves: [],
-    attendance: []
-  })
+  const [data, setData] = useState<{
+    employees: { department: string; dateOfJoining: string }[]
+    leaves: { status: string }[]
+    attendance: { date: string; status: string }[]
+  }>({ employees: [], leaves: [], attendance: [] })
 
   useEffect(() => {
-    const employees = JSON.parse(localStorage.getItem('bookito_employees') || '[]')
-    const leaves = JSON.parse(localStorage.getItem('bookito_leaves') || '[]')
-    const attendance = JSON.parse(localStorage.getItem('bookito_attendance') || '[]')
-    setData({ employees, leaves, attendance })
+    let cancelled = false
+    async function load() {
+      try {
+        const [employees, attendance, leaves] = await Promise.all([
+          fetchEmployees(),
+          fetchAttendance(),
+          fetchLeaves()
+        ])
+        if (cancelled) return
+        setData({
+          employees: employees.map((e) => ({
+            department: e.department,
+            dateOfJoining: e.date_of_joining
+          })),
+          attendance: attendance.map((a) => ({
+            date: a.date,
+            status: mapAttendanceStatus(a.status)
+          })),
+          leaves: leaves.map((l) => ({ status: mapLeaveStatus(l.status) }))
+        })
+      } catch {
+        // keep default empty data
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const stats = useMemo(() => {

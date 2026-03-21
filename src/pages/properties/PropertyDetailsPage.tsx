@@ -31,15 +31,10 @@ import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button, Input, Textarea, Select } from '@/components/FormElements'
 import { StatusBadge } from '@/components/StatusBadge'
 import type { BadgeVariant } from '@/components/StatusBadge'
-import {
-  locationHierarchy,
-  properties,
-  salesRecords,
-  type Property,
-  type SalesRecord,
-  type VisitRecord,
-} from '@/data/mockData'
 import { formatCurrency } from '@/lib/utils'
+import { fetchConfig, type LocationNode } from '@/lib/configApi'
+import { fetchPropertyById, type Property as ApiProperty } from '@/lib/propertiesApi'
+import { fetchSalesRecords, type SalesRecord, type VisitRecord } from '@/lib/salesApi'
 
 /* ─── Helper: Section card wrapper ─── */
 function SectionCard({
@@ -225,6 +220,95 @@ const tabs: { key: TabKey; label: string; icon: React.ComponentType<{ className?
 
 type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm'
 
+/** UI shape for property detail (camelCase) */
+interface Property {
+  id: string
+  slno: number
+  name: string
+  propertyType: string
+  propertyClass: string
+  roomCategory: string
+  numberOfRooms: number
+  numberOfProperties?: number
+  hasMultipleProperty: boolean
+  email: string
+  proposedPrice: number
+  finalCommittedPrice: number
+  tenure: string
+  place: string
+  primaryContactPerson: string
+  contactPersonName: string
+  contactNumber: string
+  primaryPersonPosition?: string
+  executiveName?: string
+  firstVisitDate: string
+  firstVisitStatus: string
+  committedProposedRate?: string
+  comments: string
+  rescheduledDate?: string
+  rescheduledComment?: string
+  secondVisitExecutive?: string
+  secondVisitDate?: string
+  secondVisitStatus?: string
+  secondVisitComments?: string
+  currentlyAssignedTo?: string
+  planType?: string
+  closingAmount?: number
+  planStartDate: string
+  planExpiryDate: string
+  locationLink: string
+  currentPMS: string
+  connectedOTAPlatforms: string[]
+  state: string
+  district: string
+  location: string
+}
+
+function mapApiToProperty(p: ApiProperty): Property {
+  return {
+    id: p.id,
+    slno: p.slno,
+    name: p.name,
+    propertyType: p.property_type,
+    propertyClass: p.property_class,
+    roomCategory: p.room_category,
+    numberOfRooms: p.number_of_rooms,
+    hasMultipleProperty: p.has_multiple_property,
+    numberOfProperties: p.number_of_properties ?? undefined,
+    email: p.email,
+    proposedPrice: Number(p.proposed_price),
+    finalCommittedPrice: Number(p.final_committed_price),
+    tenure: p.tenure,
+    place: p.place,
+    primaryContactPerson: p.primary_contact_person,
+    contactPersonName: p.contact_person_name,
+    contactNumber: p.contact_number,
+    primaryPersonPosition: p.primary_person_position ?? undefined,
+    executiveName: p.executive_name ?? undefined,
+    firstVisitDate: p.first_visit_date,
+    firstVisitStatus: p.first_visit_status,
+    committedProposedRate: p.committed_proposed_rate ?? undefined,
+    comments: p.comments ?? '',
+    rescheduledDate: p.rescheduled_date ?? undefined,
+    rescheduledComment: p.rescheduled_comment ?? undefined,
+    secondVisitExecutive: p.second_visit_executive ?? undefined,
+    secondVisitDate: p.second_visit_date ?? undefined,
+    secondVisitStatus: p.second_visit_status ?? undefined,
+    secondVisitComments: p.second_visit_comments ?? undefined,
+    currentlyAssignedTo: p.currently_assigned_to ?? undefined,
+    planType: p.plan_type ?? undefined,
+    closingAmount: p.closing_amount != null ? Number(p.closing_amount) : undefined,
+    planStartDate: p.plan_start_date,
+    planExpiryDate: p.plan_expiry_date,
+    locationLink: p.location_link,
+    currentPMS: p.current_pms,
+    connectedOTAPlatforms: Array.isArray(p.connected_ota_platforms) ? p.connected_ota_platforms : [],
+    state: p.state,
+    district: p.district,
+    location: p.location,
+  }
+}
+
 /* ═════════════════════════════════════════════════════════════════════════ */
 /*  MAIN COMPONENT                                                         */
 /* ═════════════════════════════════════════════════════════════════════════ */
@@ -233,27 +317,53 @@ export default function PropertyDetailsPage() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const navigationState = location.state as
-    | {
-        path?: string[]
-        pathLabels?: string[]
-      }
-    | null
+  const navigationState = location.state as { path?: string[]; pathLabels?: string[] } | null
 
-  const property: Property | undefined = useMemo(
-    () => properties.find((p) => p.id === id),
-    [id]
-  )
+  const [config, setConfig] = useState<{ location_hierarchy: LocationNode[] } | null>(null)
+  const [property, setProperty] = useState<Property | null>(null)
+  const [salesRecordsList, setSalesRecordsList] = useState<SalesRecord[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  const salesRecord: SalesRecord | undefined = useMemo(
-    () => (property ? salesRecords.find((s) => s.propertyName === property.name) : undefined),
-    [property]
+  const locationHierarchy: LocationNode[] = config?.location_hierarchy ?? []
+
+  useEffect(() => {
+    fetchConfig().then(setConfig).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!id) return
+    let cancelled = false
+    setIsLoading(true)
+    setLoadError(null)
+    fetchPropertyById(id)
+      .then((data) => {
+        if (!cancelled && data) setProperty(mapApiToProperty(data))
+      })
+      .catch((err) => {
+        if (!cancelled) setLoadError(err instanceof Error ? err.message : 'Failed to load property')
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [id])
+
+  useEffect(() => {
+    fetchSalesRecords().then(setSalesRecordsList).catch(() => {})
+  }, [])
+
+  const salesRecord = useMemo(
+    () => (property ? salesRecordsList.find((s) => s.property_name === property.name) : undefined),
+    [property, salesRecordsList]
   )
 
   const [activeTab, setActiveTab] = useState<TabKey>('overview')
-  const [visitHistory, setVisitHistory] = useState<VisitRecord[]>(
-    salesRecord?.visitHistory ?? []
-  )
+  const [visitHistory, setVisitHistory] = useState<VisitRecord[]>([])
+
+  useEffect(() => {
+    setVisitHistory(salesRecord?.visit_history ?? [])
+  }, [salesRecord])
   const [newVisit, setNewVisit] = useState<VisitRecord>({
     date: '',
     time: '',
@@ -292,7 +402,7 @@ export default function PropertyDetailsPage() {
   /* ─── navigation helpers ─── */
   const stateNode = useMemo(
     () => locationHierarchy.find((s) => s.name === property?.state),
-    [property?.state]
+    [locationHierarchy, property?.state]
   )
   const districtNode = useMemo(
     () => stateNode?.children?.find((d) => d.name === property?.district),
@@ -322,6 +432,34 @@ export default function PropertyDetailsPage() {
       ? [stateNode.name]
       : undefined
 
+  /** Must run on every render — never place hooks after a conditional return. */
+  const lifecycleStatus = useMemo(() => {
+    if (!salesRecord) return { label: 'Prospect' as const, demo: 'No', trial: 'No', live: 'No' }
+
+    const live = salesRecord.is_live ? 'Yes' : 'No'
+    const trial = salesRecord.trial_provided ? 'Yes' : 'No'
+    const demo = salesRecord.demo_provided ? 'Yes' : 'No'
+
+    let label: 'Live' | 'Trial' | 'Demo' | 'Prospect' = 'Prospect'
+    if (salesRecord.is_live) label = 'Live'
+    else if (salesRecord.trial_provided) label = 'Trial'
+    else if (salesRecord.demo_provided) label = 'Demo'
+
+    return { label, demo, trial, live }
+  }, [salesRecord])
+
+  if (isLoading && id) {
+    return (
+      <div className="space-y-4">
+        <Button variant="secondary" onClick={() => navigate('/properties')}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <p className="text-sm text-surface-500">Loading property…</p>
+      </div>
+    )
+  }
+
   if (!property) {
     return (
       <div className="space-y-4">
@@ -339,27 +477,14 @@ export default function PropertyDetailsPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <p className="text-sm text-surface-500">Property not found.</p>
+        <p className="text-sm text-surface-500">
+          {loadError ?? 'Property not found.'}
+        </p>
       </div>
     )
   }
 
   const revisitCount = visitHistory.length
-
-  const lifecycleStatus = useMemo(() => {
-    if (!salesRecord) return { label: 'Prospect' as const, demo: 'No', trial: 'No', live: 'No' }
-
-    const live = salesRecord.isLive ? 'Yes' : 'No'
-    const trial = salesRecord.trialProvided ? 'Yes' : 'No'
-    const demo = salesRecord.demoProvided ? 'Yes' : 'No'
-
-    let label: 'Live' | 'Trial' | 'Demo' | 'Prospect' = 'Prospect'
-    if (salesRecord.isLive) label = 'Live'
-    else if (salesRecord.trialProvided) label = 'Trial'
-    else if (salesRecord.demoProvided) label = 'Demo'
-
-    return { label, demo, trial, live }
-  }, [salesRecord])
 
   const breadcrumb = [
     {

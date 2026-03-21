@@ -1,18 +1,38 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Zap, Info, Target, Sparkles, History, HardDrive, Share2, Settings2, Check, Users as UsersIcon } from 'lucide-react'
 import { Breadcrumb } from '@/components/Breadcrumb'
-import { features, type Feature } from '@/data/mockData'
 import { Button } from '@/components/FormElements'
 import { cn } from '@/lib/utils'
+import type { Feature } from './AdminFeaturesPage'
+import { fetchCatalogueFeatures, type ApiCatalogueFeature } from '@/lib/accountsApi'
 
 export default function FeatureDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [featureList, setFeatureList] = useState<Feature[]>([])
 
-  const feature: Feature | undefined = useMemo(
-    () => features.find((f) => f.id === id),
-    [id]
+  const mapRow = useCallback((row: ApiCatalogueFeature): Feature => {
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      category: row.category,
+      status: row.status,
+      version: row.version,
+      date: row.release_date,
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchCatalogueFeatures()
+      .then((rows) => setFeatureList(rows.map(mapRow)))
+      .catch(() => setFeatureList([]))
+  }, [mapRow])
+
+  const feature = useMemo(
+    () => featureList.find((f) => f.id === id),
+    [featureList, id]
   )
 
   if (!feature) {

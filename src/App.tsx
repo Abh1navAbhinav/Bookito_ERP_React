@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { DashboardLayout } from './layout/DashboardLayout'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import PropertiesPage from './pages/properties/PropertiesPage'
+import AddPropertyPage from './pages/properties/AddPropertyPage'
 import PropertyDetailsPage from './pages/properties/PropertyDetailsPage'
 import FinancePage from './pages/finance/FinancePage'
 import TravelAgentsPage from './pages/travelAgents/TravelAgentsPage'
@@ -47,6 +48,8 @@ function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/executive-dashboard" element={<ExecutiveDashboardPage />} />
           <Route path="/properties" element={<PropertiesPage />} />
+          <Route path="/properties/add" element={<AddPropertyPage />} />
+          <Route path="/properties/edit/:id" element={<AddPropertyPage />} />
           <Route path="/properties/:id" element={<PropertyDetailsPage />} />
           <Route path="/finance" element={<FinancePage />} />
           <Route path="/finance/dashboard" element={<FinanceDashboard />} />

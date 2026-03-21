@@ -2,10 +2,29 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Bell, LogOut, User, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { notifications as mockNotifications } from '@/data/mockData'
 import { SelfieCaptureModal } from '@/components/modals/SelfieCaptureModal'
+import { fetchNotifications } from '@/lib/notificationsApi'
 
-type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm'
+function formatNotificationTime(createdAt: string): string {
+  try {
+    const d = new Date(createdAt)
+    const now = new Date()
+    const diffMs = now.getTime() - d.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    const diffHours = Math.floor(diffMins / 60)
+    if (diffHours < 24) return `${diffHours}h ago`
+    const diffDays = Math.floor(diffHours / 24)
+    if (diffDays === 1) return 'Yesterday'
+    if (diffDays < 7) return `${diffDays}d ago`
+    return d.toLocaleDateString()
+  } catch {
+    return ''
+  }
+}
+
+type DemoRole = 'manager' | 'admin' | 'sales' | 'accountant' | 'crm' | 'hr' | 'employee'
 
 interface DemoUserInfo {
   role: DemoRole
@@ -20,8 +39,26 @@ export function Topbar() {
   const notifRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+  const [notifications, setNotifications] = useState<{ id: string; read: boolean; title: string; message: string; time: string; type: string }[]>([])
 
-  const unreadCount = mockNotifications.filter((n) => !n.read).length
+  useEffect(() => {
+    fetchNotifications()
+      .then((list) =>
+        setNotifications(
+          list.map((n) => ({
+            id: n.id,
+            read: n.read,
+            title: n.title,
+            message: n.message,
+            time: formatNotificationTime(n.created_at),
+            type: n.notification_type || 'info',
+          }))
+        )
+      )
+      .catch(() => setNotifications([]))
+  }, [])
+
+  const unreadCount = notifications.filter((n) => !n.read).length
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -37,7 +74,7 @@ export function Topbar() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const typeColors = {
+  const typeColors: Record<string, string> = {
     info: 'bg-blue-500',
     warning: 'bg-amber-500',
     success: 'bg-accent-500',
@@ -67,16 +104,36 @@ export function Topbar() {
       .toUpperCase() || 'AD'
 
   const handleLogoutClick = () => {
-    performLogout()
+    void performLogout()
   }
 
-  const performLogout = () => {
+  const apiBase =
+    (import.meta as any).env?.VITE_API_BASE_URL ?? 'http://localhost:8000'
+
+  const performLogout = async () => {
+    const accessToken = window.localStorage.getItem('bookito_access_token')
+
+    // Fire-and-forget logout call; frontend mainly clears tokens.
+    if (accessToken) {
+      void fetch(`${apiBase}/api/accounts/logout/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }).catch(() => {
+        // Ignore network errors on logout
+      })
+    }
+
+    window.localStorage.removeItem('bookito_access_token')
+    window.localStorage.removeItem('bookito_refresh_token')
     window.localStorage.removeItem('bookito_demo_user')
+
     navigate('/login')
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-surface-200 bg-white/80 px-6 backdrop-blur-md">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-surface-200 bg-white/80 px-8 backdrop-blur-md sm:px-10 lg:px-12">
       {/* Search */}
       <div className="relative w-full max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
@@ -114,7 +171,7 @@ export function Topbar() {
                 <h3 className="text-sm font-semibold text-surface-900">Notifications</h3>
               </div>
               <div className="max-h-80 overflow-y-auto">
-                {mockNotifications.map((notif) => (
+                {notifications.map((notif) => (
                   <div
                     key={notif.id}
                     className={cn(
@@ -157,7 +214,7 @@ export function Topbar() {
                 {currentUser?.label || 'Admin'}
               </p>
               <p className="text-[10px] text-surface-400">
-                {currentUser?.role === 'manager'
+                {currentUser?.role === 'manager' || currentUser?.role === 'admin'
                   ? 'Administrator'
                   : currentUser?.role === 'sales'
                     ? 'Sales Executive'
@@ -165,7 +222,11 @@ export function Topbar() {
                       ? 'Accountant'
                       : currentUser?.role === 'crm'
                         ? 'CRM'
-                        : 'admin@bookito.in'}
+                        : currentUser?.role === 'hr'
+                          ? 'HR'
+                          : currentUser?.role === 'employee'
+                            ? 'Employee'
+                            : 'User'}
               </p>
             </div>
             <ChevronDown className="hidden h-3.5 w-3.5 text-surface-400 md:block" />

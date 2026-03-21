@@ -1,9 +1,17 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Plus, Search, MapPin, Briefcase, Users, Clock, Globe, ArrowUpRight, MoreVertical, X, Trash2, RotateCcw } from 'lucide-react'
 import { Button, FormField, Input, Select, Modal } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
 import { differenceInDays, parseISO } from 'date-fns'
+import {
+  createJobPosting,
+  fetchDeletedJobPostings,
+  fetchJobPostings,
+  restoreJobPosting,
+  softDeleteJobPosting,
+  type ApiJobPosting,
+} from '@/lib/hrApi'
 
 interface JobPosting {
   id: string
@@ -20,40 +28,30 @@ interface DeletedJobPosting extends JobPosting {
   deletedAt: string
 }
 
-const initialJobs: JobPosting[] = [
-  {
-    id: '1',
-    title: 'Senior Sales Executive',
-    department: 'Sales',
-    location: 'Remote / Dubai',
-    type: 'Full-time',
-    applicants: 45,
-    postedDate: '2026-03-01',
-    status: 'Published'
-  },
-  {
-    id: '2',
-    title: 'React Developer',
-    department: 'Engineering',
-    location: 'Bangalore Office',
-    type: 'Full-time',
-    applicants: 128,
-    postedDate: '2026-03-05',
-    status: 'Published'
+function mapJob(j: ApiJobPosting): JobPosting {
+  return {
+    id: j.id,
+    title: j.title,
+    department: j.department,
+    location: j.location,
+    type: j.employment_type as JobPosting['type'],
+    applicants: j.applicants,
+    postedDate: j.posted_date,
+    status: j.status as JobPosting['status'],
   }
-]
+}
+
+function mapDeletedJob(j: ApiJobPosting): DeletedJobPosting {
+  return {
+    ...mapJob(j),
+    deletedAt: j.deleted_at || new Date().toISOString(),
+  }
+}
 
 export default function JobPostingsPage() {
   const [activeTab, setActiveTab] = useState<'All' | 'Published' | 'Draft' | 'Closed' | 'Trash'>('All')
-  const [jobs, setJobs] = useState<JobPosting[]>(() => {
-    const saved = localStorage.getItem('bookito_jobs')
-    return saved ? JSON.parse(saved) : initialJobs
-  })
-  
-  const [deletedJobs, setDeletedJobs] = useState<DeletedJobPosting[]>(() => {
-    const saved = localStorage.getItem('bookito_deleted_jobs')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [jobs, setJobs] = useState<JobPosting[]>([])
+  const [deletedJobs, setDeletedJobs] = useState<DeletedJobPosting[]>([])
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newJob, setNewJob] = useState<Omit<JobPosting, 'id' | 'applicants' | 'postedDate'>>({
@@ -64,43 +62,44 @@ export default function JobPostingsPage() {
     status: 'Published'
   })
 
-  useEffect(() => {
-    localStorage.setItem('bookito_jobs', JSON.stringify(jobs))
-  }, [jobs])
-
-  useEffect(() => {
-    localStorage.setItem('bookito_deleted_jobs', JSON.stringify(deletedJobs))
-  }, [deletedJobs])
-
-  useEffect(() => {
-    // Purge logic: Auto-delete after 30 days
-    const now = new Date()
-    setDeletedJobs(prev => prev.filter(j => differenceInDays(now, parseISO(j.deletedAt)) < 30))
+  const load = useCallback(async () => {
+    try {
+      const [a, d] = await Promise.all([fetchJobPostings(), fetchDeletedJobPostings()])
+      setJobs(a.map(mapJob))
+      setDeletedJobs(d.map(mapDeletedJob))
+    } catch {
+      setJobs([])
+      setDeletedJobs([])
+    }
   }, [])
 
+  useEffect(() => {
+    void load()
+  }, [load])
+
   const handleCreate = () => {
-    const created: JobPosting = {
-        ...newJob,
-        id: Date.now().toString(),
-        applicants: 0,
-        postedDate: new Date().toISOString().split('T')[0]
-    }
-    setJobs([created, ...jobs])
-    setIsModalOpen(false)
+    const postedDate = new Date().toISOString().split('T')[0]
+    void createJobPosting({
+      id: `job-${Date.now()}`,
+      title: newJob.title,
+      department: newJob.department,
+      location: newJob.location,
+      employment_type: newJob.type,
+      applicants: 0,
+      posted_date: postedDate,
+      status: newJob.status,
+    }).then(() => {
+      void load()
+      setIsModalOpen(false)
+    })
   }
 
   const handleDelete = (job: JobPosting) => {
-    const deletedAt = new Date().toISOString()
-    const entry: DeletedJobPosting = { ...job, deletedAt }
-    
-    setJobs(prev => prev.filter(j => j.id !== job.id))
-    setDeletedJobs(prev => [entry, ...prev])
+    void softDeleteJobPosting(job.id).then(() => load())
   }
 
   const handleRestore = (job: DeletedJobPosting) => {
-    const { deletedAt, ...rest } = job
-    setDeletedJobs(prev => prev.filter(j => j.id !== job.id))
-    setJobs(prev => [rest, ...prev])
+    void restoreJobPosting(job.id).then(() => load())
   }
 
   const getRemainingDays = (deletedAt: string) => {

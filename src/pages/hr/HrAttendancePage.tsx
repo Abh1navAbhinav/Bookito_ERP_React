@@ -1,12 +1,14 @@
-import { useEffect, useState, useMemo } from 'react'
-import { CalendarDays, Clock, MapPin, Image as ImageIcon, X } from 'lucide-react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
+import { CalendarDays, X } from 'lucide-react'
 import { Button, FormField, Input, Select } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { StatusBadge } from '@/components/StatusBadge'
 import { type ColumnDef } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
+import { fetchAttendance, createAttendance, fetchEmployees, type ApiAttendance } from '@/lib/hrApi'
+import { fetchSalesAttendanceForMonth, type SalesAttendanceRecord } from '@/lib/salesApi'
 
-type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
+type DemoRole = 'manager' | 'admin' | 'sales' | 'accountant' | 'crm' | 'hr'
 
 interface AttendanceEntry {
   id: string
@@ -20,54 +22,129 @@ interface AttendanceEntry {
   checkInLocation?: { lat: number; lng: number; name?: string } | null
   checkOutLocation?: { lat: number; lng: number; name?: string } | null
   employeeRole?: string
+  /** Rows from sales punch API vs HR Employee attendance */
+  source?: 'hr' | 'sales'
+}
+
+function formatTime(t: string | null): string {
+  if (!t) return ''
+  if (t.length <= 5) return t
+  const [h, m, s] = t.split(':')
+  return `${h}:${m}`
+}
+
+function mapApiToEntry(a: ApiAttendance): AttendanceEntry {
+  let status: AttendanceEntry['status'] = 'present'
+  if (a.status === 'absent') status = 'absent'
+  else if (a.status === 'leave') status = 'on_leave'
+  return {
+    id: a.id,
+    employeeName: a.employee_name,
+    date: a.date,
+    status,
+    checkIn: formatTime(a.check_in_time) || undefined,
+    checkOut: formatTime(a.check_out_time) || undefined,
+    source: 'hr',
+  }
+}
+
+function parseSalesLocation(v: unknown): { lat: number; lng: number; name?: string } | null {
+  if (v == null || typeof v !== 'object') return null
+  const o = v as Record<string, unknown>
+  const lat = Number(o.lat)
+  const lng = Number(o.lng)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+  const name = o.name
+  return {
+    lat,
+    lng,
+    ...(typeof name === 'string' && name ? { name } : {}),
+  }
+}
+
+function mapSalesAttendanceToEntry(r: SalesAttendanceRecord): AttendanceEntry {
+  return {
+    id: r.id,
+    employeeName: r.user_name || r.username || 'Sales user',
+    date: r.date,
+    status: r.check_in_time ? 'present' : 'absent',
+    checkIn: formatTime(r.check_in_time) || undefined,
+    checkOut: formatTime(r.check_out_time) || undefined,
+    checkInSelfie: r.check_in_selfie || undefined,
+    checkOutSelfie: r.check_out_selfie || undefined,
+    checkInLocation: parseSalesLocation(r.check_in_location),
+    checkOutLocation: parseSalesLocation(r.check_out_location),
+    employeeRole: 'sales',
+    source: 'sales',
+  }
 }
 
 export default function HrAttendancePage() {
   const [currentRole, setCurrentRole] = useState<DemoRole | null>(null)
   const [entries, setEntries] = useState<AttendanceEntry[]>([])
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeSection, setActiveSection] = useState<'sales' | 'others'>('sales')
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
-  const [newEntry, setNewEntry] = useState<Omit<AttendanceEntry, 'id'>>({
+  const [newEntry, setNewEntry] = useState<Omit<AttendanceEntry, 'id'> & { employeeId?: string }>({
     employeeName: '',
-    date: '',
+    date: new Date().toISOString().split('T')[0],
     status: 'present',
     checkIn: '',
     checkOut: '',
   })
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true)
+      let viewerRole: DemoRole | null = null
+      try {
+        const raw = window.localStorage.getItem('bookito_demo_user')
+        if (raw) viewerRole = (JSON.parse(raw) as { role?: DemoRole }).role ?? null
+      } catch {
+        // ignore
+      }
+
+      const [attList, empList] = await Promise.all([fetchAttendance(), fetchEmployees()])
+      let merged: AttendanceEntry[] = attList.map(mapApiToEntry)
+
+      if (viewerRole === 'manager' || viewerRole === 'admin' || viewerRole === 'hr') {
+        try {
+          const salesRows = await fetchSalesAttendanceForMonth(selectedMonth)
+          merged = [...salesRows.map(mapSalesAttendanceToEntry), ...merged]
+        } catch {
+          // Sales API optional for register; keep HR rows only
+        }
+      }
+
+      setEntries(merged)
+      setEmployees(empList.map((e) => ({ id: e.id, name: `${e.first_name} ${e.last_name}`.trim() })))
+    } catch {
+      setEntries([])
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedMonth])
 
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem('bookito_demo_user')
       if (raw) {
         const parsed = JSON.parse(raw) as { role?: DemoRole }
-        if (parsed.role) {
-          setCurrentRole(parsed.role)
-        }
+        if (parsed.role) setCurrentRole(parsed.role)
       }
     } catch {
       // ignore
     }
-
-    try {
-      const rawEntries = window.localStorage.getItem('bookito_hr_attendance')
-      if (rawEntries) {
-        setEntries(JSON.parse(rawEntries) as AttendanceEntry[])
-      }
-    } catch {
-      // ignore
-    }
-  }, [])
-
-  const isHr = currentRole === 'hr'
-  const canViewDetail = currentRole === 'hr' || currentRole === 'manager'
+    void loadData()
+  }, [loadData])
 
   const saveEntries = (list: AttendanceEntry[]) => {
     setEntries(list)
-    window.localStorage.setItem('bookito_hr_attendance', JSON.stringify(list))
   }
 
   const columns: ColumnDef<AttendanceEntry, any>[] = useMemo(
@@ -174,7 +251,7 @@ export default function HrAttendancePage() {
                   onClick={() => setSelectedImage(row.original.checkInSelfie!)}
                   className="h-7 w-7 overflow-hidden rounded-full border-2 border-white bg-surface-100 shadow-sm transition-transform hover:scale-110"
                 >
-                  <img src={row.original.checkInSelfie} className="h-full w-full object-cover" />
+                  <img src={row.original.checkInSelfie} className="h-full w-full object-cover" alt="Check-in" />
                 </button>
               )}
               {row.original.checkOutSelfie && (
@@ -182,7 +259,7 @@ export default function HrAttendancePage() {
                   onClick={() => setSelectedImage(row.original.checkOutSelfie!)}
                   className="h-7 w-7 overflow-hidden rounded-full border-2 border-white bg-surface-100 shadow-sm transition-transform hover:scale-110"
                 >
-                  <img src={row.original.checkOutSelfie} className="h-full w-full object-cover" />
+                  <img src={row.original.checkOutSelfie} className="h-full w-full object-cover" alt="Check-out" />
                 </button>
               )}
             </div>
@@ -194,16 +271,19 @@ export default function HrAttendancePage() {
   )
 
   const filteredEntries = useMemo(() => {
-    return entries.filter(e => {
+    return entries.filter((e) => {
       const matchesMonth = e.date.startsWith(selectedMonth)
-      const isSales = e.employeeName.toLowerCase().includes('sales') || e.employeeRole?.toLowerCase() === 'sales'
+      const isSales =
+        e.source === 'sales' ||
+        e.employeeRole?.toLowerCase() === 'sales' ||
+        e.employeeName.toLowerCase().includes('sales')
       const matchesSection = activeSection === 'sales' ? isSales : !isSales
       return matchesMonth && matchesSection
     })
   }, [entries, selectedMonth, activeSection])
 
   const monthOptions = useMemo(() => {
-    const options = []
+    const options: { value: string; label: string }[] = []
     const now = new Date()
     for (let i = 0; i < 12; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
@@ -213,25 +293,6 @@ export default function HrAttendancePage() {
     }
     return options
   }, [])
-
-  if (isHr) {
-    columns.push({
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <div className="text-right">
-          <button
-            className="rounded-lg p-2 text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-            onClick={() =>
-              saveEntries(entries.filter((e) => e.id !== row.original.id))
-            }
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )
-    })
-  }
 
   return (
     <div className="space-y-6">
@@ -296,16 +357,15 @@ export default function HrAttendancePage() {
               Manual Attendance Entry
             </h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
-              <FormField label="Employee name">
-                <Input
-                  value={newEntry.employeeName}
-                  onChange={(e) =>
-                    setNewEntry((prev) => ({
-                      ...prev,
-                      employeeName: e.target.value,
-                    }))
-                  }
-                  placeholder="e.g. John Doe"
+              <FormField label="Employee">
+                <Select
+                  value={newEntry.employeeId ?? ''}
+                  onChange={(id) => {
+                    const emp = employees.find((e) => e.id === id)
+                    setNewEntry((prev) => ({ ...prev, employeeId: id, employeeName: emp?.name ?? '' }))
+                  }}
+                  options={[{ label: 'Select employee', value: '' }, ...employees.map((e) => ({ label: e.name, value: e.id }))]}
+                  placeholder="Select employee"
                 />
               </FormField>
               <FormField label="Date">
@@ -358,20 +418,30 @@ export default function HrAttendancePage() {
             </div>
             <div className="mt-5 flex justify-end">
               <Button
-                onClick={() => {
-                  if (!newEntry.employeeName.trim() || !newEntry.date) return
-                  const created: AttendanceEntry = {
-                    id: `${Date.now()}`,
-                    ...newEntry,
+                onClick={async () => {
+                  const employeeId = newEntry.employeeId ?? ''
+                  if (!employeeId || !newEntry.date) return
+                  try {
+                    await createAttendance({
+                      id: `att-${employeeId}-${newEntry.date}-${Date.now()}`,
+                      employee: employeeId,
+                      date: newEntry.date,
+                      status: newEntry.status,
+                      check_in_time: newEntry.checkIn || null,
+                      check_out_time: newEntry.checkOut || null,
+                    })
+                    setNewEntry({
+                      employeeId: '',
+                      employeeName: '',
+                      date: new Date().toISOString().split('T')[0],
+                      status: 'present',
+                      checkIn: '',
+                      checkOut: '',
+                    })
+                    await loadData()
+                  } catch (err) {
+                    alert((err as Error).message ?? 'Failed to add attendance')
                   }
-                  saveEntries([...entries, created])
-                  setNewEntry({
-                    employeeName: '',
-                    date: '',
-                    status: 'present',
-                    checkIn: '',
-                    checkOut: '',
-                  })
                 }}
               >
                 Add Manual Record

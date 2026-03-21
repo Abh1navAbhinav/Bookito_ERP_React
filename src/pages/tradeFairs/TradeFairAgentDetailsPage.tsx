@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   ArrowLeft, 
@@ -18,13 +18,7 @@ import {
 import { Button, Textarea, Modal, FormField, Input, Select } from '@/components/FormElements'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { StatusBadge, getStatusVariant } from '@/components/StatusBadge'
-import { 
-  tradeFairAgents,
-  tradeFairVenues, 
-  type TradeFairAgent,
-  type TradeFairVenue,
-  type TravelAgent
-} from '@/data/mockData'
+import { fetchFairAgentById, type TradeFairAgent } from '@/lib/partnersApi'
 import { AddAgentModal } from '@/components/modals/AddAgentModal'
 
 /* --- Helper Components --- */
@@ -72,10 +66,25 @@ function DetailItem({ label, value, icon: Icon, href }: { label: string, value: 
 export default function TradeFairAgentDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [agent, setAgent] = useState<TradeFairAgent | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const agent = useMemo(() => 
-    tradeFairAgents.find(a => a.id === id),
-  [id])
+  useEffect(() => {
+    if (!id) {
+      setAgent(null)
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    fetchFairAgentById(id).then((a) => {
+      if (!cancelled) {
+        setAgent(a ?? null)
+        setLoading(false)
+      }
+    })
+    return () => { cancelled = true }
+  }, [id])
 
   const [extraComments, setExtraComments] = useState<
     { author: string; comment: string; createdAt: string }[]
@@ -98,9 +107,22 @@ export default function TradeFairAgentDetailsPage() {
     location: agent?.location || '',
   }), [agent])
 
+  const onboardLockedFields = useMemo(
+    () => ['agentName', 'contactNumber', 'email', 'location'] as const,
+    []
+  )
+
   const fair = useMemo(() => 
-    agent ? tradeFairVenues.find(v => v.id === agent.fairId) : null,
+    agent ? { id: agent.fairId, venue: agent.fairVenue ?? '', date: agent.fairDate ?? '' } : null,
   [agent])
+
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-surface-200 bg-surface-50 p-12 text-center text-surface-500">
+        Loading agent…
+      </div>
+    )
+  }
 
   if (!agent) {
     return (
@@ -236,7 +258,9 @@ export default function TradeFairAgentDetailsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-surface-900">{fair?.venue || 'Unknown Event'}</h3>
-                  <p className="text-sm text-surface-500">{fair?.city}, {fair?.location} • {fair?.date}</p>
+                  <p className="text-sm text-surface-500">
+                    {agent?.location ?? '—'} • {fair?.date}
+                  </p>
                 </div>
               </div>
               <p className="text-sm leading-relaxed text-surface-600 border-l-4 border-indigo-500 pl-4 py-1">
@@ -495,7 +519,8 @@ export default function TradeFairAgentDetailsPage() {
         isOpen={showOnboardModal}
         onClose={() => setShowOnboardModal(false)}
         initialData={initialOnboardData}
-        title={`Onboard ${agent!.agentName} as Agent`}
+        lockedFields={[...onboardLockedFields]}
+        title={`Onboard ${agent!.agentName} as ${agent!.isDMC ? 'DMC' : 'Agent'}`}
         onSave={(data: any) => {
           console.log('Onboarded Agent Data:', data)
           setIsOnboarded(true)

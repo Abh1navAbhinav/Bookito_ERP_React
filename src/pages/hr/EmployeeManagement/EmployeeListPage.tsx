@@ -1,9 +1,18 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Plus, Search, Filter, MoreHorizontal, Mail, Phone, MapPin, Building2, UserCircle, X, Check, Trash2, RotateCcw } from 'lucide-react'
 import { Button, FormField, Input, Select, Modal } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
 import { differenceInDays, parseISO } from 'date-fns'
+import { cn } from '@/lib/utils'
+import {
+  fetchEmployees,
+  fetchDeletedEmployees,
+  createEmployee as createEmployeeApi,
+  softDeleteEmployee,
+  restoreEmployee,
+  type ApiEmployee
+} from '@/lib/hrApi'
 
 interface Employee {
   id: string
@@ -22,43 +31,25 @@ interface DeletedEmployee extends Employee {
   deletedAt: string
 }
 
-const initialEmployees: Employee[] = [
-  {
-    id: '1',
-    employeeId: 'EMP001',
-    name: 'John Doe',
-    email: 'john.doe@bookito.com',
-    phone: '+91 9876543210',
-    department: 'Sales',
-    designation: 'Sales Manager',
-    dateOfJoining: '2024-01-15',
-    status: 'Active',
-    salary: '75000'
-  },
-  {
-    id: '2',
-    employeeId: 'EMP002',
-    name: 'Jane Smith',
-    email: 'jane.smith@bookito.com',
-    phone: '+91 9876543211',
-    department: 'Engineering',
-    designation: 'Frontend Developer',
-    dateOfJoining: '2024-02-10',
-    status: 'Active',
-    salary: '85000'
+function mapApiToEmployee(e: ApiEmployee): Employee {
+  return {
+    id: e.id,
+    employeeId: e.id,
+    name: `${e.first_name} ${e.last_name}`.trim(),
+    email: e.email,
+    phone: e.phone ?? '',
+    department: e.department,
+    designation: e.designation,
+    dateOfJoining: e.date_of_joining,
+    status: e.status === 'active' ? 'Active' : 'Inactive',
+    salary: ''
   }
-]
+}
 
 export default function EmployeeListPage() {
-  const [employees, setEmployees] = useState<Employee[]>(() => {
-    const saved = localStorage.getItem('bookito_employees')
-    return saved ? JSON.parse(saved) : initialEmployees
-  })
-  
-  const [deletedEmployees, setDeletedEmployees] = useState<DeletedEmployee[]>(() => {
-    const saved = localStorage.getItem('bookito_deleted_employees')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [deletedEmployees, setDeletedEmployees] = useState<DeletedEmployee[]>([])
+  const [loading, setLoading] = useState(true)
 
   const [showDeleted, setShowDeleted] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -73,31 +64,44 @@ export default function EmployeeListPage() {
     salary: ''
   })
 
-  useEffect(() => {
-    localStorage.setItem('bookito_employees', JSON.stringify(employees))
-  }, [employees])
-
-  useEffect(() => {
-    localStorage.setItem('bookito_deleted_employees', JSON.stringify(deletedEmployees))
-  }, [deletedEmployees])
-
-  useEffect(() => {
-    // Purge logic for local state: Auto-delete after 30 days
-    const now = new Date()
-    setDeletedEmployees(prev => prev.filter(emp => differenceInDays(now, parseISO(emp.deletedAt)) < 30))
+  const loadEmployees = useCallback(async () => {
+    try {
+      setLoading(true)
+      const [list, deleted] = await Promise.all([fetchEmployees(), fetchDeletedEmployees()])
+      setEmployees(list.map(mapApiToEmployee))
+      setDeletedEmployees(
+        deleted.map((e) => ({ ...mapApiToEmployee(e), deletedAt: e.deleted_at ?? new Date().toISOString() }))
+      )
+    } catch {
+      setEmployees([])
+      setDeletedEmployees([])
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
-  const handleCreate = () => {
-    const id = Date.now().toString()
-    const employeeId = `EMP${(employees.length + 1).toString().padStart(3, '0')}`
-    const created: Employee = {
-        ...newEmployee,
+  useEffect(() => {
+    void loadEmployees()
+  }, [loadEmployees])
+
+  const handleCreate = async () => {
+    const [first_name = '', ...rest] = newEmployee.name.trim().split(/\s+/)
+    const last_name = rest.join(' ') || first_name
+    const id = `emp-${Date.now()}`
+    try {
+      await createEmployeeApi({
         id,
-        employeeId
-    }
-    setEmployees([...employees, created])
-    setIsModalOpen(false)
-    setNewEmployee({
+        first_name: first_name || 'Employee',
+        last_name,
+        email: newEmployee.email,
+        phone: newEmployee.phone,
+        department: newEmployee.department,
+        designation: newEmployee.designation,
+        date_of_joining: newEmployee.dateOfJoining,
+        status: newEmployee.status === 'Active' ? 'active' : 'inactive'
+      })
+      setIsModalOpen(false)
+      setNewEmployee({
         name: '',
         email: '',
         phone: '',
@@ -106,27 +110,40 @@ export default function EmployeeListPage() {
         dateOfJoining: new Date().toISOString().split('T')[0],
         status: 'Active',
         salary: ''
-    })
+      })
+      await loadEmployees()
+    } catch (err) {
+      alert((err as Error).message ?? 'Failed to create employee')
+    }
   }
 
-  const handleDelete = (employee: Employee) => {
-    const deletedAt = new Date().toISOString()
-    const entry: DeletedEmployee = { ...employee, deletedAt }
-    
-    setEmployees(prev => prev.filter(e => e.id !== employee.id))
-    setDeletedEmployees(prev => [entry, ...prev])
+  const handleDelete = async (employee: Employee) => {
+    try {
+      await softDeleteEmployee(employee.id)
+      await loadEmployees()
+    } catch {
+      // ignore
+    }
   }
 
-  const handleRestore = (employee: DeletedEmployee) => {
-    const { deletedAt, ...rest } = employee
-    setDeletedEmployees(prev => prev.filter(e => e.id !== employee.id))
-    setEmployees(prev => [...prev, rest])
+  const handleRestore = async (employee: DeletedEmployee) => {
+    try {
+      await restoreEmployee(employee.id)
+      await loadEmployees()
+    } catch {
+      // ignore
+    }
   }
 
   const getRemainingDays = (deletedAt: string) => {
     const diff = differenceInDays(new Date(), parseISO(deletedAt))
     return Math.max(0, 30 - diff)
   }
+
+  const displayedDeleted = useMemo(
+    () => deletedEmployees.filter((e) => getRemainingDays(e.deletedAt) > 0),
+    [deletedEmployees]
+  )
 
   const columns: ColumnDef<Employee, any>[] = useMemo(() => [
     {
@@ -247,6 +264,8 @@ export default function EmployeeListPage() {
     }
   ], [deletedEmployees, employees])
 
+  const dataSource = showDeleted ? displayedDeleted : employees
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -287,11 +306,15 @@ export default function EmployeeListPage() {
       </div>
 
       {!showDeleted ? (
-        <DataTable
-          data={employees}
-          columns={columns}
-          searchPlaceholder="Search by name, ID, or email..."
-        />
+        loading ? (
+          <div className="rounded-xl border border-surface-200 bg-white p-8 text-center text-surface-500">Loading employees...</div>
+        ) : (
+          <DataTable
+            data={dataSource}
+            columns={columns}
+            searchPlaceholder="Search by name, ID, or email..."
+          />
+        )
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-2 px-1">
@@ -301,7 +324,7 @@ export default function EmployeeListPage() {
             </p>
           </div>
           <DataTable
-            data={deletedEmployees}
+            data={displayedDeleted}
             columns={deletedColumns}
             searchPlaceholder="Search deleted employees..."
           />
@@ -390,8 +413,4 @@ export default function EmployeeListPage() {
       </Modal>
     </div>
   )
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
 }

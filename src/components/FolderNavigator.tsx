@@ -1,32 +1,39 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Folder, MapPin, Search } from 'lucide-react'
-import type { LocationNode } from '@/data/mockData'
-import { properties } from '@/data/mockData'
+import type { LocationNode } from '@/lib/configApi'
 import { cn } from '@/lib/utils'
+
+interface PropertyForCount {
+  state: string
+  district: string
+}
 
 interface FolderNavigatorProps {
   hierarchy: LocationNode[]
   path: string[]
   onNavigate: (path: string[], node?: LocationNode) => void
+  propertyList?: PropertyForCount[]
 }
 
 type SortMode = 'name' | 'items' | 'properties'
 
-const statePropertyCounts: Record<string, number> = {}
-const districtPropertyCounts: Record<string, Record<string, number>> = {}
-
-for (const p of properties) {
-  statePropertyCounts[p.state] = (statePropertyCounts[p.state] ?? 0) + 1
-  if (!districtPropertyCounts[p.state]) {
-    districtPropertyCounts[p.state] = {}
-  }
-  districtPropertyCounts[p.state][p.district] =
-    (districtPropertyCounts[p.state][p.district] ?? 0) + 1
+function usePropertyCounts(propertyList: PropertyForCount[] = []) {
+  return useMemo(() => {
+    const stateCounts: Record<string, number> = {}
+    const districtCounts: Record<string, Record<string, number>> = {}
+    for (const p of propertyList) {
+      stateCounts[p.state] = (stateCounts[p.state] ?? 0) + 1
+      if (!districtCounts[p.state]) districtCounts[p.state] = {}
+      districtCounts[p.state][p.district] = (districtCounts[p.state][p.district] ?? 0) + 1
+    }
+    return { stateCounts, districtCounts }
+  }, [propertyList])
 }
 
-export function FolderNavigator({ hierarchy, path, onNavigate }: FolderNavigatorProps) {
+export function FolderNavigator({ hierarchy, path, onNavigate, propertyList = [] }: FolderNavigatorProps) {
   const [query, setQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('properties')
+  const { stateCounts, districtCounts } = usePropertyCounts(propertyList)
 
   // Find the current level based on path
   let currentNodes = hierarchy
@@ -62,9 +69,9 @@ export function FolderNavigator({ hierarchy, path, onNavigate }: FolderNavigator
     let propertyCount = 0
 
     if (level === 'state') {
-      propertyCount = statePropertyCounts[node.name] ?? 0
+      propertyCount = stateCounts[node.name] ?? 0
     } else if (level === 'district' && parentStateName) {
-      propertyCount = districtPropertyCounts[parentStateName]?.[node.name] ?? 0
+      propertyCount = districtCounts[parentStateName]?.[node.name] ?? 0
     }
 
     return { node, itemsCount, propertyCount }

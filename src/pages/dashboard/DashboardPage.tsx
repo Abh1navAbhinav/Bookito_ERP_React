@@ -1,11 +1,5 @@
-import {
-  Building2,
-  DollarSign,
-  Clock,
-  Users,
-  TrendingUp,
-  AlertTriangle,
-} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Building2, DollarSign, Clock, Users, TrendingUp, AlertTriangle } from 'lucide-react'
 import {
   AreaChart,
   Area,
@@ -24,15 +18,43 @@ import {
 import { StatsCard } from '@/components/StatsCard'
 import { ChartCard } from '@/components/ChartCard'
 import {
-  dashboardStats,
-  revenueChartData,
-  salesPerformanceData,
-  propertyDistributionData,
-  closingVsPendingData,
-} from '@/data/mockData'
+  fetchCompanyOverview,
+  fetchDashboardCharts,
+  type CompanyOverview,
+  type DashboardCharts,
+} from '@/lib/reportsApi'
 import { formatCurrency, formatNumber } from '@/lib/utils'
 
 export default function DashboardPage() {
+  const [overview, setOverview] = useState<CompanyOverview | null>(null)
+  const [charts, setCharts] = useState<DashboardCharts | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    Promise.all([fetchCompanyOverview(), fetchDashboardCharts()])
+      .then(([ov, ch]) => {
+        if (!cancelled) {
+          setOverview(ov)
+          setCharts(ch)
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Failed to load dashboard')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -45,44 +67,58 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+          {error}
+        </div>
+      )}
+
+      {loading && (
+        <div className="rounded-xl border border-surface-200 bg-surface-50 p-8 text-center text-surface-500">
+          Loading dashboard…
+        </div>
+      )}
+
+      {!loading && overview && (
+        <>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatsCard
           title="Total Properties"
-          value={dashboardStats.totalProperties}
+          value={overview.total_properties}
           icon={Building2}
           trend={{ value: 12, isPositive: true }}
           variant="primary"
         />
         <StatsCard
           title="Total Revenue"
-          value={formatCurrency(dashboardStats.totalRevenue)}
+          value={formatCurrency(Number(overview.total_revenue))}
           icon={DollarSign}
           trend={{ value: 8.5, isPositive: true }}
           variant="accent"
         />
         <StatsCard
           title="Pending Payments"
-          value={formatCurrency(dashboardStats.pendingPayments)}
+          value={formatCurrency(Number(overview.total_expenses))}
           icon={Clock}
           trend={{ value: 3.2, isPositive: false }}
           variant="warning"
         />
         <StatsCard
           title="Active Agents"
-          value={dashboardStats.activeTravelAgents}
+          value={overview.active_travel_agents}
           icon={Users}
           trend={{ value: 5, isPositive: true }}
         />
         <StatsCard
           title="Sales This Month"
-          value={dashboardStats.salesClosingsThisMonth}
+          value={overview.sales_closings_this_month}
           icon={TrendingUp}
           trend={{ value: 18, isPositive: true }}
         />
         <StatsCard
           title="Expiring Plans"
-          value={dashboardStats.upcomingPlanExpiry}
+          value={overview.upcoming_plan_expiry}
           subtitle="Within 7 days"
           icon={AlertTriangle}
           variant="danger"
@@ -97,7 +133,7 @@ export default function DashboardPage() {
           subtitle="Monthly revenue vs target"
         >
           <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={revenueChartData as any[]}>
+            <AreaChart data={charts?.revenue_chart_data ?? []}>
               <defs>
                 <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
@@ -148,7 +184,7 @@ export default function DashboardPage() {
           subtitle="Executive-wise performance"
         >
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={salesPerformanceData} layout="vertical">
+            <BarChart data={charts?.sales_performance_data ?? []} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
               <YAxis
@@ -181,7 +217,7 @@ export default function DashboardPage() {
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
-                data={propertyDistributionData}
+                data={charts?.property_distribution_data ?? []}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -189,7 +225,7 @@ export default function DashboardPage() {
                 paddingAngle={4}
                 dataKey="value"
               >
-                {propertyDistributionData.map((entry, index) => (
+                {(charts?.property_distribution_data ?? []).map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
@@ -211,7 +247,7 @@ export default function DashboardPage() {
           subtitle="Monthly comparison"
         >
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={closingVsPendingData}>
+            <BarChart data={charts?.closing_vs_pending_data ?? []}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
@@ -225,6 +261,8 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </ChartCard>
       </div>
+        </>
+      )}
     </div>
   )
 }

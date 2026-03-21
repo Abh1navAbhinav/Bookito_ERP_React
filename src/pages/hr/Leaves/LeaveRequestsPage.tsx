@@ -1,9 +1,20 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Plus, Check, X, Calendar, User, Clock, AlertCircle, Trash2, RotateCcw } from 'lucide-react'
 import { Button, FormField, Input, Select, Modal } from '@/components/FormElements'
 import { DataTable } from '@/components/DataTable'
 import { type ColumnDef } from '@tanstack/react-table'
 import { differenceInDays, parseISO } from 'date-fns'
+import { cn } from '@/lib/utils'
+import {
+  fetchLeaves,
+  fetchDeletedLeaves,
+  createLeave,
+  updateLeave,
+  softDeleteLeave,
+  restoreLeave,
+  fetchEmployees,
+  type ApiLeave
+} from '@/lib/hrApi'
 
 interface LeaveRequest {
   id: string
@@ -20,43 +31,38 @@ interface DeletedLeaveRequest extends LeaveRequest {
   deletedAt: string
 }
 
-const initialLeaves: LeaveRequest[] = [
-  {
-    id: '1',
-    employeeName: 'John Doe',
-    leaveType: 'Sick Leave',
-    startDate: '2026-03-20',
-    endDate: '2026-03-21',
-    days: 2,
-    reason: 'Fever and cold',
-    status: 'Pending'
-  },
-  {
-    id: '2',
-    employeeName: 'Jane Smith',
-    leaveType: 'Casual Leave',
-    startDate: '2026-03-25',
-    endDate: '2026-03-25',
-    days: 1,
-    reason: 'Family event',
-    status: 'Approved'
+function mapStatus(s: string): LeaveRequest['status'] {
+  if (s === 'approved') return 'Approved'
+  if (s === 'rejected') return 'Rejected'
+  return 'Pending'
+}
+
+function mapApiToLeave(l: ApiLeave): LeaveRequest {
+  const start = new Date(l.start_date)
+  const end = new Date(l.end_date)
+  const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+  return {
+    id: l.id,
+    employeeName: l.employee_name,
+    leaveType: 'Leave',
+    startDate: l.start_date,
+    endDate: l.end_date,
+    days: diffDays,
+    reason: l.reason,
+    status: mapStatus(l.status),
   }
-]
+}
 
 export default function LeaveRequestsPage() {
   const [activeTab, setActiveTab] = useState<'Pending' | 'Approved' | 'Rejected' | 'Trash'>('Pending')
-  const [leaves, setLeaves] = useState<LeaveRequest[]>(() => {
-    const saved = localStorage.getItem('bookito_leaves')
-    return saved ? JSON.parse(saved) : initialLeaves
-  })
-  
-  const [deletedLeaves, setDeletedLeaves] = useState<DeletedLeaveRequest[]>(() => {
-    const saved = localStorage.getItem('bookito_deleted_leaves')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [leaves, setLeaves] = useState<LeaveRequest[]>([])
+  const [deletedLeaves, setDeletedLeaves] = useState<DeletedLeaveRequest[]>([])
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([])
+  const [loading, setLoading] = useState(true)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newRequest, setNewRequest] = useState({
+    employeeId: '',
     employeeName: '',
     leaveType: 'Casual Leave',
     startDate: '',
@@ -64,19 +70,30 @@ export default function LeaveRequestsPage() {
     reason: ''
   })
 
-  useEffect(() => {
-    localStorage.setItem('bookito_leaves', JSON.stringify(leaves))
-  }, [leaves])
-
-  useEffect(() => {
-    localStorage.setItem('bookito_deleted_leaves', JSON.stringify(deletedLeaves))
-  }, [deletedLeaves])
-
-  useEffect(() => {
-    // Purge logic for local state: Auto-delete after 30 days
-    const now = new Date()
-    setDeletedLeaves(prev => prev.filter(l => differenceInDays(now, parseISO(l.deletedAt)) < 30))
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true)
+      const [list, delList, empList] = await Promise.all([
+        fetchLeaves(),
+        fetchDeletedLeaves(),
+        fetchEmployees()
+      ])
+      setLeaves(list.map(mapApiToLeave))
+      setDeletedLeaves(
+        delList.map((l) => ({ ...mapApiToLeave(l), deletedAt: l.deleted_at ?? new Date().toISOString() }))
+      )
+      setEmployees(empList.map((e) => ({ id: e.id, name: `${e.first_name} ${e.last_name}`.trim() })))
+    } catch {
+      setLeaves([])
+      setDeletedLeaves([])
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
 
   const stats = useMemo(() => [
     { label: 'Total Requests', value: leaves.length.toString(), icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -85,48 +102,61 @@ export default function LeaveRequestsPage() {
     { label: 'Rejected', value: leaves.filter(l => l.status === 'Rejected').length.toString(), icon: X, color: 'text-red-600', bg: 'bg-red-50' },
   ], [leaves])
 
-  const handleApply = () => {
-    const start = new Date(newRequest.startDate)
-    const end = new Date(newRequest.endDate)
-    const diffTime = Math.abs(end.getTime() - start.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
-
-    const request: LeaveRequest = {
-        id: Date.now().toString(),
-        employeeName: newRequest.employeeName,
-        leaveType: newRequest.leaveType,
-        startDate: newRequest.startDate,
-        endDate: newRequest.endDate,
-        days: diffDays,
-        reason: newRequest.reason,
-        status: 'Pending'
+  const handleApply = async () => {
+    if (!newRequest.employeeId || !newRequest.startDate || !newRequest.endDate) return
+    try {
+      await createLeave({
+        id: `leave-${Date.now()}`,
+        employee: newRequest.employeeId,
+        start_date: newRequest.startDate,
+        end_date: newRequest.endDate,
+        reason: newRequest.reason || 'Leave request',
+        status: 'pending',
+      })
+      setIsModalOpen(false)
+      setNewRequest({ employeeId: '', employeeName: '', leaveType: 'Casual Leave', startDate: '', endDate: '', reason: '' })
+      await loadData()
+    } catch (err) {
+      alert((err as Error).message ?? 'Failed to apply leave')
     }
-    setLeaves([request, ...leaves])
-    setIsModalOpen(false)
   }
 
-  const handleAction = (id: string, status: 'Approved' | 'Rejected') => {
-    setLeaves(leaves.map(l => l.id === id ? { ...l, status } : l))
+  const handleAction = async (id: string, status: 'Approved' | 'Rejected') => {
+    try {
+      await updateLeave(id, { status: status === 'Approved' ? 'approved' : 'rejected' })
+      await loadData()
+    } catch {
+      // ignore
+    }
   }
 
-  const handleDelete = (leave: LeaveRequest) => {
-    const deletedAt = new Date().toISOString()
-    const entry: DeletedLeaveRequest = { ...leave, deletedAt }
-    
-    setLeaves(prev => prev.filter(l => l.id !== leave.id))
-    setDeletedLeaves(prev => [entry, ...prev])
+  const handleDelete = async (leave: LeaveRequest) => {
+    try {
+      await softDeleteLeave(leave.id)
+      await loadData()
+    } catch {
+      // ignore
+    }
   }
 
-  const handleRestore = (leave: DeletedLeaveRequest) => {
-    const { deletedAt, ...rest } = leave
-    setDeletedLeaves(prev => prev.filter(l => l.id !== leave.id))
-    setLeaves(prev => [rest, ...prev])
+  const handleRestore = async (leave: DeletedLeaveRequest) => {
+    try {
+      await restoreLeave(leave.id)
+      await loadData()
+    } catch {
+      // ignore
+    }
   }
 
   const getRemainingDays = (deletedAt: string) => {
     const diff = differenceInDays(new Date(), parseISO(deletedAt))
     return Math.max(0, 30 - diff)
   }
+
+  const displayedDeleted = useMemo(
+    () => deletedLeaves.filter((l) => getRemainingDays(l.deletedAt) > 0),
+    [deletedLeaves]
+  )
 
   const columns: ColumnDef<LeaveRequest, any>[] = useMemo(() => [
     {
@@ -308,11 +338,15 @@ export default function LeaveRequestsPage() {
         </div>
         <div className="p-4">
             {activeTab !== 'Trash' ? (
+                loading ? (
+                  <div className="rounded-xl border border-surface-200 bg-white p-8 text-center text-surface-500">Loading leave requests...</div>
+                ) : (
                 <DataTable
                     data={leaves.filter(r => r.status === activeTab)}
                     columns={columns}
                     searchPlaceholder="Search by employee..."
                 />
+                )
             ) : (
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 px-1">
@@ -322,7 +356,7 @@ export default function LeaveRequestsPage() {
                         </p>
                     </div>
                     <DataTable
-                        data={deletedLeaves}
+                        data={displayedDeleted}
                         columns={deletedColumns}
                         searchPlaceholder="Search deleted requests..."
                     />
@@ -333,11 +367,14 @@ export default function LeaveRequestsPage() {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Apply for Leave">
         <div className="space-y-4">
-            <FormField label="Employee Name">
-                <Input 
-                    value={newRequest.employeeName}
-                    onChange={(e) => setNewRequest({...newRequest, employeeName: e.target.value})}
-                    placeholder="Enter your name"
+            <FormField label="Employee">
+                <Select
+                    value={newRequest.employeeId}
+                    onChange={(id) => {
+                      const emp = employees.find((e) => e.id === id)
+                      setNewRequest((prev) => ({ ...prev, employeeId: id, employeeName: emp?.name ?? '' }))
+                    }}
+                    options={[{ label: 'Select employee', value: '' }, ...employees.map((e) => ({ label: e.name, value: e.id }))]}
                 />
             </FormField>
             <FormField label="Leave Type">
@@ -382,8 +419,4 @@ export default function LeaveRequestsPage() {
       </Modal>
     </div>
   )
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
 }

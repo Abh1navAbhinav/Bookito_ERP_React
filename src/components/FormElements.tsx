@@ -56,12 +56,17 @@ interface FormFieldProps {
   label: string
   children: React.ReactNode
   className?: string
+  labelClassName?: string
+  required?: boolean
 }
 
-export function FormField({ label, children, className }: FormFieldProps) {
+export function FormField({ label, children, className, labelClassName, required }: FormFieldProps) {
   return (
     <div className={cn('space-y-1.5', className)}>
-      <label className="text-sm font-medium text-surface-700">{label}</label>
+      <label className={cn('text-sm font-medium text-surface-700', labelClassName)}>
+        {label}
+        {required && <span className="text-red-500 ml-1 font-bold">*</span>}
+      </label>
       {children}
     </div>
   )
@@ -262,5 +267,93 @@ export function Textarea({ className, ...props }: TextareaProps) {
       )}
       {...props}
     />
+  )
+}
+
+// Radio Group
+interface RadioOption {
+  label: string
+  value: string
+}
+
+interface RadioGroupProps {
+  options: RadioOption[]
+  value: string
+  onChange: (value: string) => void
+  name: string
+  className?: string
+}
+
+export function RadioGroup({ options, value, onChange, name, className }: RadioGroupProps) {
+  return (
+    <div className={cn('flex flex-wrap gap-3', className)}>
+      {options.map((opt) => {
+        const isActive = value === opt.value
+        return (
+          <label
+            key={opt.value}
+            className={cn(
+              'flex flex-1 min-w-[80px] cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-200',
+              isActive
+                ? 'border-primary-600 bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-600'
+                : 'border-surface-200 bg-white text-surface-600 hover:border-surface-300 hover:bg-surface-50'
+            )}
+          >
+            <input
+              type="radio"
+              name={name}
+              value={opt.value}
+              checked={isActive}
+              onChange={(e) => onChange(e.target.value)}
+              className="sr-only"
+            />
+            {opt.label}
+          </label>
+        )
+      })}
+    </div>
+  )
+}
+
+export function Checkbox({
+  label,
+  checked,
+  onChange,
+  disabled,
+  className,
+}: {
+  label: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+  disabled?: boolean
+  className?: string
+}) {
+  return (
+    <label
+      className={cn(
+        'flex items-center gap-2.5 cursor-pointer text-sm font-medium text-surface-700 group transition-colors hover:text-surface-900',
+        disabled && 'opacity-50 cursor-not-allowed',
+        className
+      )}
+    >
+      <div
+        className={cn(
+          'flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-md border transition-all duration-200',
+          checked
+            ? 'bg-primary-600 border-primary-600 shadow-md shadow-primary-500/10'
+            : 'bg-white border-surface-300 group-hover:border-primary-400'
+        )}
+      >
+        {checked && <Check className="h-3 w-3 text-white stroke-[4]" />}
+        <input
+          type="checkbox"
+          className="sr-only"
+          checked={checked}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+      </div>
+      <span className="select-none flex-1 min-w-0 break-words">{label}</span>
+    </label>
   )
 }

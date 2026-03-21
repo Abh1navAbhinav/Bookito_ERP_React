@@ -1,99 +1,25 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { CreditCard, Check, Plus, Star, Zap, Info, ArrowRight, Trash2, Edit3, X, RotateCcw } from 'lucide-react'
 import { Button, Modal, FormField, Input, Textarea } from '@/components/FormElements'
 import { cn } from '@/lib/utils'
+import {
+  type RoomSlab,
+  type SubscriptionPlanUi as Plan,
+  type DeletedSubscriptionPlanUi as DeletedPlan,
+  fetchActiveSubscriptionPlans,
+  fetchTrashedSubscriptionPlans,
+  createSubscriptionPlan,
+  updateSubscriptionPlan,
+  softDeleteSubscriptionPlan,
+  restoreSubscriptionPlan,
+} from '@/lib/subscriptionPlansApi'
 
-type RoomSlab = '1-10' | '11-20' | '21-30' | '30+'
-type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr'
+type DemoRole = 'manager' | 'sales' | 'accountant' | 'crm' | 'hr' | 'admin'
 
 type PlanFeature = {
   title: string
   items: string[]
 }
-
-type PricingRow = {
-  rooms: RoomSlab
-  sixMonths: number
-  oneYear: number
-}
-
-type Plan = {
-  id: string
-  name: string
-  description: string
-  popular?: boolean
-  promo?: string
-  color: string
-  pricing: PricingRow[]
-  features: PlanFeature[]
-  footerNote?: string
-}
-
-interface DeletedPlan extends Plan {
-  deletedAt: string
-}
-
-const initialPlans: Plan[] = [
-  {
-    id: 'plan-standard',
-    name: 'Bookito Standard',
-    description: 'Core CRS + inventory + channel management for growing properties.',
-    popular: false,
-    color: 'from-blue-600 to-blue-800',
-    pricing: [
-      { rooms: '1-10', sixMonths: 10000, oneYear: 18000 },
-      { rooms: '11-20', sixMonths: 16000, oneYear: 30000 },
-      { rooms: '21-30', sixMonths: 22000, oneYear: 40000 },
-      { rooms: '30+', sixMonths: 32000, oneYear: 60000 },
-    ],
-    features: [
-      { title: 'CRS (central reservation system)', items: ['booking engine', 'ota integration', 'direct booking', 'travel agent booking', 'guest management'] },
-      { title: 'Inventory management', items: ['extra bed pricing', 'meal plan management', 'Daily rate adjustment', 'room configurations'] },
-      { title: 'Channel manager', items: ['Manage OTA platforms in a single platform'] },
-    ],
-  },
-  {
-    id: 'plan-premium',
-    name: 'Bookito Premium',
-    description: 'Everything in Standard, plus banquet, store, KOT, finance, and advanced controls.',
-    popular: true,
-    promo: 'Best for Mid-size Hotels',
-    color: 'from-indigo-600 to-purple-800',
-    pricing: [
-      { rooms: '1-10', sixMonths: 16000, oneYear: 28000 },
-      { rooms: '11-20', sixMonths: 24000, oneYear: 45000 },
-      { rooms: '21-30', sixMonths: 32000, oneYear: 60000 },
-      { rooms: '30+', sixMonths: 45000, oneYear: 85000 },
-    ],
-    features: [
-      { title: 'Includes everything in Standard', items: [] },
-      { title: 'CRS Upgrades', items: ['Hold room facility', 'Advanced guest profiles'] },
-      { title: 'Banquet & Events', items: ['Booking & Management', 'Event-based pricing'] },
-      { title: 'Store & Inventory', items: ['Purchase orders/returns', 'Department-wise stock issue', 'Outlet sales tracking'] },
-      { title: 'KOT Management', items: ['Instant order creation', 'Table/room linking', 'Kitchen communication'] },
-      { title: 'Finance & Accounts', items: ['Cash/bank entry', 'Trial balance', 'P&L reports'] },
-    ],
-  },
-  {
-    id: 'plan-pro',
-    name: 'Bookito PRO',
-    description: 'Includes everything in Premium plus PRO-grade integrations, reports, and support.',
-    color: 'from-slate-800 to-slate-950',
-    pricing: [
-      { rooms: '1-10', sixMonths: 22000, oneYear: 40000 },
-      { rooms: '11-20', sixMonths: 32000, oneYear: 60000 },
-      { rooms: '21-30', sixMonths: 45000, oneYear: 85000 },
-      { rooms: '30+', sixMonths: 85000, oneYear: 120000 },
-    ],
-    features: [
-      { title: 'Includes everything in Premium', items: [] },
-      { title: 'Advanced Operations', items: ['Bar management', 'POS integration', 'Multi-property management'] },
-      { title: 'Business Intelligence', items: ['Advanced revenue management', 'Advanced custom reports', 'Dedicated support manager'] },
-      { title: 'Connectivity', items: ['Full API access', 'Third-party accounting integration'] },
-    ],
-    footerNote: 'PRO includes all Premium modules, plus additional integrations and support.',
-  },
-]
 
 const formatInr = (value: number) =>
   `₹${value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
@@ -115,34 +41,44 @@ export default function PricingPlanPage() {
   const [expandedPlans, setExpandedPlans] = useState<Record<string, boolean>>({})
   const [showDeleted, setShowDeleted] = useState(false)
   const [deletedPlans, setDeletedPlans] = useState<DeletedPlan[]>([])
+  const [listLoading, setListLoading] = useState(true)
+  const [listError, setListError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  // Load plans and role
+  const reloadPlans = useCallback(async () => {
+    setListError(null)
+    setListLoading(true)
+    try {
+      const [active, trash] = await Promise.all([
+        fetchActiveSubscriptionPlans(),
+        fetchTrashedSubscriptionPlans(),
+      ])
+      setPlans(active)
+      setDeletedPlans(trash)
+    } catch (e) {
+      setListError(e instanceof Error ? e.message : 'Failed to load subscription plans')
+      setPlans([])
+      setDeletedPlans([])
+    } finally {
+      setListLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
-    const savedPlans = localStorage.getItem('bookito_pricing_plans')
-    if (savedPlans) {
-      setPlans(JSON.parse(savedPlans))
-    } else {
-      setPlans(initialPlans)
-    }
+    void reloadPlans()
+  }, [reloadPlans])
 
-    const savedDeleted = localStorage.getItem('bookito_deleted_pricing_plans')
-    if (savedDeleted) {
-      const parsed: DeletedPlan[] = JSON.parse(savedDeleted)
-      // Auto-purge older than 30 days
-      const now = Date.now()
-      const thirtyDays = 30 * 24 * 60 * 60 * 1000
-      const valid = parsed.filter(p => (now - new Date(p.deletedAt).getTime()) < thirtyDays)
-      setDeletedPlans(valid)
-      localStorage.setItem('bookito_deleted_pricing_plans', JSON.stringify(valid))
-    }
-
+  useEffect(() => {
     try {
       const raw = window.localStorage.getItem('bookito_demo_user')
       if (raw) {
         const parsed = JSON.parse(raw) as { role?: DemoRole }
         if (parsed.role) setCurrentRole(parsed.role)
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   // Initialize modal features when opening modal
@@ -152,71 +88,73 @@ export default function PricingPlanPage() {
     }
   }, [showEditModal, editingPlan])
 
-  const canManage = currentRole === 'manager'
+  const canManage = currentRole === 'manager' || currentRole === 'admin'
+  const isSalesRole = currentRole === 'sales'
+  /** Sales users only see active plans; trash toggle is hidden for them */
+  const viewingDeleted = !isSalesRole && showDeleted
 
-  const handleSavePlan = (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (currentRole === 'sales') setShowDeleted(false)
+  }, [currentRole])
+
+  const handleSavePlan = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setSaveError(null)
     const formData = new FormData(e.currentTarget)
-    
+
     const newPlan: Plan = {
       id: editingPlan?.id || `plan-${Date.now()}`,
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       popular: formData.get('popular') === 'on',
-      promo: formData.get('promo') as string,
-      color: formData.get('color') as string || 'from-surface-700 to-surface-900',
-      footerNote: formData.get('footerNote') as string,
+      promo: (formData.get('promo') as string) || '',
+      color: (formData.get('color') as string) || 'from-surface-700 to-surface-900',
+      footerNote: (formData.get('footerNote') as string) || editingPlan?.footerNote || '',
+      sortOrder: editingPlan?.sortOrder ?? plans.length,
       pricing: [
         { rooms: '1-10', sixMonths: Number(formData.get('p1-6m')), oneYear: Number(formData.get('p1-1y')) },
         { rooms: '11-20', sixMonths: Number(formData.get('p2-6m')), oneYear: Number(formData.get('p2-1y')) },
         { rooms: '21-30', sixMonths: Number(formData.get('p3-6m')), oneYear: Number(formData.get('p3-1y')) },
         { rooms: '30+', sixMonths: Number(formData.get('p4-6m')), oneYear: Number(formData.get('p4-1y')) },
       ],
-      features: modalFeatures.filter(f => f.title.trim() !== '')
+      features: modalFeatures.filter((f) => f.title.trim() !== ''),
     }
 
-    let updatedPlans: Plan[]
-    if (editingPlan) {
-      updatedPlans = plans.map(p => p.id === editingPlan.id ? newPlan : p)
-    } else {
-      updatedPlans = [...plans, newPlan]
-    }
-
-    setPlans(updatedPlans)
-    localStorage.setItem('bookito_pricing_plans', JSON.stringify(updatedPlans))
-    setShowEditModal(false)
-  }
-
-  const handleDeletePlan = (id: string) => {
-    const planToDelete = plans.find(p => p.id === id)
-    if (!planToDelete) return
-
-    if (window.confirm('Move this pricing plan to trash? It will be auto-deleted after 30 days.')) {
-      const deletedAt = new Date().toISOString()
-      const entry: DeletedPlan = { ...planToDelete, deletedAt }
-      
-      const updatedPlans = plans.filter(p => p.id !== id)
-      setPlans(updatedPlans)
-      localStorage.setItem('bookito_pricing_plans', JSON.stringify(updatedPlans))
-
-      const updatedDeleted = [...deletedPlans, entry]
-      setDeletedPlans(updatedDeleted)
-      localStorage.setItem('bookito_deleted_pricing_plans', JSON.stringify(updatedDeleted))
+    setSaving(true)
+    try {
+      if (editingPlan) {
+        await updateSubscriptionPlan(editingPlan.id, newPlan)
+      } else {
+        await createSubscriptionPlan({ ...newPlan, sortOrder: plans.length })
+      }
+      await reloadPlans()
+      setShowEditModal(false)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save plan')
+    } finally {
+      setSaving(false)
     }
   }
 
-  const handleRestorePlan = (id: string) => {
-    const planToRestore = deletedPlans.find(p => p.id === id)
-    if (!planToRestore) return
+  const handleDeletePlan = async (id: string) => {
+    if (!window.confirm('Move this pricing plan to trash? It will be auto-deleted after 30 days.')) return
+    setListError(null)
+    try {
+      await softDeleteSubscriptionPlan(id)
+      await reloadPlans()
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : 'Failed to delete plan')
+    }
+  }
 
-    const updatedDeleted = deletedPlans.filter(p => p.id !== id)
-    setDeletedPlans(updatedDeleted)
-    localStorage.setItem('bookito_deleted_pricing_plans', JSON.stringify(updatedDeleted))
-
-    const { deletedAt, ...rest } = planToRestore
-    const updatedPlans = [...plans, rest]
-    setPlans(updatedPlans)
-    localStorage.setItem('bookito_pricing_plans', JSON.stringify(updatedPlans))
+  const handleRestorePlan = async (id: string) => {
+    setListError(null)
+    try {
+      await restoreSubscriptionPlan(id)
+      await reloadPlans()
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : 'Failed to restore plan')
+    }
   }
 
   const getRemainingDays = (deletedAt: string) => {
@@ -263,6 +201,12 @@ export default function PricingPlanPage() {
 
   return (
     <div className="space-y-10 pb-20">
+      {listError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{listError}</div>
+      )}
+      {listLoading && (
+        <p className="text-sm text-surface-500">Loading subscription plans…</p>
+      )}
       {/* Header */}
       <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div className="space-y-2">
@@ -277,36 +221,41 @@ export default function PricingPlanPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          {/* Active/Trash Tabs */}
-          <div className="mr-4 flex rounded-xl border border-surface-200 bg-white p-1 shadow-sm">
-            <button
-              onClick={() => setShowDeleted(false)}
-              className={cn(
-                "rounded-lg px-4 py-1.5 text-xs font-bold transition-all",
-                !showDeleted ? "bg-primary-600 text-white shadow-md" : "text-surface-500 hover:text-surface-900"
-              )}
-            >
-              Active
-            </button>
-            <button
-              onClick={() => setShowDeleted(true)}
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-bold transition-all",
-                showDeleted ? "bg-red-500 text-white shadow-md" : "text-surface-500 hover:text-red-500"
-              )}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Trash
-              {deletedPlans.length > 0 && (
-                <span className={cn(
-                  "flex h-4 w-4 items-center justify-center rounded-full text-[10px]",
-                  showDeleted ? "bg-white text-red-500" : "bg-red-100 text-red-600"
-                )}>
-                  {deletedPlans.length}
-                </span>
-              )}
-            </button>
-          </div>
+          {!isSalesRole && (
+            <div className="mr-4 flex rounded-xl border border-surface-200 bg-white p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setShowDeleted(false)}
+                className={cn(
+                  'rounded-lg px-4 py-1.5 text-xs font-bold transition-all',
+                  !showDeleted ? 'bg-primary-600 text-white shadow-md' : 'text-surface-500 hover:text-surface-900'
+                )}
+              >
+                Active
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleted(true)}
+                className={cn(
+                  'flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-bold transition-all',
+                  showDeleted ? 'bg-red-500 text-white shadow-md' : 'text-surface-500 hover:text-red-500'
+                )}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Trash
+                {deletedPlans.length > 0 && (
+                  <span
+                    className={cn(
+                      'flex h-4 w-4 items-center justify-center rounded-full text-[10px]',
+                      showDeleted ? 'bg-white text-red-500' : 'bg-red-100 text-red-600'
+                    )}
+                  >
+                    {deletedPlans.length}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
 
           <Button 
             variant="secondary" 
@@ -330,21 +279,21 @@ export default function PricingPlanPage() {
 
       {/* Plans Grid */}
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {(!showDeleted ? plans : deletedPlans).map((plan) => (
+        {!listLoading && (!viewingDeleted ? plans : deletedPlans).map((plan) => (
           <div
             key={plan.id}
             className={cn(
               'group relative flex flex-col rounded-[2.5rem] border bg-white p-2 transition-all duration-500 hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]',
-              plan.popular && !showDeleted
+              plan.popular && !viewingDeleted
                 ? 'border-primary-200 shadow-2xl shadow-primary-100 ring-4 ring-primary-50/50' 
                 : 'border-surface-200 shadow-xl',
-              showDeleted && 'opacity-80'
+              viewingDeleted && 'opacity-80'
             )}
           >
             {/* Action Buttons for Managers */}
             {canManage && (
               <div className="absolute right-6 top-6 z-20 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                {!showDeleted ? (
+                {!viewingDeleted ? (
                   <>
                     <button 
                       onClick={() => { setEditingPlan(plan); setShowEditModal(true); }}
@@ -371,7 +320,7 @@ export default function PricingPlanPage() {
               </div>
             )}
 
-            {plan.popular && !showDeleted && (
+            {plan.popular && !viewingDeleted && (
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 rounded-full bg-gradient-to-r from-primary-600 to-purple-600 px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-lg ring-4 ring-white">
                 <div className="flex items-center gap-1.5">
                   <Star className="h-3 w-3 fill-white" />
@@ -380,7 +329,7 @@ export default function PricingPlanPage() {
               </div>
             )}
 
-            {showDeleted && (
+            {viewingDeleted && (
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 rounded-full bg-red-600 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg ring-4 ring-white">
                 Auto-deletes in {getRemainingDays((plan as DeletedPlan).deletedAt)} days
               </div>
@@ -478,11 +427,17 @@ export default function PricingPlanPage() {
                   </div>
                 </div>
               </div>
+
+              {plan.footerNote && !viewingDeleted && (
+                <p className="mt-6 border-t border-surface-100 pt-4 text-center text-xs text-surface-500">
+                  {plan.footerNote}
+                </p>
+              )}
             </div>
           </div>
         ))}
         
-        {showDeleted && deletedPlans.length === 0 && (
+        {!listLoading && viewingDeleted && deletedPlans.length === 0 && (
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-surface-400">
             <Trash2 className="mb-4 h-12 w-12 opacity-20" />
           </div>
@@ -497,6 +452,9 @@ export default function PricingPlanPage() {
         size="lg"
       >
         <form onSubmit={handleSavePlan} className="space-y-6 py-4">
+          {saveError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{saveError}</div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <FormField label="Plan Name">
               <Input name="name" defaultValue={editingPlan?.name} required placeholder="e.g. Standard, Enterprise" />
@@ -508,6 +466,10 @@ export default function PricingPlanPage() {
           
           <FormField label="Description">
             <Textarea name="description" defaultValue={editingPlan?.description} required rows={2} placeholder="Brief overview of who this plan is for" />
+          </FormField>
+
+          <FormField label="Footer note (optional)">
+            <Textarea name="footerNote" defaultValue={editingPlan?.footerNote} rows={2} placeholder="Shown below features on the plan card" />
           </FormField>
 
           {/* Pricing Grid Inputs */}
@@ -607,8 +569,8 @@ export default function PricingPlanPage() {
 
           <div className="flex justify-end gap-3 pt-6 border-t border-surface-100">
             <Button variant="ghost" type="button" onClick={() => setShowEditModal(false)} className="h-12 px-6">Cancel</Button>
-            <Button type="submit" className="px-10 shadow-lg shadow-primary-200 h-12">
-              {editingPlan ? 'Update Plan' : 'Create Plan'}
+            <Button type="submit" disabled={saving} className="px-10 shadow-lg shadow-primary-200 h-12">
+              {saving ? 'Saving…' : editingPlan ? 'Update Plan' : 'Create Plan'}
             </Button>
           </div>
         </form>
